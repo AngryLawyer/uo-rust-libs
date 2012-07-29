@@ -1,0 +1,16 @@
+#[link(name = "UORustLibs",
+       vers = "0.1",
+       uuid = "71bbba38-d95f-11e1-bffa-a114360b68fb",
+       url = "http://github.com/AngryLawyer/UORustLibs")];
+
+#[comment = "UO data file libraries"];
+#[license = "MIT"];
+//#[crate_type = "lib"];
+
+use std;
+mod byte_helpers;
+mod mul_reader;
+
+mod skills;
+
+mod main;
