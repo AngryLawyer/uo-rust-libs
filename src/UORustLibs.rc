@@ -11,6 +11,7 @@ use std;
 mod byte_helpers;
 mod mul_reader;
 
+mod art;
 mod skills;
 
 mod main;
