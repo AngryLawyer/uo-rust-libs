@@ -6,10 +6,10 @@ fn main() {
         io::println(str::from_bytes(skill.name)); 
     }
 */
-    let art: ~[art::map_tile] = art::load_tiles(path);
+    let (map_tiles, static_tiles) = art::load_tiles(path);
 
     let mut i:uint = 0;
-    for art.each |tile| {
+    for map_tiles.each |tile| {
         let bmp_data: ~[u8] = art::map_tile_to_bitmap(tile);
 
         //Test writing bitmap

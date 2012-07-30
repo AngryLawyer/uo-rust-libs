@@ -1,5 +1,6 @@
 export bytes_to_le_uint;
 export uint_to_le_bytes;
+export u8vec_to_u16vec;
 
 fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
 
@@ -39,4 +40,19 @@ fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
             ret bytes;
         }
     }
+}
+
+fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
+    let mut output: ~[u16] = ~[];
+    let mut i = 0;
+    let len = vec::len(input);
+    
+    assert len % 2 == 0;
+
+    while (i < len) {
+        vec::push(output, byte_helpers::bytes_to_le_uint(vec::slice(input, i * 2, (i + 1) * 2)) as u16);
+        i += 2;
+    }
+
+    ret output;
 }
