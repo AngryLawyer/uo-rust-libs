@@ -1,4 +1,4 @@
-//NOTE: apparently, when looking up tiles by ID, they're offset by 0x4000.
+//NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
 export map_tile;
 export load_tiles;
 export map_tile_to_bitmap;
@@ -21,6 +21,8 @@ fn load_tiles(root_path: ~str) -> ~[map_tile] {
 
             //Apparently, these flag values represent whether something is a tile or not
             //Others are not convinced, and think that index is all that matters
+
+            //TODO: provide a check against incorrect lengths, as this causes problems
             if (record_header > 0xFFFF || record_header == 0) {
                 vec::push(result, {
                     header: record_header as u32,
@@ -33,7 +35,7 @@ fn load_tiles(root_path: ~str) -> ~[map_tile] {
     ret result;
 }
 
-fn map_tile_to_bitmap(/*tile: map_tile*/) -> ~[u8] {
+fn map_tile_to_bitmap(tile: map_tile) -> ~[u8] {
     let signature: ~[u8] = ~[0x42, 0x4D];
     let file_size: ~[u8] = byte_helpers::uint_to_le_bytes(7744 + 14 + 40, 4);
     let reserved: ~[u8] = ~[0, 0, 0, 0];
@@ -56,20 +58,22 @@ fn map_tile_to_bitmap(/*tile: map_tile*/) -> ~[u8] {
     //44 columns
     
     //Here's where it gets crazy - image data is stored as 2, 4, 8,  up to 44, then 44 down again
-    let mut pixels: ~[u8] = ~[];
+    let mut pixel_rows: ~[mut ~[u8]] = ~[mut];
+    let mut data_pointer: uint = 0;
     for uint::range(0, 44) |i| {
-        vec::grow(pixels, 22 * 2, 0x00);
-        vec::grow(pixels, 22 * 2, 0xFF);
-        /*if (i < 22) {
-            vec::grow(pixels, (22 - (i + 1)) * 3, 0xff);
-            vec::grow(pixels, ((i + 1) * 2) * 3, 0);
-            vec::grow(pixels, (22 - (i + 1)) * 3, 0xff);
-        } else {
-            vec::grow(pixels, ((i + 1) - 22) * 3, 0xff);
-            vec::grow(pixels, (44 - ((i + 1) * 2)) * 3, 0);
-            vec::grow(pixels, ((i + 1) - 22) * 3, 0xff);
-        }*/
+        
+        let slice:uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
+        let mut pixels: ~[u8] = ~[];
+
+        vec::grow(pixels, (44 - slice), 0xFF); //TODO: Find a better unused colour
+        vec::push_all(pixels, vec::slice(tile.data, data_pointer, data_pointer + (slice * 2)));
+        //vec::grow(pixels, slice * 2, 0xFF);
+        vec::grow(pixels, (44 - slice), 0xFF);
+        data_pointer += (slice * 2);
+        vec::push(pixel_rows, pixels);
     }
+    vec::reverse(pixel_rows);
+    
     //vec::grow(pixels, 44 * 44 * 4, 0x7f);
 
     ret vec::concat(~[
@@ -90,6 +94,6 @@ fn map_tile_to_bitmap(/*tile: map_tile*/) -> ~[u8] {
         palette_count,
         important_colours,
 
-        pixels
+        vec::concat(pixel_rows)
     ]);
 }
