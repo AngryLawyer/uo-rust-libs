@@ -22,6 +22,7 @@ type run = {
 };
 
 const transparent: u16 = 0b1000000000000000;
+const expected_tile_size: uint = 2048;
 
 fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a better return type for this
     let reader:mul_reader::mul_reader = mul_reader::mul_reader(root_path, ~"artidx.mul", ~"art.mul");
@@ -37,7 +38,8 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
             //Apparently, these flag values represent whether something is a tile or not
             //Others are not convinced, and think that index is all that matters
             //TODO: provide a check against incorrect lengths, as this causes problems
-            if (record_header > 0xFFFF || record_header == 0) {
+            
+            if (vec::len(unwrapped.data) == expected_tile_size &&  (record_header > 0xFFFF || record_header == 0)) {
                 vec::push(map_tiles, parse_map_tile(unwrapped));
             } else {
             }
@@ -57,13 +59,18 @@ fn parse_map_tile(record: mul_reader::mul_record) -> map_tile {
     for uint::range(0, 44) |i| {
         
         let slice: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
-        vec::grow(image, (22 - slice), transparent);
-
+        vec::grow(image, (22 - (slice / 2)), transparent);
         let slice_data: ~[u8] = vec::slice(data_slice, data_pointer, data_pointer + (slice * 2));
-
+        //vec::grow(image, slice, 0b0111110000000000);
+        //io::println(#fmt("%u", vec::len(slice_data)));
+        /*let mut slice_data: ~[u8] = ~[];
+        for uint::range(0, slice) |j| {
+            vec::push(slice_data, 0b01111100);
+            vec::push(slice_data, 0b00000000);
+        };*/
+        
         vec::push_all(image, byte_helpers::u8vec_to_u16vec(slice_data));
-
-        vec::grow(image, (22 - slice), transparent);
+        vec::grow(image, (22 - (slice / 2)), transparent);
         data_pointer += (slice * 2);
     };
 
