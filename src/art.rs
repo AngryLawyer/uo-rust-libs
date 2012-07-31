@@ -1,7 +1,7 @@
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
 export map_tile;
 export load_tiles;
-export map_tile_to_bitmap;
+export to_bitmap;
 
 type map_tile = {
     header: u32,
@@ -90,13 +90,13 @@ fn parse_map_tile(record: mul_reader::mul_record) -> map_tile {
 
 fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make this take arbitrary pixel depths
     let signature: ~[u8] = ~[0x42, 0x4D];
-    let file_size: ~[u8] = byte_helpers::uint_to_le_bytes((width * height * 2) + 14 + 40, 4);
+    let file_size: ~[u8] = byte_helpers::uint_to_le_bytes(((width * height * 2) + 14 + 40) as u64, 4);
     let reserved: ~[u8] = ~[0, 0, 0, 0];
     let data_offset: ~[u8] = byte_helpers::uint_to_le_bytes(54, 4);
 
     let header_size: ~[u8] = byte_helpers::uint_to_le_bytes(40, 4);
-    let width: ~[u8] = byte_helpers::uint_to_le_bytes(width, 4); //FIXME: should be signed?
-    let height: ~[u8] = byte_helpers::uint_to_le_bytes(height, 4);
+    let width_bytes: ~[u8] = byte_helpers::uint_to_le_bytes(width as u64, 4); //FIXME: should be signed?
+    let height_bytes: ~[u8] = byte_helpers::uint_to_le_bytes(height as u64, 4);
     let colour_panes: ~[u8] = ~[1, 0];
     let depth: ~[u8] = ~[16, 0];
     let compression: ~[u8] = ~[0,0,0,0];
@@ -107,12 +107,17 @@ fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make this
     let important_colours: ~[u8] = ~[0, 0, 0, 0];
 
     //54 bytes so far
-    //44 pixels per row, each 3 bytes
-    //44 columns
-    
-    //Here's where it gets crazy - image data is stored as 2, 4, 8,  up to 44, then 44 down again
     //TODO: explode the image vector, iterate backwards, turn it into bytes
-     
+    let mut rows: ~[mut ~[u8]] = ~[mut];
+    for uint::range(0, height as uint) |i| {
+        let slice = vec::slice(data, i * (width as uint), (i+1) * (width as uint));
+        let mut row: ~[u8] = ~[];
+        for slice.each |sliced| {
+            vec::push_all(row, byte_helpers::uint_to_le_bytes(sliced as u64, 2));
+        }
+        vec::push(rows, row);
+    }; 
+    vec::reverse(rows);
     //vec::grow(pixels, 44 * 44 * 4, 0x7f);
 
     ret vec::concat(~[
@@ -122,8 +127,8 @@ fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make this
         data_offset,
 
         header_size,
-        width,
-        height,
+        width_bytes,
+        height_bytes,
         colour_panes,
         depth,
         compression,
@@ -131,8 +136,8 @@ fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make this
         horizontal_res,
         vertical_res,
         palette_count,
-        important_colours
+        important_colours,
 
-        //vec::concat(pixel_rows)
+        vec::concat(rows)
     ]);
 }

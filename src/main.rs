@@ -10,7 +10,7 @@ fn main() {
 
     let mut i:uint = 0;
     for map_tiles.each |tile| {
-        let bmp_data: ~[u8] = art::map_tile_to_bitmap(tile);
+        let bmp_data: ~[u8] = art::to_bitmap(44, 44, tile.image);
 
         //Test writing bitmap
         let maybe_writer = io::file_writer(#fmt("./output/tile%u.bmp", i), ~[io::create, io::truncate]);
