@@ -33,10 +33,16 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
             //Apparently, these flag values represent whether something is a tile or not
             //Others are not convinced, and think that index is all that matters
             
-            if (vec::len(unwrapped.data) == expected_tile_size &&  (record_header > 0xFFFF || record_header == 0)) {
-                vec::push(map_tiles, parse_map_tile(unwrapped));
+            if (record_header > 0xFFFF || record_header == 0) {
+                let maybe_map_tile: option::option<map_tile> = parse_map_tile(unwrapped);
+                if option::is_some(maybe_map_tile) {
+                    vec::push(map_tiles, maybe_map_tile.get());
+                }
             } else {
-                vec::push(static_tiles, parse_static_tile(unwrapped));
+                let maybe_static_tile: option::option<static_tile> = parse_static_tile(unwrapped);
+                if option::is_some(maybe_static_tile) {
+                    vec::push(static_tiles, maybe_static_tile.get());
+                }
             }
         }
     }
@@ -44,9 +50,13 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
     ret (map_tiles, static_tiles);
 }
 
-fn parse_map_tile(record: mul_reader::mul_record) -> map_tile { //Interestingly, pixels seem to be 565, rather than 555
+fn parse_map_tile(record: mul_reader::mul_record) -> option::option<map_tile> { //Interestingly, pixels seem to be 565, rather than 555
 
     let record_header = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 3));
+
+    if (vec::len(record.data) == expected_tile_size) {
+        ret option::none;
+    }
     let mut image: ~[u16] = ~[];
     let data_slice: ~[u8] = vec::slice(record.data, 4, vec::len(record.data));
 
@@ -61,17 +71,20 @@ fn parse_map_tile(record: mul_reader::mul_record) -> map_tile { //Interestingly,
         data_pointer += (slice * 2);
     };
 
-    ret {
+    ret option::some({
         header: record_header as u32,
         image: image 
-    };
+    });
 }
-fn parse_static_tile(record: mul_reader::mul_record) -> static_tile {
+fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_tile> {
     let record_header: u32 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 3)) as u32;
     let width: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 4, 5)) as u16;
     let height: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 6, 7)) as u16;
     let mut image: ~[u16] = ~[];
 
+    if (width == 0 || height == 0) {
+        ret option::none;
+    }
     io::println(#fmt("%u", width as uint));
     io::println(#fmt("%u", height as uint));
 
@@ -86,20 +99,23 @@ fn parse_static_tile(record: mul_reader::mul_record) -> static_tile {
             if (padding == 0 && length == 0) {
                 break;
             }
+            if (padding + length >= 2048) { //Corrupt image
+                ret option::none;
+            }
             vec::grow(image, padding as uint, transparent);
-            let run: ~[u16] = byte_helpers::u8vec_to_u16vec(vec::slice(record.data, (offset + 4) as uint, (offset + 4 + (length * 2)) as uint)); //This should be repetitions
-            vec::push_all(image, run);
+            let run_pixel: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, (offset + 4) as uint, (offset + 5) as uint)) as u16;
+            vec::grow(image, length as uint, run_pixel);
             offset += padding + length;
         }
         //Write blanks until we reach width
         vec::grow(image, (width - offset) as uint, transparent);
     }
-    ret {
+    ret option::some({
         header: record_header as u32,
         width: width,
         height: height,
         image: image
-    };
+    });
 }
 
 
