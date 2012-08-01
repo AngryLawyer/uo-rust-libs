@@ -13,13 +13,7 @@ type static_tile = {
     header: u32,
     width: u16,
     height: u16,
-    rows: ~[~[run]]
-};
-
-type run = {
-    offset: u16,
-    length: u16,
-    data: ~[u8]
+    image: ~[u16]
 };
 
 const transparent: u16 = 0b1000000000000000;
@@ -38,11 +32,11 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
             let record_header = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 0, 3));
             //Apparently, these flag values represent whether something is a tile or not
             //Others are not convinced, and think that index is all that matters
-            //TODO: provide a check against incorrect lengths, as this causes problems
             
             if (vec::len(unwrapped.data) == expected_tile_size &&  (record_header > 0xFFFF || record_header == 0)) {
                 vec::push(map_tiles, parse_map_tile(unwrapped));
             } else {
+                vec::push(static_tiles, parse_static_tile(unwrapped));
             }
         }
     }
@@ -61,14 +55,6 @@ fn parse_map_tile(record: mul_reader::mul_record) -> map_tile { //Interestingly,
         
         let slice: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
         vec::grow(image, (22 - (slice / 2)), transparent);
-        //vec::grow(image, slice, byte_helpers::u8vec_to_u16vec(~[0b00000000, 0b01111100])[0]);
-        //io::println(#fmt("%u", vec::len(slice_data)));
-        /*let mut slice_data: ~[u8] = ~[];
-        for uint::range(0, slice) |j| {
-            vec::push(slice_data, 0b01111100);
-            vec::push(slice_data, 0b00000000);
-        };*/
-        
         let slice_data: ~[u8] = vec::slice(data_slice, data_pointer, data_pointer + (slice * 2));
         vec::push_all(image, byte_helpers::u8vec_to_u16vec(slice_data));
         vec::grow(image, (22 - (slice / 2)), transparent);
@@ -80,19 +66,41 @@ fn parse_map_tile(record: mul_reader::mul_record) -> map_tile { //Interestingly,
         image: image 
     };
 }
-/*fn parse_static_tile(record: mul_reader::mul_record) -> static_tile {
-    let record_header: u32 = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 0, 3)) as u32;
-    let width: u16 = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 4, 5)) as u16;
-    let height: u16 = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 6, 7)) as u16;
+fn parse_static_tile(record: mul_reader::mul_record) -> static_tile {
+    let record_header: u32 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 3)) as u32;
+    let width: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 4, 5)) as u16;
+    let height: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 6, 7)) as u16;
+    let mut image: ~[u16] = ~[];
 
-    let mut rows: ~[ mut ~[run]] = ~[mut];
+    io::println(#fmt("%u", width as uint));
+    io::println(#fmt("%u", height as uint));
 
-    for uint::range(0, height) |i| {    
-        //Ze plan - read a row, starting from position 8, all the way to height
-        let offset: u16 = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 8 + (2 * i), 9 + (2 * i)), 2) as u16;
-        
+    for uint::range(0, height as uint) |i| {    
+        //Ze plan - read the offset, then loop while we're reading out runs 
+        let mut offset: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (2 * i), 9 + (2 * i))) as u16;
+
+        //Read the run - u16 offset (number of transparent pixels to write) - u16 run length - u16 pixel data
+        loop {
+            let padding: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, offset as uint, (offset + 1) as uint)) as u16;
+            let length: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, (offset + 2) as uint, (offset + 3) as uint)) as u16;
+            if (padding == 0 && length == 0) {
+                break;
+            }
+            vec::grow(image, padding as uint, transparent);
+            let run: ~[u16] = byte_helpers::u8vec_to_u16vec(vec::slice(record.data, (offset + 4) as uint, (offset + 4 + (length * 2)) as uint));
+            vec::push_all(image, run);
+            offset += padding + length;
+        }
+        //Write blanks until we reach width
+        vec::grow(image, (width - offset) as uint, transparent);
     }
-}*/
+    ret {
+        header: record_header as u32,
+        width: width,
+        height: height,
+        image: image
+    };
+}
 
 
 
