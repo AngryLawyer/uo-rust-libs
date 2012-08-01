@@ -87,7 +87,7 @@ fn parse_static_tile(record: mul_reader::mul_record) -> static_tile {
                 break;
             }
             vec::grow(image, padding as uint, transparent);
-            let run: ~[u16] = byte_helpers::u8vec_to_u16vec(vec::slice(record.data, (offset + 4) as uint, (offset + 4 + (length * 2)) as uint));
+            let run: ~[u16] = byte_helpers::u8vec_to_u16vec(vec::slice(record.data, (offset + 4) as uint, (offset + 4 + (length * 2)) as uint)); //This should be repetitions
             vec::push_all(image, run);
             offset += padding + length;
         }
