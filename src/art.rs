@@ -50,7 +50,7 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
     ret (map_tiles, static_tiles);
 }
 
-fn parse_map_tile(record: mul_reader::mul_record) -> map_tile {
+fn parse_map_tile(record: mul_reader::mul_record) -> map_tile { //Interestingly, pixels seem to be 565, rather than 555
 
     let record_header = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 3));
     let mut image: ~[u16] = ~[];
