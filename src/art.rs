@@ -2,6 +2,7 @@
 export map_tile;
 export load_tiles;
 export to_bitmap;
+export parse_map_tile;
 
 type map_tile = {
     header: u32,
@@ -60,8 +61,7 @@ fn parse_map_tile(record: mul_reader::mul_record) -> map_tile {
         
         let slice: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
         vec::grow(image, (22 - (slice / 2)), transparent);
-        let slice_data: ~[u8] = vec::slice(data_slice, data_pointer, data_pointer + (slice * 2));
-        //vec::grow(image, slice, 0b0111110000000000);
+        //vec::grow(image, slice, byte_helpers::u8vec_to_u16vec(~[0b00000000, 0b01111100])[0]);
         //io::println(#fmt("%u", vec::len(slice_data)));
         /*let mut slice_data: ~[u8] = ~[];
         for uint::range(0, slice) |j| {
@@ -69,6 +69,7 @@ fn parse_map_tile(record: mul_reader::mul_record) -> map_tile {
             vec::push(slice_data, 0b00000000);
         };*/
         
+        let slice_data: ~[u8] = vec::slice(data_slice, data_pointer, data_pointer + (slice * 2));
         vec::push_all(image, byte_helpers::u8vec_to_u16vec(slice_data));
         vec::grow(image, (22 - (slice / 2)), transparent);
         data_pointer += (slice * 2);

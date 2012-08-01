@@ -60,7 +60,7 @@ fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
     assert len % 2 == 0;
 
     while (i < (len / 2)) {
-        vec::push(output, byte_helpers::bytes_to_le_uint(vec::slice(input, i * 2, (i * 2) + 1)) as u16);
+        vec::push(output, (input[i * 2] as u16 + ((input[(i * 2) + 1] as u16) << 8)));
         i += 1;
     }
 
