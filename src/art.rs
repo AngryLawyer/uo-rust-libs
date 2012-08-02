@@ -82,33 +82,40 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
     let height: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 6, 7)) as u16;
     let mut image: ~[u16] = ~[];
 
-    if (width == 0 || height == 0) {
+    if (width == 0 || height == 0 || width >= 2048 || height >= 2048) {
         ret option::none;
     }
-    io::println(#fmt("%u", width as uint));
-    io::println(#fmt("%u", height as uint));
 
     for uint::range(0, height as uint) |i| {    
         //Ze plan - read the offset, then loop while we're reading out runs 
         let mut offset: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (2 * i), 9 + (2 * i))) as u16;
+        io::println(#fmt("Offset %u", offset as uint));
 
-        //Read the run - u16 offset (number of transparent pixels to write) - u16 run length - u16 pixel data
+        //Read the run - u16 offset (number of transparent pixels to write) - u16 run length (pixels to read?) - u16 pixel data
+        let mut row_length: uint = 0;
+        io::println(#fmt("Start row %u", i));
         loop {
             let padding: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, offset as uint, (offset + 1) as uint)) as u16;
             let length: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, (offset + 2) as uint, (offset + 3) as uint)) as u16;
+            io::println(#fmt("Padding %u, length %u", padding as uint, length as uint));
             if (padding == 0 && length == 0) {
                 break;
             }
-            if (padding + length >= 2048) { //Corrupt image
+            if (row_length + (padding as uint) + (length as uint) >= 2048) { //Corrupt image
                 ret option::none;
             }
-            vec::grow(image, padding as uint, transparent);
-            let run_pixel: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, (offset + 4) as uint, (offset + 5) as uint)) as u16;
-            vec::grow(image, length as uint, run_pixel);
-            offset += padding + length;
+            vec::grow(image, padding as uint, transparent); //Add the padding
+            
+            let run_pixels: ~[u16] = byte_helpers::u8vec_to_u16vec(vec::slice(record.data, (offset + 4) as uint, (offset + 4 + (length * 2)) as uint));
+            io::println(#fmt("Pixels read - %u", vec::len(run_pixels) as uint));
+            vec::push_all(image, run_pixels);
+            offset += (vec::len(run_pixels) * 2) as u16;
+            row_length += (padding + length) as uint;
+            io::println(#fmt("Row length %u", row_length as uint));
         }
         //Write blanks until we reach width
-        vec::grow(image, (width - offset) as uint, transparent);
+        assert (width as uint) >= (row_length);
+        vec::grow(image, (width as uint - row_length), transparent);
     }
     ret option::some({
         header: record_header as u32,

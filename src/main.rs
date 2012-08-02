@@ -1,6 +1,6 @@
 fn main() {
-    let path = ~"../uo-aos/";
-    //let path = ~"/home/tony/Ubuntu One/";
+    //let path = ~"../uo-aos/";
+    let path = ~"/home/tony/Ubuntu One/";
     /*let skills: ~[skills::skill] = skills::load_skills(path);
 
     for skills.each |skill| {
