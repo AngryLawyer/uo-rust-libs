@@ -86,7 +86,45 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
         ret option::none;
     }
 
+    //Stuff all of the Offsets into an array
+    let mut offsets: ~[u16] = ~[];
+    
     for uint::range(0, height as uint) |i| {    
+        //Ze plan - read the offset, then loop while we're reading out runs 
+        vec::push(offsets, byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (2 * i), 9 + (2 * i))) as u16);
+    };
+
+    for offsets.each |offset| {
+        //Possible that offsets are pixels
+        let byte_offset = offset * 2;
+        let mut byte_pos = 0;
+        loop {
+            //Read run padding - u16
+            let run_padding = byte_helpers::bytes_to_le_uint(vec::slice(record.data, (byte_offset + byte_pos) as uint, ((byte_offset + byte_pos) + 1) as uint)) as u16;
+            //Read run length - u16
+            let run_length = byte_helpers::bytes_to_le_uint(vec::slice(record.data, (byte_offset + byte_pos + 2) as uint, (byte_offset + byte_pos + 3) as uint)) as u16;
+            io::println(#fmt("Offset %u, padding %u, length %u",byte_offset as uint, run_padding as uint, run_length as uint));
+            if (run_padding == 0 && run_length == 0) {
+                break;
+            }
+            //Check expected length
+            if (run_padding + run_length > 2048) {
+                io::println("Unexpected length!");
+                ret option::none;
+            }
+            let run_pixels: ~[u16] = byte_helpers::u8vec_to_u16vec(vec::slice(record.data, (byte_offset + byte_pos + 4) as uint, (byte_offset + byte_pos+ 4 + (run_length * 2)) as uint));
+            //increase by offset
+            vec::grow(image, run_padding as uint, transparent); //Add the padding
+            vec::push_all(image, run_pixels);
+            io::println(#fmt("Pixels read - %u", vec::len(run_pixels) as uint));
+            byte_pos += 4 + (run_length * 2);
+        }
+        
+    };
+
+    
+
+    /*for uint::range(0, height as uint) |i| {    
         //Ze plan - read the offset, then loop while we're reading out runs 
         let mut offset: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (2 * i), 9 + (2 * i))) as u16;
         io::println(#fmt("Offset %u", offset as uint));
@@ -116,7 +154,7 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
         //Write blanks until we reach width
         assert (width as uint) >= (row_length);
         vec::grow(image, (width as uint - row_length), transparent);
-    }
+    }*/
     ret option::some({
         header: record_header as u32,
         width: width,
