@@ -2,6 +2,8 @@ export bytes_to_le_uint;
 export bytes_to_be_uint;
 export uint_to_le_bytes;
 export u8vec_to_u16vec;
+export read_le_u16;
+export read_le_u32;
 
 fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
 
@@ -65,4 +67,20 @@ fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
     }
 
     ret output;
+}
+
+fn read_le_u16(&input: ~[u8]) -> u16 {
+    let first  = vec::shift(input);
+    let second = vec::shift(input);
+    ret bytes_to_le_uint(~[first, second]) as u16;
+//    ret first | (second << 8);
+}
+
+fn read_le_u32(&input: ~[u8]) -> u32 {
+    let first = vec::shift(input);
+    let second = vec::shift(input);
+    let third = vec::shift(input);
+    let fourth = vec::shift(input);
+    ret bytes_to_le_uint(~[first, second, third, fourth]) as u32;
+    //ret first | (second << 8) | (third << 16) | (fourth << 24);
 }
