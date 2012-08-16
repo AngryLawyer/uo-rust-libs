@@ -19,7 +19,7 @@ type static_tile = {
 const transparent: u16 = 0b1000000000000000;
 const expected_tile_size: uint = 2048;
 
-fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a better return type for this
+fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a better returnurn type for this
     let reader:mul_reader::mul_reader = mul_reader::mul_reader(root_path, ~"artidx.mul", ~"art.mul");
 
     let mut map_tiles: ~[map_tile] = ~[];
@@ -47,7 +47,7 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
         }
     }
 
-    ret (map_tiles, static_tiles);
+    return (map_tiles, static_tiles);
 }
 
 fn parse_map_tile(record: mul_reader::mul_record) -> option::option<map_tile> { //Interestingly, pixels seem to be 565, rather than 555
@@ -55,7 +55,7 @@ fn parse_map_tile(record: mul_reader::mul_record) -> option::option<map_tile> { 
     let record_header = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 3));
 
     if (vec::len(record.data) == expected_tile_size) {
-        ret option::none;
+        return option::none;
     }
     let mut image: ~[u16] = ~[];
     let data_slice: ~[u8] = vec::slice(record.data, 4, vec::len(record.data));
@@ -71,7 +71,7 @@ fn parse_map_tile(record: mul_reader::mul_record) -> option::option<map_tile> { 
         data_pointer += (slice * 2);
     };
 
-    ret option::some({
+    return option::some({
         header: record_header as u32,
         image: image 
     });
@@ -83,7 +83,7 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
     let mut image: ~[u16] = ~[];
 
     if (width == 0 || height == 0 || width >= 2048 || height >= 2048) {
-        ret option::none;
+        return option::none;
     }
 
     //Stuff all of the Offsets into an array
@@ -110,7 +110,7 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
             //Check expected length
             if (run_padding + run_length > 2048) {
                 io::println("Unexpected length!");
-                ret option::none;
+                return option::none;
             }
             let run_pixels: ~[u16] = byte_helpers::u8vec_to_u16vec(vec::slice(record.data, (byte_offset + byte_pos + 4) as uint, (byte_offset + byte_pos+ 4 + (run_length * 2)) as uint));
             //increase by offset
@@ -140,7 +140,7 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
                 break;
             }
             if (row_length + (padding as uint) + (length as uint) >= 2048) { //Corrupt image
-                ret option::none;
+                return option::none;
             }
             vec::grow(image, padding as uint, transparent); //Add the padding
             
@@ -155,7 +155,7 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
         assert (width as uint) >= (row_length);
         vec::grow(image, (width as uint - row_length), transparent);
     }*/
-    ret option::some({
+    return option::some({
         header: record_header as u32,
         width: width,
         height: height,
@@ -197,7 +197,7 @@ fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make this
     vec::reverse(rows);
     //vec::grow(pixels, 44 * 44 * 4, 0x7f);
 
-    ret vec::concat(~[
+    return vec::concat(~[
         signature,
         file_size,
         reserved,
