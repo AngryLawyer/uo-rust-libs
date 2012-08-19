@@ -25,6 +25,7 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
     let mut map_tiles: ~[map_tile] = ~[];
     let mut static_tiles: ~[static_tile] = ~[];
 
+    let mut index:uint = 0;
     while (reader.eof() != true) {
         let item: option::option<mul_reader::mul_record> = reader.read();
         if option::is_some(item) {
@@ -33,18 +34,20 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
             //Apparently, these flag values represent whether something is a tile or not
             //Others are not convinced, and think that index is all that matters
 
-            if (record_header > 0xFFFF || record_header == 0) {
+            //if (record_header > 0xFFFF || record_header == 0) {
+            if (index < 0x4000) {
                 /*let maybe_map_tile: option::option<map_tile> = parse_map_tile(unwrapped);
                 if option::is_some(maybe_map_tile) {
                     vec::push(map_tiles, maybe_map_tile.get());
                 }*/
-            } else if (record_header != 0){
+            } else if (index < 0x8000){
                 let maybe_static_tile: option::option<static_tile> = parse_static_tile(unwrapped);
                 if option::is_some(maybe_static_tile) {
                     vec::push(static_tiles, maybe_static_tile.get());
                 }
             }
         }
+        index += 1;
     }
 
     ret (map_tiles, static_tiles);
@@ -78,14 +81,17 @@ fn parse_map_tile(record: mul_reader::mul_record) -> option::option<map_tile> { 
     });
 }
 fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_tile> {
-    let record_header: u32 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 3)) as u32;
+    let data_size: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 1)) as u16; //Might not be size :P
+    let trigger: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 2, 3)) as u16;
+
     let width: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 4, 5)) as u16;
     let height: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 6, 7)) as u16;
     let mut image: ~[u16] = ~[];
 
-    if (width == 0 || height == 0 || width >= 2048 || height >= 2048) {
+    if (width == 0 || height == 0 || width > 1024 || height > 1024) {
         ret option::none;
     }
+
     //Stuff all of the Offsets into an array
     let mut offsets: ~[u16] = ~[];
 
@@ -94,15 +100,16 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
         vec::push(offsets, byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (2 * i), 9 + (2 * i))) as u16);
     };
 
+    let run_data_start = (height * 2) + 8;
+
     for offsets.each |offset| {
-        let row_start = 8 + (height as uint * 2); //Runs start at the offset plus the header, plus the table
-        let mut run_start = row_start + (offset as uint * 2);
+        let mut run_start = run_data_start + (offset * 2);
         let mut current_width = 0;
 
         loop {
-            let run_padding = byte_helpers::bytes_to_le_uint(vec::slice(record.data, run_start, run_start + 1)) as u16;
-            let run_length = byte_helpers::bytes_to_le_uint(vec::slice(record.data, run_start + 2, run_start + 3)) as u16;
-            if run_padding == 0 && run_length == 0 {
+            let run_padding = byte_helpers::bytes_to_le_uint(vec::slice(record.data, run_start as uint, run_start as uint + 1)) as u16;
+            let run_length = byte_helpers::bytes_to_le_uint(vec::slice(record.data, run_start as uint + 2, run_start as uint + 3)) as u16;
+            if run_length == 0 && run_padding == 0 {
                 break;
             }
             current_width += (run_padding + run_length);
@@ -110,17 +117,18 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
                 ret option::none;
             }
 
-            if (current_width > 1024) {
+            if (current_width > 2048) {
                 ret option::none;
             }
             //Add the padding!
             vec::grow(image, run_padding as uint, transparent);
             //Read ze pixels!
-            let run_data = vec::slice(record.data, run_start + 4, run_start + 4 + (run_length as uint * 2));
+            let run_data = vec::slice(record.data, run_start as uint + 4, run_start as uint + 4 + (run_length as uint * 2));
+            
             vec::push_all(image, byte_helpers::u8vec_to_u16vec(run_data));
             
             //io::println(#fmt("%u, %u", run_padding as uint, run_length as uint));
-            run_start += 4 + (run_length * 2) as uint;
+            run_start += 4 + (run_length * 2);
         }
         //io::println("ROW END");
         vec::grow(image, (width - current_width) as uint, transparent);
@@ -128,9 +136,10 @@ fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_ti
         
     };
     //io::println("Image end");
+    assert vec::len(image) == (width as uint) * (height as uint);
 
     ret option::some({
-        header: record_header as u32,
+        header: 0,// record_header as u32,
         width: width,
         height: height,
         image: image
