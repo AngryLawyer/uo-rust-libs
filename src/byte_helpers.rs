@@ -16,7 +16,7 @@ fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
         i += 1;
     }
 
-    ret val;
+    return val;
 }
 
 fn bytes_to_be_uint(bytes: ~[u8]) -> uint {
@@ -25,15 +25,15 @@ fn bytes_to_be_uint(bytes: ~[u8]) -> uint {
         i -= 1u;
         val += (bytes[i] as uint) << i * 8u;
     }
-    ret val;
+    return val;
 }
 
 fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
-    alt size {
-        1u { ret ~[n as u8] }
-        2u { ret ~[n as u8, (n >> 8) as u8] }
-        4u { ret ~[n as u8, (n >> 8) as u8, (n >> 16) as u8, (n >> 24) as u8] }
-        8u { ret ~[n as u8,
+    match size {
+        1u => { return ~[n as u8] }
+        2u => { return ~[n as u8, (n >> 8) as u8] }
+        4u => { return ~[n as u8, (n >> 8) as u8, (n >> 16) as u8, (n >> 24) as u8] }
+        8u => { return ~[n as u8,
             (n >> 8) as u8,
             (n >> 16) as u8,
             (n >> 24) as u8,
@@ -42,14 +42,14 @@ fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
             (n >> 48) as u8,
             (n >> 56) as u8] 
         }
-        _ {
+        _ => {
             let mut bytes: ~[u8] = ~[], i = size, n = n;
             while i > 0u {
                 vec::push(bytes, (n & 255_u64) as u8);
                 n >>= 8_u64;
                 i -= 1u;
             }
-            ret bytes;
+            return bytes;
         }
     }
 }
@@ -66,7 +66,7 @@ fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
         i += 1;
     }
 
-    ret output;
+    return output;
 }
 
 fn read_le_u16(&input: ~[u8]) -> u16 {

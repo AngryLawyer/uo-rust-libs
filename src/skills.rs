@@ -23,5 +23,5 @@ fn load_skills(root_path: ~str) -> ~[skill] {
         }
     }
 
-    ret result;
+    return result;
 }

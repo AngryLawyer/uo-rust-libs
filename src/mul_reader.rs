@@ -33,13 +33,13 @@ class mul_reader {
     }
 
     fn eof() -> bool {
-        ret self.is_eof;
+        return self.is_eof;
     }
 
     fn read() -> option<mul_record> {
 
         //Check for eof
-        if (self.eof() == true) { ret option::none };
+        if (self.eof() == true) { return option::none };
         
         let start: u32 = self.idx_reader.read_le_uint(4) as u32;
         let length: u32 = self.idx_reader.read_le_uint(4) as u32;
@@ -55,12 +55,12 @@ class mul_reader {
 
         //Check for empty cell
         if (start == undef_record || start == u32::max_value) { 
-            ret option::none;
+            return option::none;
         };
         
         self.data_reader.seek(start as int, io::seek_set);
 
-        ret option::some({
+        return option::some({
             data: self.data_reader.read_bytes(length as uint),
             opt1: opt1,
             opt2: opt2
