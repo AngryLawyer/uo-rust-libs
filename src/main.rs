@@ -1,13 +1,16 @@
 fn main() {
     //let path = ~"../uo-aos/";
     let path = ~"/home/tony/Ubuntu One/";
+
+    utils::extract_muls(path, ~"artidx.mul", ~"art.mul", ~"art");
+
     /*let skills: ~[skills::skill] = skills::load_skills(path);
 
     for skills.each |skill| {
         io::println(str::from_bytes(skill.name)); 
     }
 */
-    let (map_tiles, static_tiles) = art::load_tiles(path);
+    /*let (map_tiles, static_tiles) = art::load_tiles(path);
 
     let mut i:uint = 0;
     /*for map_tiles.each |tile| {
@@ -43,6 +46,8 @@ fn main() {
        
         writer.write(bmp_data);
         i += 1;
-    }
+    }*/
+
+    
 
 }

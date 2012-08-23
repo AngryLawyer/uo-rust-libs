@@ -2,7 +2,7 @@ export get_writer;
 export extract_muls;
 
 fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
-    let reader:mul_reader::mul_reader = mul_reader::mul_reader(root_path, idx, mul);
+    let reader:mul_reader::mul_reader = mul_reader::mul_reader(path, idx, mul);
     
     let mut index:uint = 0;
     while (reader.eof() != true) {
@@ -15,7 +15,7 @@ fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
     }
 }
 
-fn get_writer(path: ~string) -> io::writer {
+fn get_writer(path: ~str) -> io::writer {
     
     let maybe_writer = io::file_writer(path, ~[io::create, io::truncate]);
 
