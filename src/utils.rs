@@ -30,6 +30,8 @@ fn get_writer(path: ~str) -> io::writer {
 fn slice_mul(record: mul_reader::mul_record, name: ~str) {
     let header: io::writer = get_writer(#fmt("./output/%s.mulheader", name));
     let body: io::writer = get_writer(#fmt("./output/%s.mulslice", name));
+    io::u64_to_le_bytes(record.start as u64, 4u, |v| header.write(v));
+    io::u64_to_le_bytes(record.length as u64, 4u, |v| header.write(v));
     io::u64_to_le_bytes(record.opt1 as u64, 2u, |v| header.write(v));
     io::u64_to_le_bytes(record.opt2 as u64, 2u, |v| header.write(v));
     body.write(record.data);

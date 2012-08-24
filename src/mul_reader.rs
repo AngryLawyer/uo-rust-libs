@@ -5,6 +5,8 @@ const undef_record:u32 = 0xFEFEFEFF;
 
 type mul_record = {
     data: ~[u8],
+    start: u32,
+    length: u32,
     opt1: u16,
     opt2: u16
 };
@@ -62,6 +64,8 @@ class mul_reader {
 
         return option::some({
             data: self.data_reader.read_bytes(length as uint),
+            start: start,
+            length: length,
             opt1: opt1,
             opt2: opt2
         });
