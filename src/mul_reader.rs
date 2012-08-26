@@ -11,7 +11,39 @@ type mul_record = {
     opt2: u16
 };
 
-class mul_reader {
+struct mul_reader {
+    idx_reader: io::reader;
+    data_reader: io::reader;
+    mut index: uint;
+    mut is_eof: bool;
+}
+
+fn mul_reader(path: ~str, idx_name: ~str, mul_name: ~str) -> option<mul_reader>{
+    //Try to load the two readers
+    let maybe_idx_reader: result::result<io::reader, ~str> = io::file_reader(path + idx_name);
+
+    if result::is_err::<io::reader, ~str>(maybe_idx_reader) {
+        io::println(#fmt("%s", result::get_err(maybe_idx_reader)));
+        return option::none;
+    }
+
+    let maybe_data_reader: result::result<io::reader, ~str> = io::file_reader(path + mul_name);
+
+    if result::is_err::<io::reader, ~str>(maybe_data_reader) {
+        io::println(#fmt("%s", result::get_err(maybe_data_reader)));
+        return option::none;
+    }
+
+    return mul_reader {
+        idx_reader: result::unwrap(maybe_idx_reader),
+        data_reader: result::unwrap(maybe_data_reader),
+        index: 0,
+        is_eof: false
+    };
+}
+
+
+/*class mul_reader {
 
     priv {
         let idx_reader: io::reader;
@@ -70,4 +102,4 @@ class mul_reader {
             opt2: opt2
         });
     }
-}
+}*/
