@@ -15,11 +15,11 @@ fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
     }
 }
 
-fn get_writer(path: ~str) -> io::writer {
+fn get_writer(path: ~str) -> io::Writer {
     
     let maybe_writer = io::file_writer(path, ~[io::create, io::truncate]);
 
-    if result::is_err::<io::writer, ~str>(maybe_writer) {
+    if result::is_err::<io::Writer, ~str>(maybe_writer) {
         io::println(#fmt("%s", result::get_err(maybe_writer)));
         fail;
     }
@@ -28,8 +28,8 @@ fn get_writer(path: ~str) -> io::writer {
 }
 
 fn slice_mul(record: mul_reader::mul_record, name: ~str) {
-    let header: io::writer = get_writer(#fmt("./output/%s.mulheader", name));
-    let body: io::writer = get_writer(#fmt("./output/%s.mulslice", name));
+    let header: io::Writer = get_writer(#fmt("./output/%s.mulheader", name));
+    let body: io::Writer = get_writer(#fmt("./output/%s.mulslice", name));
     io::u64_to_le_bytes(record.start as u64, 4u, |v| header.write(v));
     io::u64_to_le_bytes(record.length as u64, 4u, |v| header.write(v));
     io::u64_to_le_bytes(record.opt1 as u64, 2u, |v| header.write(v));

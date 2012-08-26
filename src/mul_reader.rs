@@ -1,9 +1,10 @@
-export mul_record;
-export mul_reader;
+export MulRecord;
+export MulReader;
+export reader;
 
 const undef_record:u32 = 0xFEFEFEFF;
 
-type mul_record = {
+type MulRecord = {
     data: ~[u8],
     start: u32,
     length: u32,
@@ -11,30 +12,30 @@ type mul_record = {
     opt2: u16
 };
 
-struct mul_reader {
-    idx_reader: io::reader;
-    data_reader: io::reader;
+struct MulReader {
+    idx_reader: io::Reader;
+    data_reader: io::Reader;
     mut index: uint;
     mut is_eof: bool;
 }
 
-fn mul_reader(path: ~str, idx_name: ~str, mul_name: ~str) -> option<mul_reader>{
+fn reader(path: ~str, idx_name: ~str, mul_name: ~str) -> option<MulReader>{
     //Try to load the two readers
-    let maybe_idx_reader: result::result<io::reader, ~str> = io::file_reader(path + idx_name);
+    let maybe_idx_reader: result::result<io::Reader, ~str> = io::file_reader(path + idx_name);
 
-    if result::is_err::<io::reader, ~str>(maybe_idx_reader) {
+    if result::is_err::<io::Reader, ~str>(maybe_idx_reader) {
         io::println(#fmt("%s", result::get_err(maybe_idx_reader)));
         return option::none;
     }
 
-    let maybe_data_reader: result::result<io::reader, ~str> = io::file_reader(path + mul_name);
+    let maybe_data_reader: result::result<io::Reader, ~str> = io::file_reader(path + mul_name);
 
-    if result::is_err::<io::reader, ~str>(maybe_data_reader) {
+    if result::is_err::<io::Reader, ~str>(maybe_data_reader) {
         io::println(#fmt("%s", result::get_err(maybe_data_reader)));
         return option::none;
     }
 
-    return mul_reader {
+    return MulReader {
         idx_reader: result::unwrap(maybe_idx_reader),
         data_reader: result::unwrap(maybe_data_reader),
         index: 0,
@@ -42,36 +43,12 @@ fn mul_reader(path: ~str, idx_name: ~str, mul_name: ~str) -> option<mul_reader>{
     };
 }
 
-
-/*class mul_reader {
-
-    priv {
-        let idx_reader: io::reader;
-        let data_reader: io::reader;
-        let mut index: uint;
-        let mut is_eof: bool;
-    }
-
-    new(path:~str, idx_name:~str, mul_name:~str) {
-
-        self.index = 0;
-        self.is_eof = false;
- 
-        let maybe_idx_reader: result::result<io::reader, ~str> = io::file_reader(path + idx_name);
-        self.idx_reader = result::unwrap(maybe_idx_reader);
-
-        let maybe_data_reader: result::result<io::reader, ~str> = io::file_reader(path + mul_name);
-
-        self.data_reader = result::unwrap(maybe_data_reader);
-        //TODO: Error checking
-    }
-
-    fn eof() -> bool {
+impl MulReader {
+    fn eof(&self) {
         return self.is_eof;
     }
 
-    fn read() -> option<mul_record> {
-
+    fn read(&self) -> option<MulRecord> {
         //Check for eof
         if (self.eof() == true) { return option::none };
         
@@ -92,7 +69,7 @@ fn mul_reader(path: ~str, idx_name: ~str, mul_name: ~str) -> option<mul_reader>{
             return option::none;
         };
         
-        self.data_reader.seek(start as int, io::seek_set);
+        self.data_reader.seek(start as int, io::SeekSet);
 
         return option::some({
             data: self.data_reader.read_bytes(length as uint),
@@ -102,4 +79,4 @@ fn mul_reader(path: ~str, idx_name: ~str, mul_name: ~str) -> option<mul_reader>{
             opt2: opt2
         });
     }
-}*/
+}
