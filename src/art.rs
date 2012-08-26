@@ -1,15 +1,16 @@
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
-export map_tile;
+export MapTile;
+export StaticTile;
 export load_tiles;
 export to_bitmap;
 export parse_map_tile;
 
-type map_tile = {
+type MapTile = {
     header: u32,
     image: ~[u16] //TODO: Consider making Pixel a type
 };
 
-type static_tile = {
+type StaticTile = {
     header: u32,
     width: u16,
     height: u16,
@@ -19,29 +20,36 @@ type static_tile = {
 const transparent: u16 = 0b1000000000000000;
 const expected_tile_size: uint = 2048;
 
-fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a better return type for this
-    let reader:mul_reader::mul_reader = mul_reader::mul_reader(root_path, ~"artidx.mul", ~"art.mul");
+fn load_tiles(root_path: ~str) -> (~[MapTile], ~[StaticTile]) { //TODO: Find a better return type for this
+    let maybe_reader: option::option<mul_reader::MulReader> = mul_reader::reader(root_path, ~"artidx.mul", ~"art.mul");
 
-    let mut map_tiles: ~[map_tile] = ~[];
-    let mut static_tiles: ~[static_tile] = ~[];
+    if option::is_none(maybe_reader) {
+        io::println("Error reading art tiles");
+        assert false;
+    }
+
+    let reader: mul_reader::MulReader = option::get(maybe_reader);
+
+    let mut map_tiles: ~[MapTile] = ~[];
+    let mut static_tiles: ~[StaticTile] = ~[];
 
     let mut index:uint = 0;
     while (reader.eof() != true) {
-        let item: option::option<mul_reader::mul_record> = reader.read();
+        let item: option::option<mul_reader::MulRecord> = reader.read();
         if option::is_some(item) {
-            let unwrapped: mul_reader::mul_record = option::get(item);
+            let unwrapped: mul_reader::MulRecord = option::get(item);
             let record_header = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 0, 3));
             //Apparently, these flag values represent whether something is a tile or not
             //Others are not convinced, and think that index is all that matters
 
             //if (record_header > 0xFFFF || record_header == 0) {
             if (index < 0x4000) {
-                /*let maybe_map_tile: option::option<map_tile> = parse_map_tile(unwrapped);
+                /*let maybe_map_tile: option::option<MapTile> = parse_map_tile(unwrapped);
                 if option::is_some(maybe_map_tile) {
                     vec::push(map_tiles, maybe_map_tile.get());
                 }*/
             } else if (index < 0x8000){
-                let maybe_static_tile: option::option<static_tile> = parse_static_tile(unwrapped);
+                let maybe_static_tile: option::option<StaticTile> = parse_static_tile(unwrapped);
                 if option::is_some(maybe_static_tile) {
                     vec::push(static_tiles, maybe_static_tile.get());
                 }
@@ -53,7 +61,8 @@ fn load_tiles(root_path: ~str) -> (~[map_tile], ~[static_tile]) { //TODO: Find a
     return (map_tiles, static_tiles);
 }
 
-fn parse_map_tile(record: mul_reader::mul_record) -> option::option<map_tile> { //Interestingly, pixels seem to be 565, rather than 555
+//TODO: Use borrowed pointers;
+fn parse_map_tile(record: mul_reader::MulRecord) -> option::option<MapTile> { //Interestingly, pixels seem to be 565, rather than 555
 
     if (vec::len(record.data) != expected_tile_size) {
         return option::none;
@@ -81,7 +90,7 @@ fn parse_map_tile(record: mul_reader::mul_record) -> option::option<map_tile> { 
     });
 }
 
-fn parse_static_tile(record: mul_reader::mul_record) -> option::option<static_tile> {
+fn parse_static_tile(record: mul_reader::MulRecord) -> option::option<StaticTile> {
     let data_size: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 1)) as u16; //Might not be size :P
     let trigger: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 2, 3)) as u16;
 

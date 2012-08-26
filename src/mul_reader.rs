@@ -35,16 +35,16 @@ fn reader(path: ~str, idx_name: ~str, mul_name: ~str) -> option<MulReader>{
         return option::none;
     }
 
-    return MulReader {
+    return option::some(MulReader {
         idx_reader: result::unwrap(maybe_idx_reader),
         data_reader: result::unwrap(maybe_data_reader),
         index: 0,
         is_eof: false
-    };
+    });
 }
 
 impl MulReader {
-    fn eof(&self) {
+    fn eof(&self) -> bool {
         return self.is_eof;
     }
 
