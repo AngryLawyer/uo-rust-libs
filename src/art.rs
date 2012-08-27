@@ -20,7 +20,7 @@ type StaticTile = {
 const transparent: u16 = 0b1000000000000000;
 const expected_tile_size: uint = 2048;
 
-fn load_tiles(root_path: ~str) -> (~[MapTile], ~[StaticTile]) { //TODO: Find a better return type for this
+fn load_tiles(root_path: ~str) -> (~[(uint, MapTile)], ~[(uint, StaticTile)]) { //TODO: Find a better return type for this
     let maybe_reader: option::option<mul_reader::MulReader> = mul_reader::reader(root_path, ~"artidx.mul", ~"art.mul");
 
     if option::is_none(maybe_reader) {
@@ -30,8 +30,8 @@ fn load_tiles(root_path: ~str) -> (~[MapTile], ~[StaticTile]) { //TODO: Find a b
 
     let reader: mul_reader::MulReader = option::get(maybe_reader);
 
-    let mut map_tiles: ~[MapTile] = ~[];
-    let mut static_tiles: ~[StaticTile] = ~[];
+    let mut map_tiles: ~[(uint, MapTile)] = ~[];
+    let mut static_tiles: ~[(uint, StaticTile)] = ~[];
 
     let mut index:uint = 0;
     while (reader.eof() != true) {
@@ -44,14 +44,14 @@ fn load_tiles(root_path: ~str) -> (~[MapTile], ~[StaticTile]) { //TODO: Find a b
 
             //if (record_header > 0xFFFF || record_header == 0) {
             if (index < 0x4000) {
-                /*let maybe_map_tile: option::option<MapTile> = parse_map_tile(unwrapped);
+                let maybe_map_tile: option::option<MapTile> = parse_map_tile(unwrapped);
                 if option::is_some(maybe_map_tile) {
-                    vec::push(map_tiles, maybe_map_tile.get());
-                }*/
+                    vec::push(map_tiles, (index, maybe_map_tile.get()));
+                }
             } else if (index < 0x8000){
                 let maybe_static_tile: option::option<StaticTile> = parse_static_tile(unwrapped);
                 if option::is_some(maybe_static_tile) {
-                    vec::push(static_tiles, maybe_static_tile.get());
+                    vec::push(static_tiles, (index, maybe_static_tile.get()));
                 }
             }
         }
