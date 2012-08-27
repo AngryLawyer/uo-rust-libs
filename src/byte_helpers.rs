@@ -5,6 +5,20 @@ export u8vec_to_u16vec;
 export read_le_u16;
 export read_le_u32;
 
+struct ByteStream {
+    data: ~[u8];
+    mut pos: uint;
+    mut length: uint;
+}
+
+fn to_byte_stream(bytes: ~[u8]) -> ByteStream {
+    return ByteStream{
+        data: bytes,
+        pos: 0,
+        length: vec::len(bytes)
+    };
+}
+
 fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
 
     let mut val = 0u, pos = 0u, i = 0;
