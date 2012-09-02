@@ -7,7 +7,7 @@ type Skill = {
 };
 
 fn load_skills(root_path: ~str) -> ~[Skill] {
-    let maybe_reader: option::option<mul_reader::MulReader> = mul_reader::reader(root_path, ~"skills.idx", ~"skills.mul");
+    let maybe_reader: option::Option<mul_reader::MulReader> = mul_reader::reader(root_path, ~"skills.idx", ~"skills.mul");
 
     if option::is_none(maybe_reader) {
         io::println("Error reading skills");
@@ -19,7 +19,7 @@ fn load_skills(root_path: ~str) -> ~[Skill] {
     let mut result:~[Skill] = ~[];
 
     while (reader.eof() != true) {
-        let item: option::option<mul_reader::MulRecord> = reader.read();
+        let item: option::Option<mul_reader::MulRecord> = reader.read();
         if option::is_some(item) {
             let unwrapped: mul_reader::MulRecord = option::get(item);
             vec::push(result, {
