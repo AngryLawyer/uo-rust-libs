@@ -1,5 +1,12 @@
 export get_writer;
 export extract_muls;
+export ByteBuffer;
+
+struct ByteBuffer {
+    bytes: ~[u8],
+    mut length: uint,
+    mut pos: uint
+}
 
 fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
     let maybe_reader: option::Option<mul_reader::MulReader> = mul_reader::reader(path, idx, mul);
@@ -43,3 +50,10 @@ fn slice_mul(record: mul_reader::MulRecord, name: ~str) {
     body.write(record.data);
 }
 
+pure fn ByteBuffer(bytes: ~[u8]) -> ByteBuffer {
+    return ByteBuffer {
+        bytes: bytes,
+        length: vec::len(bytes),
+        pos: 0
+    }
+}

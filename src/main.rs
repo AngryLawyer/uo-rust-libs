@@ -2,8 +2,8 @@ fn main() {
     let path = ~"../uo-aos/";
     //let path = ~"/home/tony/Ubuntu One/";
 
-    //utils::extract_muls(path, ~"artidx.mul", ~"art.mul", ~"art");
-    //utils::extract_muls(path, ~"skills.idx", ~"skills.mul", ~"skills");
+    utils::extract_muls(path, ~"artidx.mul", ~"art.mul", ~"art");
+    utils::extract_muls(path, ~"skills.idx", ~"skills.mul", ~"skills");
 
     /*let skills: ~[skills::Skill] = skills::load_skills(path);
 
