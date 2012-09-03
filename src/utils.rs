@@ -23,7 +23,7 @@ fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
 
 fn get_writer(path: ~str) -> io::Writer {
     
-    let maybe_writer = io::file_writer(path, ~[io::Create, io::Truncate]);
+    let maybe_writer = io::file_writer(&path::Path(path), ~[io::Create, io::Truncate]);
 
     if result::is_err::<io::Writer, ~str>(maybe_writer) {
         io::println(#fmt("%s", result::get_err(maybe_writer)));

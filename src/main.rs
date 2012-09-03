@@ -19,7 +19,7 @@ fn main() {
         
 
         //Test writing bitmap
-        let maybe_writer = io::file_writer(#fmt("./output/tile%u.bmp", idx), ~[io::Create, io::Truncate]);
+        let maybe_writer = io::file_writer(&path::Path(#fmt("./output/tile%u.bmp", idx)), ~[io::Create, io::Truncate]);
 
         if result::is_err::<io::Writer, ~str>(maybe_writer) {
             io::println(#fmt("%s", result::get_err(maybe_writer)));

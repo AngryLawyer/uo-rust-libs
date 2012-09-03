@@ -74,9 +74,9 @@ impl MulReader {
         };
         
         self.data_reader.seek(start as int, io::SeekSet);
-
+        let reader_util = self.data_reader as io::ReaderUtil; 
         return option::Some({
-            data: self.data_reader.read_bytes(length as uint),
+            data: reader_util.read_bytes(length as uint),
             start: start,
             length: length,
             opt1: opt1,
