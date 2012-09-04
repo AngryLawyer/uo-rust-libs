@@ -59,11 +59,17 @@ pure fn ByteBuffer(bytes: ~[u8]) -> ByteBuffer {
 }
 
 impl ByteBuffer {
-    fn eof() -> bool {return self.pos == self.length;}
-    fn read(number: uint) -> ~[u8]{
-        assert (number + self.pos < self.length);
+    pure fn eof() -> bool {return self.pos == self.length;}
+    fn read(number: uint) -> ~[u8] {
+        io::println(#fmt("Read from %u to %u against %u", self.pos, number, self.length));
+        assert (number + self.pos <= self.length);
         let return_data = vec::slice(self.bytes, self.pos, self.pos + number);
         self.pos += number;
         return return_data;
+    }
+    fn seek(pos: uint) {
+        io::println(#fmt("Seek to %u", pos));
+        assert pos >= 0 && pos <= self.length;
+        self.pos = pos;
     }
 }

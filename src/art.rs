@@ -39,20 +39,17 @@ fn load_tiles(root_path: ~str) -> (~[(uint, MapTile)], ~[(uint, StaticTile)]) { 
         let item: option::Option<mul_reader::MulRecord> = reader.read();
         if option::is_some(item) {
             let unwrapped: mul_reader::MulRecord = option::unwrap(item);
-            let record_header = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 0, 3));
-            //Apparently, these flag values represent whether something is a tile or not
-            //Others are not convinced, and think that index is all that matters
+            //let record_header = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 0, 3));
 
-            //if (record_header > 0xFFFF || record_header == 0) {
             if (index < 0x4000) {
                 /*let maybe_map_tile: option::Option<MapTile> = parse_map_tile(unwrapped);
                 if option::is_some(maybe_map_tile) {
-                    vec::push(map_tiles, (index, maybe_map_tile.get()));
-                }*/ //Skip
+                    vec::push(map_tiles, (index, option::unwrap(maybe_map_tile.unwrap)));
+                }*/
             } else if (index < 0x8000){
                 let maybe_static_tile: option::Option<StaticTile> = parse_static_tile(unwrapped);
                 if option::is_some(maybe_static_tile) {
-                    vec::push(static_tiles, (index, maybe_static_tile.get()));
+                    vec::push(static_tiles, (index, option::unwrap(maybe_static_tile)));
                 }
             }
         }
@@ -69,20 +66,17 @@ fn parse_map_tile(record: mul_reader::MulRecord) -> option::Option<MapTile> { //
         return option::None;
     }
 
-    let record_header = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 3));
-
+    let data_source = utils::ByteBuffer(record.data);
+    let record_header = byte_helpers::bytes_to_le_uint(data_source.read(4));
     let mut image: ~[u16] = ~[];
-    let data_slice: ~[u8] = vec::slice(record.data, 4, vec::len(record.data));
 
-    let mut data_pointer: uint = 0;
     for uint::range(0, 44) |i| {
         
-        let slice: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
-        vec::grow(image, (22 - (slice / 2)), transparent);
-        let slice_data: ~[u8] = vec::slice(data_slice, data_pointer, data_pointer + (slice * 2));
+        let slice_size: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
+        vec::grow(image, (22 - (slice_size / 2)), transparent);
+        let slice_data = data_source.read(slice_size * 2);
         vec::push_all(image, byte_helpers::u8vec_to_u16vec(slice_data));
-        vec::grow(image, (22 - (slice / 2)), transparent);
-        data_pointer += (slice * 2);
+        vec::grow(image, (22 - (slice_size / 2)), transparent);
     };
 
     return option::Some({
@@ -95,11 +89,11 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
 
     let data_source = utils::ByteBuffer(record.data);
 
-    let data_size: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 1)) as u16; //Might not be size :P
-    let trigger: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 2, 3)) as u16;
+    let data_size: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16; //Might not be size :P
+    let trigger: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
 
-    let width: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 4, 5)) as u16;
-    let height: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 6, 7)) as u16;
+    let width: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+    let height: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
 
     let mut image: ~[u16] = ~[];
 
@@ -112,6 +106,20 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
     //let mut offset_table: ~[u16] = ~[];
     //TODO: Less magic numbers
     io::println("Access");
+    //Read the offset table
+    let mut offset_table: ~[u16] = ~[];
+    for uint::range(0, height as uint) |index| {
+        vec::push(offset_table, byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16);
+    }
+
+    for offset_table.each |offset| {
+        data_source.seek(offset as uint);
+        let x_offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+        let run_length = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+        let run = byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2));
+    }
+
+    /*
     for uint::range(0, height as uint) |index| {
         io::println("ROW");
         let offset = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (index * 2), 9 + (index * 2)));
@@ -139,7 +147,7 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
             current_row_width += padding_pixels + (run_by * 2);
         }
         //offset_table.push(byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (index * 2), 9 + (index * 2)))
-    };
+    };*/
 
     return option::Some({
         data_size: data_size,
