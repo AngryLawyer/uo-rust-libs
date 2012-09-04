@@ -92,6 +92,7 @@ fn parse_map_tile(record: mul_reader::MulRecord) -> option::Option<MapTile> { //
 }
 
 fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile> {
+
     let data_size: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 0, 1)) as u16; //Might not be size :P
     let trigger: u16 = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 2, 3)) as u16;
 
