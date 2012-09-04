@@ -14,14 +14,14 @@ fn load_skills(root_path: ~str) -> ~[Skill] {
         assert false;
     }
 
-    let reader: mul_reader::MulReader = option::get(maybe_reader);
+    let reader: mul_reader::MulReader = option::unwrap(maybe_reader);
 
     let mut result:~[Skill] = ~[];
 
     while (reader.eof() != true) {
         let item: option::Option<mul_reader::MulRecord> = reader.read();
         if option::is_some(item) {
-            let unwrapped: mul_reader::MulRecord = option::get(item);
+            let unwrapped: mul_reader::MulRecord = option::unwrap(item);
             vec::push(result, {
                 clickable: vec::head(unwrapped.data) == 1,
                 name: vec::tail(unwrapped.data)

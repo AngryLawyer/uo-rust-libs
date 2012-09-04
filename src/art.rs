@@ -29,7 +29,7 @@ fn load_tiles(root_path: ~str) -> (~[(uint, MapTile)], ~[(uint, StaticTile)]) { 
         assert false;
     }
 
-    let reader: mul_reader::MulReader = option::get(maybe_reader);
+    let reader: mul_reader::MulReader = option::unwrap(maybe_reader);
 
     let mut map_tiles: ~[(uint, MapTile)] = ~[];
     let mut static_tiles: ~[(uint, StaticTile)] = ~[];
@@ -38,7 +38,7 @@ fn load_tiles(root_path: ~str) -> (~[(uint, MapTile)], ~[(uint, StaticTile)]) { 
     while (reader.eof() != true) {
         let item: option::Option<mul_reader::MulRecord> = reader.read();
         if option::is_some(item) {
-            let unwrapped: mul_reader::MulRecord = option::get(item);
+            let unwrapped: mul_reader::MulRecord = option::unwrap(item);
             let record_header = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 0, 3));
             //Apparently, these flag values represent whether something is a tile or not
             //Others are not convinced, and think that index is all that matters

@@ -16,12 +16,12 @@ fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
         assert false;
     }
 
-    let reader: mul_reader::MulReader = option::get(maybe_reader);
+    let reader: mul_reader::MulReader = option::unwrap(maybe_reader);
     let mut index:uint = 0;
     while (reader.eof() != true) {
         let item: option::Option<mul_reader::MulRecord> = reader.read();
         if option::is_some(item) {
-            let unwrapped: mul_reader::MulRecord = option::get(item);
+            let unwrapped: mul_reader::MulRecord = option::unwrap(item);
             slice_mul(unwrapped, #fmt("%s-%u", name, index))
         }
         index += 1;
