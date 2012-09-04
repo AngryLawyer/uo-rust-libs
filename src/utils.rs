@@ -60,7 +60,7 @@ pure fn ByteBuffer(bytes: ~[u8]) -> ByteBuffer {
 
 impl ByteBuffer {
     fn eof() -> bool {return self.pos == self.length;}
-    fn read_bytes(number: uint) -> ~[u8]{
+    fn read(number: uint) -> ~[u8]{
         assert (number + self.pos < self.length);
         let return_data = vec::slice(self.bytes, self.pos, self.pos + number);
         self.pos += number;
