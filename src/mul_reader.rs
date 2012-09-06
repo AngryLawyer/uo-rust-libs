@@ -27,7 +27,7 @@ fn reader(path: ~str, idx_name: ~str, mul_name: ~str) -> Option<MulReader>{
     let maybe_idx_reader: result::Result<io::Reader, ~str> = io::file_reader(&idx_path);
 
     if result::is_err::<io::Reader, ~str>(maybe_idx_reader) {
-        io::println(#fmt("%s", result::get_err(maybe_idx_reader))); //TODO: replace with unwrap_err, once I figure out why it's not compiling
+        io::println(#fmt("%s", result::unwrap_err(maybe_idx_reader)));
         return option::None;
     }
 
@@ -35,7 +35,7 @@ fn reader(path: ~str, idx_name: ~str, mul_name: ~str) -> Option<MulReader>{
     let maybe_data_reader: result::Result<io::Reader, ~str> = io::file_reader(&mul_path);
 
     if result::is_err::<io::Reader, ~str>(maybe_data_reader) {
-        io::println(#fmt("%s", result::get_err(maybe_data_reader)));
+        io::println(#fmt("%s", result::unwrap_err(maybe_data_reader)));
         return option::None;
     }
 
