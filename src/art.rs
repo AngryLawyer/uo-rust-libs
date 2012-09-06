@@ -87,6 +87,7 @@ fn parse_map_tile(record: mul_reader::MulRecord) -> option::Option<MapTile> { //
 
 fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile> {
 
+    io::println("NEW STATIC");
     let data_source = utils::ByteBuffer(record.data);
 
     let data_size: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16; //Might not be size :P
@@ -95,28 +96,36 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
     let width: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
     let height: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
 
-    let mut image: ~[u16] = ~[];
-
     if (width == 0 || height >= 1024 || height == 0 || height >= 1024) {
         io::println("Bad image dimensions found");
         return option::None;
     }
 
+    let mut image: ~[u16] = ~[];
+
     //Offset table
     //let mut offset_table: ~[u16] = ~[];
     //TODO: Less magic numbers
-    io::println("Access");
     //Read the offset table
     let mut offset_table: ~[u16] = ~[];
     for uint::range(0, height as uint) |index| {
-        vec::push(offset_table, byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16);
+        let offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+        io::println(#fmt("Offset %u", offset as uint));
+        vec::push(offset_table, offset);
     }
 
+    let data_start_pos = data_source.pos;
+
     for offset_table.each |offset| {
-        data_source.seek(offset as uint);
+        data_source.seek(data_start_pos as uint + (offset as uint * 2));
         let x_offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
         let run_length = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-        let run = byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2));
+        io::println(#fmt("%u pixels of padding, run length of %u", x_offset as uint, run_length as uint * 2));
+        if (x_offset + run_length == 0) {
+             io::println("Null line!");
+        } else {
+            let run = byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2));
+        }
     }
 
     /*
