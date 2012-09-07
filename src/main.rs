@@ -1,3 +1,17 @@
+fn write_tile(bmp_data: ~[u8], path: &path::Path) {
+    //Test writing bitmap
+    let maybe_writer = io::file_writer(path, ~[io::Create, io::Truncate]);
+
+    if result::is_err::<io::Writer, ~str>(maybe_writer) {
+        io::println(#fmt("%s", result::unwrap_err(maybe_writer)));
+        assert false;
+    }
+
+    let writer: io::Writer = result::unwrap(maybe_writer);
+   
+    writer.write(bmp_data);
+}
+
 fn main() {
     //let path = ~"../uo-aos/";
     let path = ~"/home/tony/Ubuntu One/";
@@ -31,22 +45,11 @@ fn main() {
         writer.write(bmp_data);
     }*/
 
-    /*for static_tiles.each |tile| {
+    for static_tiles.each |tile_tuple| {
+        let (idx, tile) = tile_tuple;
         let bmp_data: ~[u8] = art::to_bitmap(tile.width as u32, tile.height as u32, tile.image);
-
-        //Test writing bitmap
-        let maybe_writer = io::file_writer(#fmt("./output/tile%u.bmp", i), ~[io::create, io::truncate]);
-
-        if result::is_err::<io::writer, ~str>(maybe_writer) {
-            io::println(#fmt("%s", result::get_err(maybe_writer)));
-            assert false;
-        }
-
-        let writer: io::writer = result::unwrap(maybe_writer);
-       
-        writer.write(bmp_data);
-        i += 1;
-    }*/
+        write_tile(bmp_data, &path::Path(#fmt("./output/static%u.bmp", idx)));
+    }
 
     
 

@@ -87,7 +87,7 @@ fn parse_map_tile(record: mul_reader::MulRecord) -> option::Option<MapTile> { //
 
 fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile> {
 
-    io::println("NEW STATIC");
+    //io::println("NEW STATIC");
     let data_source = utils::ByteBuffer(record.data);
 
     let data_size: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16; //Might not be size :P
@@ -103,14 +103,11 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
 
     let mut image: ~[u16] = ~[];
 
-    //Offset table
-    //let mut offset_table: ~[u16] = ~[];
-    //TODO: Less magic numbers
     //Read the offset table
     let mut offset_table: ~[u16] = ~[];
     for uint::range(0, height as uint) |index| {
         let offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-        io::println(#fmt("Offset %u", offset as uint));
+        //io::println(#fmt("Offset %u", offset as uint));
         vec::push(offset_table, offset);
     }
 
@@ -123,9 +120,9 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
         loop {
             let x_offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
             let run_length = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-            io::println(#fmt("%u pixels of padding, run length of %u", x_offset as uint, run_length as uint * 2));
+            //io::println(#fmt("%u pixels of padding, run length of %u", x_offset as uint, run_length as uint * 2));
             if (x_offset + run_length == 0) {
-                io::println("Null line!");
+                //io::println("Null line!");
                 vec::grow(image, width as uint - current_row_width, transparent);
                 break;
             } else {
@@ -137,36 +134,6 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
             }
         }
     }
-
-    /*
-    for uint::range(0, height as uint) |index| {
-        io::println("ROW");
-        let offset = byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (index * 2), 9 + (index * 2)));
-        let mut data_start = offset + 8 + (height as uint * 2);
-        let mut current_row_width:uint = 0;
-        //From here, read the padding length, run length, and then Run pixels
-        loop {
-            io::println("LOOP");
-            let padding_pixels = byte_helpers::bytes_to_le_uint(vec::slice(record.data, data_start, data_start + 1));
-            let run_by = byte_helpers::bytes_to_le_uint(vec::slice(record.data, data_start + 2, data_start + 3));
-            if padding_pixels == 0 && run_by == 0 {
-                //Fill until current row width is less than width
-                io::println("BREAK");
-                if current_row_width < width as uint {
-                    vec::grow(image, width as uint - current_row_width, transparent);
-                }
-                break;
-            }
-            let run_data = byte_helpers::u8vec_to_u16vec(vec::slice(record.data, data_start + 4, data_start + 4 + (run_by * 2)));
-
-            vec::grow(image, padding_pixels, transparent);
-            vec::push_all(image, run_data);
-
-            data_start += 4 + (run_by * 2);
-            current_row_width += padding_pixels + (run_by * 2);
-        }
-        //offset_table.push(byte_helpers::bytes_to_le_uint(vec::slice(record.data, 8 + (index * 2), 9 + (index * 2)))
-    };*/
 
     return option::Some({
         data_size: data_size,
