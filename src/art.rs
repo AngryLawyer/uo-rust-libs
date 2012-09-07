@@ -118,13 +118,23 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
 
     for offset_table.each |offset| {
         data_source.seek(data_start_pos as uint + (offset as uint * 2));
-        let x_offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-        let run_length = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-        io::println(#fmt("%u pixels of padding, run length of %u", x_offset as uint, run_length as uint * 2));
-        if (x_offset + run_length == 0) {
-             io::println("Null line!");
-        } else {
-            let run = byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2));
+        let mut current_row_width: uint = 0;
+
+        loop {
+            let x_offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+            let run_length = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+            io::println(#fmt("%u pixels of padding, run length of %u", x_offset as uint, run_length as uint * 2));
+            if (x_offset + run_length == 0) {
+                io::println("Null line!");
+                vec::grow(image, width as uint - current_row_width, transparent);
+                break;
+            } else {
+                let run = byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2));
+                vec::grow(image, x_offset as uint, transparent);
+                vec::push_all(image, run);
+                current_row_width += x_offset as uint + run_length as uint;
+                assert(current_row_width <= width as uint);
+            }
         }
     }
 
