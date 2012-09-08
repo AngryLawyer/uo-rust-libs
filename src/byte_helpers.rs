@@ -2,21 +2,40 @@ export bytes_to_le_uint;
 export bytes_to_be_uint;
 export uint_to_le_bytes;
 export u8vec_to_u16vec;
-export read_le_u16;
-export read_le_u32;
+export ByteBuffer;
 
-struct ByteStream {
-    data: ~[u8];
-    mut pos: uint;
-    mut length: uint;
+struct ByteBuffer {
+    bytes: ~[u8],
+    mut length: uint,
+    mut pos: uint
 }
 
-fn to_byte_stream(bytes: ~[u8]) -> ByteStream {
-    return ByteStream{
-        data: bytes,
-        pos: 0,
-        length: vec::len(bytes)
-    };
+
+pure fn ByteBuffer(bytes: ~[u8]) -> ByteBuffer {
+    return ByteBuffer {
+        bytes: bytes,
+        length: vec::len(bytes),
+        pos: 0
+    }
+}
+
+impl ByteBuffer {
+    pure fn eof() -> bool {return self.pos == self.length;}
+    fn read(number: uint) -> ~[u8] {
+        assert (number + self.pos <= self.length);
+        let return_data = vec::slice(self.bytes, self.pos, self.pos + number);
+        self.pos += number;
+        return return_data;
+    }
+
+    fn read_le_uint(number: uint) -> uint {
+        return bytes_to_le_uint(self.read(number));
+    }
+
+    fn seek(pos: uint) {
+        assert pos >= 0 && pos <= self.length;
+        self.pos = pos;
+    }
 }
 
 fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
@@ -81,18 +100,4 @@ fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
     }
 
     return output;
-}
-
-fn read_le_u16(&input: ~[u8]) -> u16 {
-    let first  = vec::shift(input);
-    let second = vec::shift(input);
-    return bytes_to_le_uint(~[first, second]) as u16;
-}
-
-fn read_le_u32(&input: ~[u8]) -> u32 {
-    let first = vec::shift(input);
-    let second = vec::shift(input);
-    let third = vec::shift(input);
-    let fourth = vec::shift(input);
-    return bytes_to_le_uint(~[first, second, third, fourth]) as u32;
 }

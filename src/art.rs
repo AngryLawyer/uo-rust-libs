@@ -66,7 +66,7 @@ fn parse_map_tile(record: mul_reader::MulRecord) -> option::Option<MapTile> { //
         return option::None;
     }
 
-    let data_source = utils::ByteBuffer(record.data);
+    let data_source = byte_helpers::ByteBuffer(record.data);
     let record_header = byte_helpers::bytes_to_le_uint(data_source.read(4));
     let mut image: ~[u16] = ~[];
 
@@ -87,14 +87,12 @@ fn parse_map_tile(record: mul_reader::MulRecord) -> option::Option<MapTile> { //
 
 fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile> {
 
-    //io::println("NEW STATIC");
-    let data_source = utils::ByteBuffer(record.data);
+    let data_source = byte_helpers::ByteBuffer(record.data);
 
-    let data_size: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16; //Might not be size :P
-    let trigger: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-
-    let width: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-    let height: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+    let data_size: u16 = data_source.read_le_uint(2) as u16; //Might not be size :P
+    let trigger: u16 = data_source.read_le_uint(2) as u16;
+    let width: u16 = data_source.read_le_uint(2) as u16;
+    let height: u16 = data_source.read_le_uint(2) as u16;
 
     if (width == 0 || height >= 1024 || height == 0 || height >= 1024) {
         io::println("Bad image dimensions found");
@@ -106,8 +104,7 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
     //Read the offset table
     let mut offset_table: ~[u16] = ~[];
     for uint::range(0, height as uint) |index| {
-        let offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-        //io::println(#fmt("Offset %u", offset as uint));
+        let offset = data_source.read_le_uint(2) as u16;
         vec::push(offset_table, offset);
     }
 
@@ -118,11 +115,10 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
         let mut current_row_width: uint = 0;
 
         loop {
-            let x_offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-            let run_length = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-            //io::println(#fmt("%u pixels of padding, run length of %u", x_offset as uint, run_length as uint * 2));
+            let x_offset = data_source.read_le_uint(2) as u16;
+            let run_length = data_source.read_le_uint(2) as u16;
+
             if (x_offset + run_length == 0) {
-                //io::println("Null line!");
                 vec::grow(image, width as uint - current_row_width, transparent);
                 break;
             } else {

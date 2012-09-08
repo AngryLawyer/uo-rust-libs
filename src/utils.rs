@@ -1,12 +1,5 @@
 export get_writer;
 export extract_muls;
-export ByteBuffer;
-
-struct ByteBuffer {
-    bytes: ~[u8],
-    mut length: uint,
-    mut pos: uint
-}
 
 fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
     let maybe_reader: option::Option<mul_reader::MulReader> = mul_reader::reader(path, idx, mul);
@@ -50,26 +43,3 @@ fn slice_mul(record: mul_reader::MulRecord, name: ~str) {
     body.write(record.data);
 }
 
-pure fn ByteBuffer(bytes: ~[u8]) -> ByteBuffer {
-    return ByteBuffer {
-        bytes: bytes,
-        length: vec::len(bytes),
-        pos: 0
-    }
-}
-
-impl ByteBuffer {
-    pure fn eof() -> bool {return self.pos == self.length;}
-    fn read(number: uint) -> ~[u8] {
-        //io::println(#fmt("Read: Pos %u, read %u bytes, total %u", self.pos, number, self.length));
-        assert (number + self.pos <= self.length);
-        let return_data = vec::slice(self.bytes, self.pos, self.pos + number);
-        self.pos += number;
-        return return_data;
-    }
-    fn seek(pos: uint) {
-        //io::println(#fmt("Seek to %u", pos));
-        assert pos >= 0 && pos <= self.length;
-        self.pos = pos;
-    }
-}
