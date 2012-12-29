@@ -7,12 +7,13 @@
 #[license = "MIT"];
 //#[crate_type = "lib"];
 
-use std;
-mod byte_helpers;
-mod mul_reader;
-mod utils;
+extern mod std;
 
-mod art;
-mod skills;
+pub mod byte_helpers;
+pub mod mul_reader;
+pub mod utils;
+
+pub mod art;
+pub mod skills;
 
 mod main;

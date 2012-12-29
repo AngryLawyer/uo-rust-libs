@@ -1,41 +1,38 @@
-export get_writer;
-export extract_muls;
-
-fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
-    let maybe_reader: option::Option<mul_reader::MulReader> = mul_reader::reader(path, idx, mul);
-
-    if option::is_none(maybe_reader) {
-        io::println("Error reading tiles");
-        assert false;
-    }
-
-    let reader: mul_reader::MulReader = option::unwrap(maybe_reader);
-    let mut index:uint = 0;
-    while (reader.eof() != true) {
-        let item: option::Option<mul_reader::MulRecord> = reader.read();
-        if option::is_some(item) {
-            let unwrapped: mul_reader::MulRecord = option::unwrap(item);
-            slice_mul(unwrapped, #fmt("%s-%u", name, index))
+pub fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
+    match mul_reader::reader(path, idx, mul) {
+        result::Ok(reader) => {
+            let mut index:uint = 0;
+            while (reader.eof() != true) {
+                match reader.read() {
+                    option::Some(item) => {
+                        slice_mul(item, fmt!("%s-%u", name, index));
+                    },
+                    option::None => ()
+                };
+                index += 1;
+            }
+        },
+        result::Err(message) => {
+            io::println(fmt!("Error reading tiles - %s", message));
         }
-        index += 1;
-    }
+    };
+
 }
 
-fn get_writer(path: ~str) -> io::Writer {
+pub fn get_writer(path: ~str) -> io::Writer {
     
-    let maybe_writer = io::file_writer(&path::Path(path), ~[io::Create, io::Truncate]);
-
-    if result::is_err::<io::Writer, ~str>(maybe_writer) {
-        io::println(#fmt("%s", result::unwrap_err(maybe_writer)));
-        fail;
+    match io::file_writer(&path::Path(path), ~[io::Create, io::Truncate]) {
+        result::Err(message) => {
+            io::println(fmt!("%s", message));
+            fail;
+        },
+        result::Ok(writer) => writer
     }
-
-    return result::unwrap(maybe_writer);
 }
 
 fn slice_mul(record: mul_reader::MulRecord, name: ~str) {
-    let header: io::Writer = get_writer(#fmt("./output/%s.mulheader", name));
-    let body: io::Writer = get_writer(#fmt("./output/%s.mulslice", name));
+    let header: io::Writer = get_writer(fmt!("./output/%s.mulheader", name));
+    let body: io::Writer = get_writer(fmt!("./output/%s.mulslice", name));
     io::u64_to_le_bytes(record.start as u64, 4u, |v| header.write(v));
     io::u64_to_le_bytes(record.length as u64, 4u, |v| header.write(v));
     io::u64_to_le_bytes(record.opt1 as u64, 2u, |v| header.write(v));

@@ -1,20 +1,15 @@
-export bytes_to_le_uint;
-export bytes_to_be_uint;
-export uint_to_le_bytes;
-export u8vec_to_u16vec;
-export ByteBuffer;
-
-struct ByteBuffer {
+pub struct ByteBuffer {
     bytes: ~[u8],
     mut length: uint,
     mut pos: uint
 }
 
 
-pure fn ByteBuffer(bytes: ~[u8]) -> ByteBuffer {
-    return ByteBuffer {
-        bytes: bytes,
-        length: vec::len(bytes),
+pub pure fn ByteBuffer(bytes: ~[u8]) -> ByteBuffer {
+    let len = vec::len(bytes);
+    ByteBuffer {
+        bytes: move bytes,
+        length: len,
         pos: 0
     }
 }
@@ -38,7 +33,7 @@ impl ByteBuffer {
     }
 }
 
-fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
+pub fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
 
     let mut val = 0u, pos = 0u, i = 0;
     let size:uint = vec::len(bytes);
@@ -52,7 +47,7 @@ fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
     return val;
 }
 
-fn bytes_to_be_uint(bytes: ~[u8]) -> uint {
+pub fn bytes_to_be_uint(bytes: ~[u8]) -> uint {
     let mut val = 0u, i = vec::len(bytes);
     while i > 0u {
         i -= 1u;
@@ -61,7 +56,7 @@ fn bytes_to_be_uint(bytes: ~[u8]) -> uint {
     return val;
 }
 
-fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
+pub fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
     match size {
         1u => { return ~[n as u8] }
         2u => { return ~[n as u8, (n >> 8) as u8] }
@@ -78,7 +73,7 @@ fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
         _ => {
             let mut bytes: ~[u8] = ~[], i = size, n = n;
             while i > 0u {
-                vec::push(bytes, (n & 255_u64) as u8);
+                bytes.push((n & 255_u64) as u8);
                 n >>= 8_u64;
                 i -= 1u;
             }
@@ -87,7 +82,7 @@ fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
     }
 }
 
-fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
+pub fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
     let mut output: ~[u16] = ~[];
     let len = vec::len(input);
     let mut i:uint = 0;
@@ -95,7 +90,7 @@ fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
     assert len % 2 == 0;
 
     while (i < (len / 2)) {
-        vec::push(output, (input[i * 2] as u16 + ((input[(i * 2) + 1] as u16) << 8)));
+        output.push((input[i * 2] as u16 + ((input[(i * 2) + 1] as u16) << 8)));
         i += 1;
     }
 
