@@ -12,8 +12,8 @@ fn write_tile(bmp_data: ~[u8], path: &path::Path) {
 }
 
 fn main() {
-    //let path = ~"../uo-aos/";
-    let path = ~"/home/tony/Ubuntu One/";
+    let path = ~"../uo-aos/";
+    //let path = ~"/home/tony/Ubuntu One/";
 
     //utils::extract_muls(path, ~"artidx.mul", ~"art.mul", ~"art");
     //utils::extract_muls(path, ~"skills.idx", ~"skills.mul", ~"skills");
@@ -24,7 +24,7 @@ fn main() {
         io::println(str::from_bytes(skill.name)); 
     }*/
 
-    let (map_tiles, static_tiles) = art::load_tiles(path);
+    //let (map_tiles, static_tiles) = art::load_tiles(path);
 
     /*for map_tiles.each |tile_tuple| {
         let (idx, tile) = tile_tuple;
@@ -44,12 +44,10 @@ fn main() {
         writer.write(bmp_data);
     }*/
 
-    for static_tiles.each |tile_tuple| {
+    /*for static_tiles.each |tile_tuple| {
         let &(idx, tile) = tile_tuple;
         let bmp_data: ~[u8] = art::to_bitmap(tile.width as u32, tile.height as u32, copy tile.image);
         write_tile(bmp_data, &path::Path(fmt!("./output/static%u.bmp", idx)));
-    }
-
-    
+    }*/
 
 }

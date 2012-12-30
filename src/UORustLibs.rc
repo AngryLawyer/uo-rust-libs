@@ -15,5 +15,6 @@ pub mod utils;
 
 pub mod art;
 pub mod skills;
+pub mod map;
 
 mod main;
