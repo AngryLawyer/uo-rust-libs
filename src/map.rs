@@ -28,8 +28,8 @@ impl MapReader {
         //Read 64 cells
         for uint::range(0, 64) |_index| {
             block.push({
-                graphic: byte_helpers::bytes_to_le_uint(map_reader.read_bytes(2)) as u16,
-                altitude: map_reader.read_bytes(1)[0] as i8
+                graphic: map_reader.read_le_u16(),
+                altitude: map_reader.read_i8()
             });
         }
         block

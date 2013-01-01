@@ -5,7 +5,7 @@
 
 #[comment = "UO data file libraries"];
 #[license = "MIT"];
-//#[crate_type = "lib"];
+#[crate_type = "lib"];
 
 extern mod std;
 
@@ -17,4 +17,4 @@ pub mod art;
 pub mod skills;
 pub mod map;
 
-mod main;
+//mod main;

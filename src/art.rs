@@ -1,16 +1,67 @@
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
+
+trait Tile {
+    fn with_transparency(&self, transparency_color: u16);
+}
+
 pub type MapTile = {
     header: u32,
-    image: ~[u16] //TODO: Consider making Pixel a type
+    raw_image: ~[u16] //TODO: Consider making Pixel a type
 };
+
+impl MapTile : Tile {
+}
 
 pub type StaticTile = {
     data_size: u16,
     trigger: u16,
     width: u16,
     height: u16,
-    image: ~[u16]
+    raw_image: ~[u16]
 };
+
+impl StaticTile : Tile {
+}
+
+pub struct TileReader {
+    mul_reader: mul_reader::MulReader
+}
+
+impl TileReader {
+    fn read_tile(id: uint) => option::Option<MapTile> {
+        match self.mul_reader.read(id) {
+            option::Some(record) => {
+                if (vec::len(record.data) != expected_tile_size) {
+                    return option::None;
+                }
+
+                let data_source = byte_helpers::ByteBuffer(copy record.data);
+                let record_header = byte_helpers::bytes_to_le_uint(data_source.read(4));
+                let raw_image: ~[u16] = byte_helpers::u8vec_to_u16vec(data_source.read(44 * 44 * 2));
+
+                option::Some({
+                    header: record_header as u32,
+                    raw_image: raw_image 
+                })
+            },
+            option::None => option::None
+        }
+    }
+
+    fn read_static(id: uint) => option::Option<StaticTile> {
+    }
+}
+
+pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) => result::Result<TileReader, ~str> {
+    match mul_reader::MulReader(index_path, mul_path) {
+        result::Err(message) => result::Err(message),
+        result::Ok(mul_reader) => {
+            result::Ok(TileReader{
+                mul_reader: mul_reader
+            })
+        }
+    }
+}
 
 const transparent: u16 = 0b1000000000000000;
 const expected_tile_size: uint = 2048;
@@ -137,7 +188,7 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
 }
 
 
-
+/*
 pub fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make this take arbitrary pixel depths
     let signature: ~[u8] = ~[0x42, 0x4D];
     let file_size: ~[u8] = byte_helpers::uint_to_le_bytes(((width * height * 2) + 14 + 40) as u64, 4);
@@ -190,4 +241,4 @@ pub fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make 
 
         vec::concat(rows)
     ]);
-}
+}*/
