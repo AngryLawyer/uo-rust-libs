@@ -17,15 +17,13 @@ pub struct MulReader {
 pub fn MulReader(idx_path: &path::Path, mul_path: &path::Path) -> result::Result<MulReader, ~str>{
     //Try to load the two readers
 
-    match io::file_reader(&idx_path) {
+    match io::file_reader(idx_path) {
         result::Ok(idx_reader) => {
-            match io::file_reader(&mul_path) {
+            match io::file_reader(mul_path) {
                 result::Ok(data_reader) => {
                     result::Ok(MulReader {
                         idx_reader: move idx_reader,
-                        data_reader: move data_reader,
-                        index: 0,
-                        is_eof: false
+                        data_reader: move data_reader
                     })
                 },
                 result::Err(error_message) => {

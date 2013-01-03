@@ -3,8 +3,8 @@ pub type Skill = {
     name: ~[u8]
 };
 
-pub fn load_skills(root_path: ~str) -> ~[Skill] {
-    match mul_reader::reader(root_path, ~"skills.idx", ~"skills.mul") {
+/*pub fn load_skills(root_path: ~str) -> ~[Skill] {
+    match mul_reader::MulReader(root_path + ~"skills.idx", root_path + ~"skills.mul") {
         result::Ok(reader) => {
             let mut result:~[Skill] = ~[];
 
@@ -26,4 +26,4 @@ pub fn load_skills(root_path: ~str) -> ~[Skill] {
             fail;
         }
     }
-}
+}*/

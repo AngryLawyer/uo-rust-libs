@@ -1,4 +1,4 @@
-pub fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
+/*pub fn extract_muls(path: ~str, idx: ~str, mul: ~str, name: ~str) {
     match mul_reader::reader(path, idx, mul) {
         result::Ok(reader) => {
             let mut index:uint = 0;
@@ -39,4 +39,4 @@ fn slice_mul(record: mul_reader::MulRecord, name: ~str) {
     io::u64_to_le_bytes(record.opt2 as u64, 2u, |v| header.write(v));
     body.write(record.data);
 }
-
+*/

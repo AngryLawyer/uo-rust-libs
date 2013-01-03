@@ -1,7 +1,7 @@
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
 
 trait Tile {
-    fn with_transparency(&self, transparency_color: u16);
+    fn with_transparency(&self, transparency_color: u16) -> ~[u16];
 }
 
 pub type MapTile = {
@@ -10,6 +10,10 @@ pub type MapTile = {
 };
 
 impl MapTile : Tile {
+    fn with_transparency(&self, transparency_color: u16) -> ~[u16] {
+        let dummy: ~[u16] = ~[];
+        dummy
+    }
 }
 
 pub type StaticTile = {
@@ -21,6 +25,21 @@ pub type StaticTile = {
 };
 
 impl StaticTile : Tile {
+    fn with_transparency(&self, transparency_color: u16) -> ~[u16] {
+
+        let mut image: ~[u16] = ~[];
+        /*let data_source = byte_helpers::ByteBuffer(copy self.raw_image);
+
+        for uint::range(0, 44) |i| {
+            
+            let slice_size: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
+            image.grow((22 - (slice_size / 2)), &transparency_color);
+            let slice_data = data_source.read(slice_size * 2);
+            image.push_all(byte_helpers::u8vec_to_u16vec(slice_data));
+            image.grow((22 - (slice_size / 2)), &transparency_color);
+        };*/ //FIXME
+        image
+    }
 }
 
 pub struct TileReader {
@@ -28,7 +47,8 @@ pub struct TileReader {
 }
 
 impl TileReader {
-    fn read_tile(id: uint) => option::Option<MapTile> {
+
+    fn read_tile(id: uint) -> option::Option<MapTile> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
                 if (vec::len(record.data) != expected_tile_size) {
@@ -48,11 +68,12 @@ impl TileReader {
         }
     }
 
-    fn read_static(id: uint) => option::Option<StaticTile> {
+    fn read_static(id: uint) -> option::Option<StaticTile> {
+        option::None
     }
 }
 
-pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) => result::Result<TileReader, ~str> {
+pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<TileReader, ~str> {
     match mul_reader::MulReader(index_path, mul_path) {
         result::Err(message) => result::Err(message),
         result::Ok(mul_reader) => {
@@ -66,7 +87,7 @@ pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) => result::Res
 const transparent: u16 = 0b1000000000000000;
 const expected_tile_size: uint = 2048;
 
-pub fn load_tiles(root_path: ~str) -> (~[(uint, MapTile)], ~[(uint, StaticTile)]) { //TODO: Find a better return type for this
+/*pub fn load_tiles(root_path: ~str) -> (~[(uint, MapTile)], ~[(uint, StaticTile)]) { //TODO: Find a better return type for this
     match mul_reader::reader(root_path, ~"artidx.mul", ~"art.mul") {
         result::Err(message) => {
             io::println(fmt!("Error reading art tiles - %s", message));
@@ -185,7 +206,7 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
         height: height,
         image: image
     });
-}
+}*/
 
 
 /*
