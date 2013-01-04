@@ -28,16 +28,16 @@ impl StaticTile : Tile {
     fn with_transparency(&self, transparency_color: u16) -> ~[u16] {
 
         let mut image: ~[u16] = ~[];
-        /*let data_source = byte_helpers::ByteBuffer(copy self.raw_image);
+        let data_source = byte_helpers::Buffer(copy self.raw_image);
 
         for uint::range(0, 44) |i| {
             
             let slice_size: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
             image.grow((22 - (slice_size / 2)), &transparency_color);
-            let slice_data = data_source.read(slice_size * 2);
-            image.push_all(byte_helpers::u8vec_to_u16vec(slice_data));
+            let slice_data = data_source.read(slice_size);
+            image.push_all(slice_data);
             image.grow((22 - (slice_size / 2)), &transparency_color);
-        };*/ //FIXME
+        };
         image
     }
 }
