@@ -1,3 +1,5 @@
+use core::vec;
+
 pub struct Buffer<T> {
     items: ~[T],
     mut length: uint,
@@ -23,43 +25,7 @@ impl<T: Copy> Buffer<T> {
     }
 
     fn seek(&self, pos: uint) {
-        assert pos >= 0 && pos <= self.length;
-        self.pos = pos;
-    }
-}
-
-//TODO: Make me part of the generic buffer!
-pub struct ByteBuffer {
-    bytes: ~[u8],
-    mut length: uint,
-    mut pos: uint
-}
-
-
-pub pure fn ByteBuffer(bytes: ~[u8]) -> ByteBuffer {
-    let len = vec::len(bytes);
-    ByteBuffer {
-        bytes: move bytes,
-        length: len,
-        pos: 0
-    }
-}
-
-impl ByteBuffer {
-    pure fn eof() -> bool {return self.pos == self.length;}
-    fn read(number: uint) -> ~[u8] {
-        assert (number + self.pos <= self.length);
-        let return_data = vec::slice(self.bytes, self.pos, self.pos + number);
-        self.pos += number;
-        return return_data;
-    }
-
-    fn read_le_uint(number: uint) -> uint {
-        return bytes_to_le_uint(self.read(number));
-    }
-
-    fn seek(pos: uint) {
-        assert pos >= 0 && pos <= self.length;
+        pos <= self.length;
         self.pos = pos;
     }
 }
