@@ -36,15 +36,37 @@ pub type StaticTile = {
     trigger: u16,
     width: u16,
     height: u16,
-    raw_image: ~[pixel]
+    raw_image_rows: ~[Row]
 };
 
 impl StaticTile : Tile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
-        let dummy: ~[pixel] = ~[];
-        dummy
+        let mut image: ~[pixel] = ~[];
+
+        for self.raw_image_rows.each |row| {
+            let mut current_width = 0;
+            for row.each |run_pair| {
+                image.grow(run_pair.offset as uint, &transparency_color);
+                image.push_all(run_pair.run);
+                current_width += run_pair.offset as uint + run_pair.run.len();
+                assert current_width <= self.width as uint
+            }
+            if current_width < self.width as uint {
+                image.grow((self.width as uint) - current_width, &transparency_color)
+            }
+        }
+        image 
     }
 }
+
+pub type RunPair = {
+    offset: u16,
+    run: ~[pixel]
+};
+
+pub type Row = ~[RunPair];
+
+const expected_tile_size: uint = 2048;
 
 pub struct TileReader {
     mul_reader: mul_reader::MulReader
@@ -86,61 +108,50 @@ impl TileReader {
                     return option::None;
                 }
 
-                let mut image: ~[pixel] = data_source.read(data_source.length - 8);
+                //Read the offset table
+                let mut offset_table: ~[u16] = ~[];
+                for uint::range(0, height as uint) |_index| {
+                    let offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+                    offset_table.push(offset);
+                }
+
+                let data_start_pos = data_source.pos;
+                let mut rows = ~[];
+
+                for offset_table.each |offset| {
+                    data_source.seek(data_start_pos as uint + (*offset as uint * 2));
+                    let mut current_row_width: uint = 0;
+                    let mut row = ~[];
+
+                    loop {
+                        let x_offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+                        let run_length = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+
+                        if (x_offset + run_length == 0) {
+                            break;
+                        } else {
+                            row.push({
+                                offset: x_offset,
+                                run: byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2))
+                            });
+                            current_row_width += x_offset as uint + run_length as uint;
+                            assert(current_row_width <= width as uint);
+                        }
+                    }
+                    rows.push(row);
+                }
 
                 option::Some({
                     data_size: data_size,
                     trigger: trigger,
                     width: width,
                     height: height,
-                    raw_image: image //FIXME
+                    raw_image_rows: rows
                 })
             },
             option::None => option::None
         }
     }
-
-
-
-
-    //Read the offset table
-    /*let mut offset_table: ~[u16] = ~[];
-    for uint::range(0, height as uint) |_index| {
-        let offset = data_source.read_le_uint(2) as u16;
-        offset_table.push(offset);
-    }
-
-    let data_start_pos = data_source.pos;
-
-    for offset_table.each |offset| {
-        data_source.seek(data_start_pos as uint + (*offset as uint * 2));
-        let mut current_row_width: uint = 0;
-
-        loop {
-            let x_offset = data_source.read_le_uint(2) as u16;
-            let run_length = data_source.read_le_uint(2) as u16;
-
-            if (x_offset + run_length == 0) {
-                image.grow(width as uint - current_row_width, &transparent);
-                break;
-            } else {
-                let run = byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2));
-                image.grow(x_offset as uint, &transparent);
-                image.push_all(run);
-                current_row_width += x_offset as uint + run_length as uint;
-                assert(current_row_width <= width as uint);
-            }
-        }
-    }
-
-    return option::Some({
-        data_size: data_size,
-        trigger: trigger,
-        width: width,
-        height: height,
-        image: image
-    });
-    }*/
 }
 
 pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<TileReader, ~str> {
@@ -153,9 +164,6 @@ pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) -> result::Res
         }
     }
 }
-
-const transparent: pixel = 0b1000000000000000;
-const expected_tile_size: uint = 2048;
 
 /*pub fn load_tiles(root_path: ~str) -> (~[(uint, MapTile)], ~[(uint, StaticTile)]) { //TODO: Find a better return type for this
     match mul_reader::reader(root_path, ~"artidx.mul", ~"art.mul") {
