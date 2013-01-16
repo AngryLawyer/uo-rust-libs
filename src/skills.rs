@@ -1,7 +1,27 @@
-pub type Skill = {
+pub struct Skill = {
     clickable: bool,
     name: ~[u8]
 };
+
+pub struct SkillReader {
+    mul_reader: mul_reader::MulReader
+}
+
+impl SkillReader {
+    fn read_skill() -> option::Option<Skill>{
+    }
+};
+
+pub fn SkillReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<SkillReader, ~str> {
+    match mul_reader::MulReader(index_path, mul_path) {
+        result::Err(message) => result::Err(message),
+        result::Ok(mul_reader) => {
+            result::Ok(SkillReader{
+                mul_reader: mul_reader
+            })
+        }
+    }
+}
 
 /*pub fn load_skills(root_path: ~str) -> ~[Skill] {
     match mul_reader::MulReader(root_path + ~"skills.idx", root_path + ~"skills.mul") {
