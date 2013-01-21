@@ -53,6 +53,7 @@ impl MulReader {
 
         //Check for empty cell
         if (start == undef_record || start == u32::max_value) { 
+            //error!("Trying to read out of bounds record %u, with a start of %u", index, start as uint);
             return option::None;
         };
         

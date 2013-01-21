@@ -9,10 +9,10 @@ trait Tile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel];
 }
 
-pub type MapTile = {
+pub struct MapTile {
     header: u32,
     raw_image: ~[pixel]
-};
+}
 
 impl MapTile : Tile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
@@ -31,13 +31,13 @@ impl MapTile : Tile {
     }
 }
 
-pub type StaticTile = {
+pub struct StaticTile {
     data_size: u16,
     trigger: u16,
     width: u16,
     height: u16,
     raw_image_rows: ~[Row]
-};
+}
 
 impl StaticTile : Tile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
@@ -59,10 +59,10 @@ impl StaticTile : Tile {
     }
 }
 
-pub type RunPair = {
+pub struct RunPair {
     offset: u16,
     run: ~[pixel]
-};
+}
 
 pub type Row = ~[RunPair];
 
@@ -83,9 +83,9 @@ impl TileReader {
 
                 let data_source = byte_helpers::Buffer(copy record.data);
                 let record_header = byte_helpers::bytes_to_le_uint(data_source.read(4));
-                let raw_image: ~[pixel] = byte_helpers::u8vec_to_u16vec(data_source.read(44 * 44 * 2));
+                let raw_image: ~[pixel] = byte_helpers::u8vec_to_u16vec(data_source.read(1012 * 2));
 
-                option::Some({
+                option::Some(MapTile{
                     header: record_header as u32,
                     raw_image: raw_image 
                 })
@@ -104,7 +104,7 @@ impl TileReader {
                 let height: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
 
                 if (width == 0 || height >= 1024 || height == 0 || height >= 1024) {
-                    //io::println("Bad image dimensions found");
+                    error!("Bad image dimensions found at %u", id);
                     return option::None;
                 }
 
@@ -130,7 +130,7 @@ impl TileReader {
                         if (x_offset + run_length == 0) {
                             break;
                         } else {
-                            row.push({
+                            row.push(RunPair{
                                 offset: x_offset,
                                 run: byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2))
                             });
@@ -141,7 +141,7 @@ impl TileReader {
                     rows.push(row);
                 }
 
-                option::Some({
+                option::Some(StaticTile {
                     data_size: data_size,
                     trigger: trigger,
                     width: width,
