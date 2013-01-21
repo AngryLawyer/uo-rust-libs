@@ -1,16 +1,27 @@
-pub struct Skill = {
+use mul_reader;
+
+pub struct Skill {
     clickable: bool,
-    name: ~[u8]
-};
+    name: ~str
+}
 
 pub struct SkillReader {
     mul_reader: mul_reader::MulReader
 }
 
 impl SkillReader {
-    fn read_skill() -> option::Option<Skill>{
+    fn read_skill(&self, id: uint) -> option::Option<Skill>{
+        match self.mul_reader.read(id) {
+            option::None => option::None,
+            option::Some(record) => {
+                option::Some(Skill {
+                    clickable: vec::head(record.data) == 1,
+                    name: str::from_bytes(vec::const_view(record.data, 1, record.data.len() - 1))
+                })
+            }
+        }
     }
-};
+}
 
 pub fn SkillReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<SkillReader, ~str> {
     match mul_reader::MulReader(index_path, mul_path) {
@@ -23,27 +34,27 @@ pub fn SkillReader(index_path: &path::Path, mul_path: &path::Path) -> result::Re
     }
 }
 
-/*pub fn load_skills(root_path: ~str) -> ~[Skill] {
-    match mul_reader::MulReader(root_path + ~"skills.idx", root_path + ~"skills.mul") {
+pub fn load_skills(index_path: &path::Path, mul_path: &path::Path) -> result::Result<~[Skill], ~str> {
+
+    match SkillReader(index_path, mul_path) {
         result::Ok(reader) => {
             let mut result:~[Skill] = ~[];
-
-            while (reader.eof() != true) {
-                let item: option::Option<mul_reader::MulRecord> = reader.read();
-                if option::is_some(&item) {
-                    let unwrapped: mul_reader::MulRecord = option::unwrap(item);
-                    result.push({
-                        clickable: vec::head(unwrapped.data) == 1,
-                        name: vec::tail(unwrapped.data)
-                    });
+            let mut id:uint = 0;
+            
+            loop {
+                match reader.read_skill(id) {
+                    option::Some(skill) => {
+                        result.push(skill);
+                    },
+                    option::None => {
+                        break;
+                    }
                 }
+                id += 1;
             }
 
-            return result;
+            result::Ok(result)
         },
-        result::Err(message) => {
-            io::println(fmt!("Error reading skills - %s", message));
-            fail;
-        }
-    }
-}*/
+        result::Err(message) => result::Err(message)
+   }
+}

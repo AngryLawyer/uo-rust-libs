@@ -202,7 +202,6 @@ pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) -> result::Res
             (map_tiles, static_tiles)
         }
     }
-
 }
 
 fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile> {
