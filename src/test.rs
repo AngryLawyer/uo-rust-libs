@@ -113,10 +113,10 @@ mod art {
             },
             result::Ok(tile_reader) => {
                 match tile_reader.read_static(16384) {
-                    option::Some(staticTile) => {
-                        let bitmap = staticTile.with_transparency(0xF000);
-                        error!("%u, %u, %u", bitmap.len(), staticTile.width as uint, staticTile.height as uint);
-                        assert bitmap.len() == (staticTile.width + staticTile.height) as uint;
+                    option::Some(static_tile) => {
+                        let bitmap = static_tile.with_transparency(0xF000);
+                        error!("%u, %u, %u", bitmap.len(), static_tile.width as uint, static_tile.height as uint);
+                        assert bitmap.len() == (static_tile.width + static_tile.height) as uint;
                     },
                     option::None => {
                         error!("Couldn't read tile 16384");
