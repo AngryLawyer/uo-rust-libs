@@ -2,10 +2,10 @@ pub type Map = ~[Block];
 
 pub type Block = ~[Cell];
 
-pub type Cell = {
+pub struct Cell {
     graphic: u16,
     altitude: i8,
-};
+}
 
 const BLOCK_SIZE: uint = 196;
 const OFFSET: uint = 4;
@@ -27,7 +27,7 @@ impl MapReader {
         let mut block: Block = ~[];
         //Read 64 cells
         for uint::range(0, 64) |_index| {
-            block.push({
+            block.push(Cell{
                 graphic: map_reader.read_le_u16(),
                 altitude: map_reader.read_i8()
             });

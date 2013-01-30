@@ -1,13 +1,13 @@
 const undef_record:u32 = 0xFEFEFEFF;
 const INDEX_SIZE: uint = 12;
 
-pub type MulRecord = {
+pub struct MulRecord {
     data: ~[u8],
     start: u32,
     length: u32,
     opt1: u16,
     opt2: u16
-};
+}
 
 pub struct MulReader {
     idx_reader: io::Reader,
@@ -59,7 +59,7 @@ impl MulReader {
         
         self.data_reader.seek(start as int, io::SeekSet);
         let reader_util = self.data_reader as io::ReaderUtil; 
-        return option::Some({
+        return option::Some(MulRecord {
             data: reader_util.read_bytes(length as uint),
             start: start,
             length: length,
