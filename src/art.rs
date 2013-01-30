@@ -74,7 +74,7 @@ pub struct TileReader {
 
 impl TileReader {
 
-    fn read_tile(id: uint) -> option::Option<MapTile> {
+    fn read_tile(&self, id: uint) -> option::Option<MapTile> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
                 if (vec::len(record.data) != expected_tile_size) {
@@ -94,7 +94,7 @@ impl TileReader {
         }
     }
 
-    fn read_static(id: uint) -> option::Option<StaticTile> {
+    fn read_static(&self, id: uint) -> option::Option<StaticTile> {
         match self.mul_reader.read(id) {    
             option::Some(record) => {
                 let data_source = byte_helpers::Buffer(copy record.data);
