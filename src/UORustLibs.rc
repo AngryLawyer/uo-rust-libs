@@ -16,6 +16,8 @@ pub mod utils;
 pub mod art;
 pub mod skills;
 pub mod map;
+pub mod gump;
+pub mod hues;
 
 #[cfg(test)]
 mod test;

@@ -68,7 +68,7 @@ mod art {
                 fail;
             },
             result::Ok(tileReader) => {
-                match tileReader.read_tile(400) {
+                /*match tileReader.read_tile(400) {
                     option::Some(tile) => {
                         assert tile.raw_image.len() == 1012; 
                         let bitmap = tile.with_transparency(0xF000);
@@ -77,9 +77,10 @@ mod art {
                         assert bitmap[21] != 0xF000;
                     },
                     option::None => {
-                        error!("Couldn't read tile 0")
+                        error!("Couldn't read tile 400")
+                        fail;
                     }
-                };
+                };*/
                 match tileReader.read_tile(100) {
                     option::Some(tile) => {
                         assert tile.raw_image.len() == 1012; 
