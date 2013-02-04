@@ -8,7 +8,7 @@ pub struct Gump {
 }
 
 pub struct GumpReader {
-    mul_reader: mul_reader::MulReader;
+    mul_reader: mul_reader::MulReader
 }
 
 impl GumpReader {
@@ -21,7 +21,7 @@ pub fn GumpReader(index_path: &path::Path, mul_path: &path::Path) -> result::Res
     match mul_reader::MulReader(index_path, mul_path) {
         result::Err(message) => result::Err(message),
         result::Ok(mul_reader) => {
-            result::Ok(TileReader{
+            result::Ok(GumpReader{
                 mul_reader: mul_reader
             })
         }

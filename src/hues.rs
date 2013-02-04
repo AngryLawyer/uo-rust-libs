@@ -17,9 +17,9 @@ pub struct HueReader {
 }
 
 //8 entries to a group, plus a 4 byte header. 708 bytes.
-const GROUP_SIZE = 708;
+const GROUP_SIZE: uint = 708;
 //A hue_entry is (32 * 2) + 2 + 2 + 20 bytes = 88 bytes
-const ENTRY_SIZE = 88;
+const ENTRY_SIZE: uint = 88;
 
 impl HueReader {
     fn read_hue_group(&self, id: uint) -> option::Option<HueGroup> {
@@ -37,7 +37,7 @@ impl HueReader {
                 color_table: color_table,
                 table_start: group_reader.read_le_u16(),
                 table_end: group_reader.read_le_u16(),
-                string: /* READ 20 bytes */ 
+                name: ~""/* READ 20 bytes */ 
             });
         }
         option::Some(HueGroup {
@@ -48,7 +48,7 @@ impl HueReader {
 }
 
 pub fn HueReader(hues_path: &path::Path) -> result::Result<HueReader, ~str> {
-    match io::file_reader(&hues_path) {
+    match io::file_reader(hues_path) {
         result::Ok(data_reader) => {
             result::Ok(HueReader {
                 data_reader: data_reader
