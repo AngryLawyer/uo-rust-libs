@@ -5,7 +5,7 @@ use byte_helpers;
 
 type pixel = u16;
 
-trait Tile {
+pub trait Tile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel];
 }
 
@@ -14,7 +14,7 @@ pub struct MapTile {
     raw_image: ~[pixel]
 }
 
-impl MapTile : Tile {
+pub impl MapTile : Tile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
         let data_source = byte_helpers::Buffer(copy self.raw_image);
@@ -39,7 +39,7 @@ pub struct StaticTile {
     raw_image_rows: ~[Row]
 }
 
-impl StaticTile : Tile {
+pub impl StaticTile : Tile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
 
