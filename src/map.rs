@@ -7,6 +7,16 @@ pub struct Cell {
     altitude: i8,
 }
 
+pub type Statics = ~[StaticLocation];
+
+pub struct StaticLocation {
+    object_id: u16,
+    x: u8,
+    y: u8,
+    altitude: i8,
+    remainder: u16
+}
+
 const BLOCK_SIZE: uint = 196;
 const OFFSET: uint = 4;
 
@@ -62,6 +72,35 @@ pub fn MapReader(path: ~str) -> result::Result<MapReader, ~str> {
         },
         result::Err(error_message) => {
             result::Err(error_message)
+        }
+    }
+}
+
+pub struct StaticReader {
+    mul_reader: mul_reader::MulReader
+}
+
+impl StaticReader {
+    fn read_block(&self, id: uint) -> option::Option(Statics) {
+        match self.mul_reader.read(id) {
+            option::Some(record) => {
+                assert record.len % 7 == 0;
+                //TODO: Read the actual gumpf
+            }
+            option::None => {
+                option::None
+            }
+        }
+    }
+}
+
+pub fn StaticReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<StaticReader, ~str> {
+    match mul_reader::MulReader(index_path, mul_path) {
+        result::Err(message) => result::Err(message),
+        result::Ok(mul_reader) => {
+            result::Ok(StaticReader{
+                mul_reader: mul_reader
+            })
         }
     }
 }
