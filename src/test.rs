@@ -53,6 +53,7 @@ mod skills {
 
 mod art {
     use art;
+    use art::Tile;
     use path;
 
     #[test]
