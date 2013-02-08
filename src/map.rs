@@ -1,3 +1,6 @@
+use mul_reader;
+use byte_helpers;
+
 pub type Map = ~[Block];
 
 pub type Block = ~[Cell];
@@ -81,11 +84,28 @@ pub struct StaticReader {
 }
 
 impl StaticReader {
-    fn read_block(&self, id: uint) -> option::Option(Statics) {
+    fn read_block(&self, id: uint) -> option::Option<Statics> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
-                assert record.len % 7 == 0;
+                assert record.data.len() % 7 == 0;
+                let mut statics:Statics = ~[];
                 //TODO: Read the actual gumpf
+                for uint::range_step(0, record.data.len(), 7) |_i| {
+                    let data_source = byte_helpers::Buffer(copy record.data);
+                    let object_id: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+                    let x: u8 = byte_helpers::bytes_to_le_uint(data_source.read(1)) as u8;
+                    let y: u8 = byte_helpers::bytes_to_le_uint(data_source.read(1)) as u8;
+                    let altitude: i8 = byte_helpers::bytes_to_le_uint(data_source.read(1)) as i8;
+                    let remainder: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+                    statics.push(StaticLocation{
+                        object_id: object_id,
+                        x: x,
+                        y: y,
+                        altitude: altitude,
+                        remainder: remainder
+                    });
+                }
+                option::Some(statics)
             }
             option::None => {
                 option::None
