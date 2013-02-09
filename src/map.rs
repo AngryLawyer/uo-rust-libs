@@ -89,7 +89,6 @@ impl StaticReader {
             option::Some(record) => {
                 assert record.data.len() % 7 == 0;
                 let mut statics:Statics = ~[];
-                //TODO: Read the actual gumpf
                 for uint::range_step(0, record.data.len(), 7) |_i| {
                     let data_source = byte_helpers::Buffer(copy record.data);
                     let object_id: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
