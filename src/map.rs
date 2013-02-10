@@ -65,9 +65,8 @@ impl MapReader {
 /**
  * Create a handle to a mapreader, and read out given blocks as needed
  */
-pub fn MapReader(path: ~str) -> result::Result<MapReader, ~str> {
-    let mul_path: path::Path = path::Path(path);
-    match io::file_reader(&mul_path) {
+pub fn MapReader(mul_path: &path::Path) -> result::Result<MapReader, ~str> {
+    match io::file_reader(mul_path) {
         result::Ok(data_reader) => {
             result::Ok(MapReader {
                 data_reader: data_reader
@@ -89,8 +88,8 @@ impl StaticReader {
             option::Some(record) => {
                 assert record.data.len() % 7 == 0;
                 let mut statics:Statics = ~[];
+                let data_source = byte_helpers::Buffer(copy record.data);
                 for uint::range_step(0, record.data.len(), 7) |_i| {
-                    let data_source = byte_helpers::Buffer(copy record.data);
                     let object_id: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
                     let x: u8 = byte_helpers::bytes_to_le_uint(data_source.read(1)) as u8;
                     let y: u8 = byte_helpers::bytes_to_le_uint(data_source.read(1)) as u8;
