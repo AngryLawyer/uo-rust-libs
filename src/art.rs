@@ -77,7 +77,6 @@ impl TileReader {
     fn read_tile(&self, id: uint) -> option::Option<MapTile> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
-                io::println(fmt!("%u TILE AT %u VERSUS %u", id, vec::len(record.data), expected_tile_size));
                 if (vec::len(record.data) != expected_tile_size) {
                     io::println(fmt!("%u BAD SIZE AT %u VERSUS %u", id, vec::len(record.data), expected_tile_size));
                     return option::None;
