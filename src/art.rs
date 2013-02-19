@@ -14,7 +14,7 @@ pub struct MapTile {
     raw_image: ~[pixel]
 }
 
-pub impl MapTile : Tile {
+pub impl Tile for MapTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
         let data_source = byte_helpers::Buffer(copy self.raw_image);
@@ -39,7 +39,7 @@ pub struct StaticTile {
     raw_image_rows: ~[Row]
 }
 
-pub impl StaticTile : Tile {
+pub impl Tile for StaticTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
 

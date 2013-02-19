@@ -22,8 +22,8 @@ pub fn MulReader(idx_path: &path::Path, mul_path: &path::Path) -> result::Result
             match io::file_reader(mul_path) {
                 result::Ok(data_reader) => {
                     result::Ok(MulReader {
-                        idx_reader: move idx_reader,
-                        data_reader: move data_reader
+                        idx_reader: idx_reader,
+                        data_reader: data_reader
                     })
                 },
                 result::Err(error_message) => {

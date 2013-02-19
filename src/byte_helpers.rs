@@ -9,7 +9,7 @@ pub struct Buffer<T> {
 pub pure fn Buffer<T>(items: ~[T]) -> Buffer<T> {
     let len = vec::len(items);
     Buffer {
-        items: move items,
+        items: items,
         length: len,
         pos: 0
     }
@@ -17,9 +17,10 @@ pub pure fn Buffer<T>(items: ~[T]) -> Buffer<T> {
 
 impl<T: Copy> Buffer<T> {
     pure fn eof(&self) -> bool {return self.pos == self.length;}
+
     fn read(&self, number: uint) -> ~[T] {
         assert (number + self.pos <= self.length);
-        let return_data = vec::slice(self.items, self.pos, self.pos + number);
+        let return_data = vec::from_slice(vec::slice(self.items, self.pos, self.pos + number));
         self.pos += number;
         return return_data;
     }

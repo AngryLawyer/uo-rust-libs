@@ -16,7 +16,7 @@ impl SkillReader {
             option::Some(record) => {
                 option::Some(Skill {
                     clickable: vec::head(record.data) == 1,
-                    name: str::from_bytes(vec::const_view(record.data, 1, record.data.len() - 1))
+                    name: str::from_bytes(vec::const_slice(record.data, 1, record.data.len() - 1))
                 })
             }
         }
