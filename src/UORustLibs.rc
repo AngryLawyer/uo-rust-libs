@@ -16,8 +16,7 @@ pub mod utils;
 pub mod art;
 pub mod skills;
 pub mod map;
-pub mod gump;
-pub mod hues;
+pub mod tiledata;
 
 #[cfg(test)]
 mod test;
