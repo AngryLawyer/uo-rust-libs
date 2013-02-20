@@ -137,3 +137,28 @@ mod art {
         }
     }
 }
+
+mod tiledata {
+    use path;
+    use tiledata;
+    #[test]
+    fn test_read_map_tile_data() {
+        match ::tiledata::TileDataReader::new(&path::Path(~"files/tiledata.mul")) {
+            result::Err(msg) => {
+                fail!(msg);
+            },
+            result::Ok(tile_data_reader) => {
+                for uint::range(0, 128) |idx| {
+                    match tile_data_reader.read_map_tile_data(idx) {
+                        option::Some(tile_data) => {
+                            io::println(tile_data.name)
+                        },
+                        option::None => {
+                            fail!(fmt!("Couldn't read tile %u", idx))
+                        }
+                    };
+                }
+            }
+        }
+    }
+}
