@@ -61,6 +61,8 @@ pub struct TileDataReader {
 // Tile data is odd, as we have [(unknown, (LAND_TILE_DATA) *32) * 512]
 const GROUP_HEADER_SIZE:uint = 4;
 const MAP_TILE_SIZE:uint = 26;
+const STATIC_TILE_SIZE:uint 37;
+const STATIC_OFFSET:uint = 428032; 
 
 impl TileDataReader {
     static fn new(tile_data_path: &path::Path) -> result::Result<TileDataReader, ~str> {
@@ -93,7 +95,30 @@ impl TileDataReader {
     }
 
     fn read_static_tile_data(&self, idx: uint) -> option::Option<StaticTileData> {
-        option::None
+        self.data_reader.seek(self.calculate_static_tile_offset(idx) as int, io::SeekSet);
+        let tile_data_reader = self.data_reader as io::ReaderUtil;
+
+        let flags = tile_data_reader.read_le_u32();
+        let weight = tile_data_reader.read_byte();
+        let quality  = tile_data_reader.read_byte();
+        let _unknown = tile_data_reader.read_le_u16();
+        let _unknown1 = tile_data_reader.read_byte();
+        let quantity = tile_data_reader.read_byte();
+        let anim_id = tile_data_reader.read_le_u16();
+        let _unknown2 = tile_data_reader.read_byte();
+        let hue = tile_data_reader.read_byte();
+        let _unknown3 = tile_data_reader.read_le_u16();
+        let height = tile_data_reader.read_byte();
+        let name = str::from_bytes(tile_data_reader.read_bytes(20))
+
+        option::Some(StaticTileData{
+        })
+    }
+
+    fn calculate_static_tile_offset(&self, idx: uint) -> uint {
+        //For every 32, we have to add an unknown header
+        let group_header_jumps = ((idx / 32) + 1) * GROUP_HEADER_SIZE;
+        (idx * STATIC_TILE_SIZE) + group_header_jumps
     }
 
 }
