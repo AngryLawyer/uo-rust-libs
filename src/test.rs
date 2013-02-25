@@ -159,7 +159,7 @@ mod tiledata {
                         }
                     };
                 }
-                io::print(~"TILE DATA: (");
+                /*io::print(~"TILE DATA: (");
                 let mut first = false;
                 for out.each |name| {
                     if !first {
@@ -169,7 +169,7 @@ mod tiledata {
                     }
                     io::print(*name);
                 }
-                io::println(")");
+                io::println(")");*/
             }
         }
     }

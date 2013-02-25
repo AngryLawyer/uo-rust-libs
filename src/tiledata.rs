@@ -109,7 +109,7 @@ impl TileDataReader {
         let hue = tile_data_reader.read_u8();
         let _unknown3 = tile_data_reader.read_le_u16();
         let height = tile_data_reader.read_u8();
-        let name = str::from_bytes(tile_data_reader.read_bytes(20));
+        let name = str::from_bytes(tile_data_reader.read_bytes(20));  //FIXME: This might be overrunning the null character, and reading broken data
 
         option::Some(StaticTileData{
             flags: flags,
@@ -126,7 +126,7 @@ impl TileDataReader {
     fn calculate_static_tile_offset(&self, idx: uint) -> uint {
         //For every 32, we have to add an unknown header
         let group_header_jumps = ((idx / 32) + 1) * GROUP_HEADER_SIZE;
-        (idx * STATIC_TILE_SIZE) + group_header_jumps
+        (idx * STATIC_TILE_SIZE) + group_header_jumps + STATIC_OFFSET
     }
 
 }
