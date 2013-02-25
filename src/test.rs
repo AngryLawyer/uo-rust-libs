@@ -148,16 +148,61 @@ mod tiledata {
                 fail!(msg);
             },
             result::Ok(tile_data_reader) => {
+                let mut out = ~[];
                 for uint::range(0, 128) |idx| {
                     match tile_data_reader.read_map_tile_data(idx) {
                         option::Some(tile_data) => {
-                            io::println(tile_data.name)
+                            out.push(copy tile_data.name)
                         },
                         option::None => {
                             fail!(fmt!("Couldn't read tile %u", idx))
                         }
                     };
                 }
+                io::print(~"TILE DATA: (");
+                let mut first = false;
+                for out.each |name| {
+                    if !first {
+                        first = true
+                    } else {
+                        io::print(~",")
+                    }
+                    io::print(*name);
+                }
+                io::println(")");
+            }
+        }
+    }
+
+    #[test]
+    fn test_read_map_static_data() {
+        match ::tiledata::TileDataReader::new(&path::Path(~"files/tiledata.mul")) {
+            result::Err(msg) => {
+                fail!(msg);
+            },
+            result::Ok(tile_data_reader) => {
+                let mut out = ~[];
+                for uint::range(0, 128) |idx| {
+                    match tile_data_reader.read_static_tile_data(idx) {
+                        option::Some(tile_data) => {
+                            out.push(copy tile_data.name)
+                        },
+                        option::None => {
+                            fail!(fmt!("Couldn't read tile %u", idx))
+                        }
+                    };
+                }
+                io::print(~"STATIC DATA: (");
+                let mut first = false;
+                for out.each |name| {
+                    if !first {
+                        first = true
+                    } else {
+                        io::print(~",")
+                    }
+                    io::print(*name);
+                }
+                io::println(")");
             }
         }
     }

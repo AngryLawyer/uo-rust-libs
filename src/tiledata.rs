@@ -61,7 +61,7 @@ pub struct TileDataReader {
 // Tile data is odd, as we have [(unknown, (LAND_TILE_DATA) *32) * 512]
 const GROUP_HEADER_SIZE:uint = 4;
 const MAP_TILE_SIZE:uint = 26;
-const STATIC_TILE_SIZE:uint 37;
+const STATIC_TILE_SIZE:uint = 37;
 const STATIC_OFFSET:uint = 428032; 
 
 impl TileDataReader {
@@ -99,19 +99,27 @@ impl TileDataReader {
         let tile_data_reader = self.data_reader as io::ReaderUtil;
 
         let flags = tile_data_reader.read_le_u32();
-        let weight = tile_data_reader.read_byte();
-        let quality  = tile_data_reader.read_byte();
+        let weight = tile_data_reader.read_u8();
+        let quality  = tile_data_reader.read_u8();
         let _unknown = tile_data_reader.read_le_u16();
-        let _unknown1 = tile_data_reader.read_byte();
-        let quantity = tile_data_reader.read_byte();
+        let _unknown1 = tile_data_reader.read_u8();
+        let quantity = tile_data_reader.read_u8();
         let anim_id = tile_data_reader.read_le_u16();
-        let _unknown2 = tile_data_reader.read_byte();
-        let hue = tile_data_reader.read_byte();
+        let _unknown2 = tile_data_reader.read_u8();
+        let hue = tile_data_reader.read_u8();
         let _unknown3 = tile_data_reader.read_le_u16();
-        let height = tile_data_reader.read_byte();
-        let name = str::from_bytes(tile_data_reader.read_bytes(20))
+        let height = tile_data_reader.read_u8();
+        let name = str::from_bytes(tile_data_reader.read_bytes(20));
 
         option::Some(StaticTileData{
+            flags: flags,
+            weight: weight,
+            quality_layer_light_id: quality,
+            quantity_weapon_class_armor_class: quantity,
+            anim_id: anim_id,
+            hue: hue,
+            height_capacity: height,
+            name: name 
         })
     }
 
