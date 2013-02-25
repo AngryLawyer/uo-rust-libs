@@ -182,17 +182,19 @@ mod tiledata {
             },
             result::Ok(tile_data_reader) => {
                 let mut out = ~[];
-                for uint::range(0, 128) |idx| {
+                for uint::range(0, 512 * 32) |idx| {
                     match tile_data_reader.read_static_tile_data(idx) {
                         option::Some(tile_data) => {
-                            out.push(copy tile_data.name)
+                            if tile_data.flags & ::tiledata::Unknown2Flag as u32 == 0 {
+                                out.push(copy tile_data.name)
+                            }
                         },
                         option::None => {
                             fail!(fmt!("Couldn't read tile %u", idx))
                         }
                     };
                 }
-                io::print(~"STATIC DATA: (");
+                /*io::print(~"STATIC DATA: (");
                 let mut first = false;
                 for out.each |name| {
                     if !first {
@@ -202,7 +204,7 @@ mod tiledata {
                     }
                     io::print(*name);
                 }
-                io::println(")");
+                io::println(")");*/
             }
         }
     }
