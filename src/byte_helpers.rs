@@ -2,8 +2,8 @@ use core::vec;
 
 pub struct Buffer<T> {
     items: ~[T],
-    mut length: uint,
-    mut pos: uint
+    length: uint,
+    pos: uint
 }
 
 pub pure fn Buffer<T>(items: ~[T]) -> Buffer<T> {
@@ -18,14 +18,14 @@ pub pure fn Buffer<T>(items: ~[T]) -> Buffer<T> {
 impl<T: Copy> Buffer<T> {
     pure fn eof(&self) -> bool {return self.pos == self.length;}
 
-    fn read(&self, number: uint) -> ~[T] {
+    fn read(&mut self, number: uint) -> ~[T] {
         assert (number + self.pos <= self.length);
         let return_data = vec::from_slice(vec::slice(self.items, self.pos, self.pos + number));
         self.pos += number;
         return return_data;
     }
 
-    fn seek(&self, pos: uint) {
+    fn seek(&mut self, pos: uint) {
         pos <= self.length;
         self.pos = pos;
     }
