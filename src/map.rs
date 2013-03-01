@@ -1,3 +1,5 @@
+use core::io;
+use core::io::ReaderUtil;
 use mul_reader;
 use byte_helpers;
 
@@ -35,7 +37,7 @@ impl MapReader {
     fn read_block(&self, id: uint) -> Block {
         //Cycle to id * 196 + Offset
         self.data_reader.seek(((id * BLOCK_SIZE) + OFFSET) as int, io::SeekSet);
-        let map_reader = self.data_reader as io::ReaderUtil;
+        let map_reader = self.data_reader;
         //Read the 64 cells
         let mut block: Block = ~[];
         //Read 64 cells
@@ -83,18 +85,18 @@ pub struct StaticReader {
 }
 
 impl StaticReader {
-    fn read_block(&self, id: uint) -> option::Option<Statics> {
+    pub fn read_block(&self, id: uint) -> option::Option<Statics> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
                 assert record.data.len() % 7 == 0;
                 let mut statics:Statics = ~[];
                 let mut data_source = byte_helpers::Buffer(copy record.data);
                 for uint::range_step(0, record.data.len(), 7) |_i| {
-                    let object_id: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-                    let x: u8 = byte_helpers::bytes_to_le_uint(data_source.read(1)) as u8;
-                    let y: u8 = byte_helpers::bytes_to_le_uint(data_source.read(1)) as u8;
-                    let altitude: i8 = byte_helpers::bytes_to_le_uint(data_source.read(1)) as i8;
-                    let remainder: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+                    let object_id: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
+                    let x: u8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as u8;
+                    let y: u8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as u8;
+                    let altitude: i8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as i8;
+                    let remainder: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
                     statics.push(StaticLocation{
                         object_id: object_id,
                         x: x,

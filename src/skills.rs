@@ -10,7 +10,7 @@ pub struct SkillReader {
 }
 
 impl SkillReader {
-    fn read_skill(&self, id: uint) -> option::Option<Skill>{
+    pub fn read_skill(&self, id: uint) -> option::Option<Skill>{
         match self.mul_reader.read(id) {
             option::None => option::None,
             option::Some(record) => {

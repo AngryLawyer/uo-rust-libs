@@ -14,7 +14,7 @@ pub struct MapTile {
     raw_image: ~[pixel]
 }
 
-pub impl Tile for MapTile {
+impl Tile for MapTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
         let mut data_source = byte_helpers::Buffer(copy self.raw_image);
@@ -23,7 +23,7 @@ pub impl Tile for MapTile {
             
             let slice_size: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
             image.grow((22 - (slice_size / 2)), &transparency_color);
-            let slice_data = data_source.read(slice_size);
+            let slice_data = data_source.read_items(slice_size);
             image.push_all(slice_data);
             image.grow((22 - (slice_size / 2)), &transparency_color);
         };
@@ -39,7 +39,7 @@ pub struct StaticTile {
     raw_image_rows: ~[Row]
 }
 
-pub impl Tile for StaticTile {
+impl Tile for StaticTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
 
@@ -74,7 +74,7 @@ pub struct TileReader {
 
 impl TileReader {
 
-    fn read_tile(&self, id: uint) -> option::Option<MapTile> {
+    pub fn read_tile(&self, id: uint) -> option::Option<MapTile> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
                 if (vec::len(record.data) != expected_tile_size) {
@@ -83,8 +83,8 @@ impl TileReader {
                 }
 
                 let mut data_source = byte_helpers::Buffer(copy record.data);
-                let record_header = byte_helpers::bytes_to_le_uint(data_source.read(4));
-                let raw_image: ~[pixel] = byte_helpers::u8vec_to_u16vec(data_source.read(1012 * 2));
+                let record_header = byte_helpers::bytes_to_le_uint(data_source.read_items(4));
+                let raw_image: ~[pixel] = byte_helpers::u8vec_to_u16vec(data_source.read_items(1012 * 2));
 
                 option::Some(MapTile{
                     header: record_header as u32,
@@ -95,14 +95,14 @@ impl TileReader {
         }
     }
 
-    fn read_static(&self, id: uint) -> option::Option<StaticTile> {
+    pub fn read_static(&self, id: uint) -> option::Option<StaticTile> {
         match self.mul_reader.read(id) {    
             option::Some(record) => {
                 let mut data_source = byte_helpers::Buffer(copy record.data);
-                let data_size: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16; //Might not be size :P
-                let trigger: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-                let width: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-                let height: u16 = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+                let data_size: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16; //Might not be size :P
+                let trigger: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
+                let width: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
+                let height: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
 
                 if (width == 0 || height >= 1024 || height == 0 || height >= 1024) {
                     error!("Bad image dimensions found at %u", id);
@@ -112,7 +112,7 @@ impl TileReader {
                 //Read the offset table
                 let mut offset_table: ~[u16] = ~[];
                 for uint::range(0, height as uint) |_index| {
-                    let offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+                    let offset = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
                     offset_table.push(offset);
                 }
 
@@ -125,15 +125,15 @@ impl TileReader {
                     let mut row = ~[];
 
                     loop {
-                        let x_offset = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
-                        let run_length = byte_helpers::bytes_to_le_uint(data_source.read(2)) as u16;
+                        let x_offset = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
+                        let run_length = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
 
                         if (x_offset + run_length == 0) {
                             break;
                         } else {
                             row.push(RunPair{
                                 offset: x_offset,
-                                run: byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2))
+                                run: byte_helpers::u8vec_to_u16vec(data_source.read_items((run_length as uint) * 2))
                             });
                             current_row_width += x_offset as uint + run_length as uint;
                             assert(current_row_width <= width as uint);
@@ -178,7 +178,7 @@ pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) -> result::Res
 
             let mut index:uint = 0;
             while (reader.eof() != true) {
-                let item: option::Option<mul_reader::MulRecord> = reader.read();
+                let item: option::Option<mul_reader::MulRecord> = reader.read_bytes();
                 if option::is_some(&item) {
                     let unwrapped: mul_reader::MulRecord = option::unwrap(item);
                     //let record_header = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 0, 3));
@@ -242,7 +242,7 @@ fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile
                 image.grow(width as uint - current_row_width, &transparent);
                 break;
             } else {
-                let run = byte_helpers::u8vec_to_u16vec(data_source.read((run_length as uint) * 2));
+                let run = byte_helpers::u8vec_to_u16vec(data_source.read_bytes((run_length as uint) * 2));
                 image.grow(x_offset as uint, &transparent);
                 image.push_all(run);
                 current_row_width += x_offset as uint + run_length as uint;

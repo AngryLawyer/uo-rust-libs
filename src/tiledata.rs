@@ -1,3 +1,5 @@
+use core::io;
+use core::io::ReaderUtil;
 use mul_reader;
 use byte_helpers;
 
@@ -78,9 +80,9 @@ impl TileDataReader {
         }
     }
 
-    fn read_map_tile_data(&self, idx: uint) -> option::Option<MapTileData> {
+    pub fn read_map_tile_data(&self, idx: uint) -> option::Option<MapTileData> {
         self.data_reader.seek(self.calculate_map_tile_offset(idx) as int, io::SeekSet);
-        let tile_data_reader = self.data_reader as io::ReaderUtil;
+        let tile_data_reader = self.data_reader;
         option::Some(MapTileData{
             flags: tile_data_reader.read_le_u32(),
             texture_id: tile_data_reader.read_le_u16(),
@@ -94,9 +96,9 @@ impl TileDataReader {
         (idx * MAP_TILE_SIZE) + group_header_jumps
     }
 
-    fn read_static_tile_data(&self, idx: uint) -> option::Option<StaticTileData> {
+    pub fn read_static_tile_data(&self, idx: uint) -> option::Option<StaticTileData> {
         self.data_reader.seek(self.calculate_static_tile_offset(idx) as int, io::SeekSet);
-        let tile_data_reader = self.data_reader as io::ReaderUtil;
+        let tile_data_reader = self.data_reader;
 
         let flags = tile_data_reader.read_le_u32();
         let weight = tile_data_reader.read_u8();

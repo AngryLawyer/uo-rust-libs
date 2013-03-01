@@ -1,3 +1,6 @@
+use core::io;
+use core::io::ReaderUtil;
+
 const undef_record:u32 = 0xFEFEFEFF;
 const INDEX_SIZE: uint = 12;
 
@@ -40,11 +43,11 @@ pub fn MulReader(idx_path: &path::Path, mul_path: &path::Path) -> result::Result
 
 impl MulReader {
 
-    fn read(&self, index: uint) -> option::Option<MulRecord> {
+    pub fn read(&self, index: uint) -> option::Option<MulRecord> {
         //Wind the idx reader to the index position
         self.idx_reader.seek((index * INDEX_SIZE) as int, io::SeekSet);
 
-        let idx_reader = self.idx_reader as io::ReaderUtil;
+        let idx_reader = self.idx_reader;
         
         let start: u32 = idx_reader.read_le_uint_n(4) as u32;
         let length: u32 = idx_reader.read_le_uint_n(4) as u32;
@@ -58,7 +61,7 @@ impl MulReader {
         };
         
         self.data_reader.seek(start as int, io::SeekSet);
-        let reader_util = self.data_reader as io::ReaderUtil; 
+        let reader_util = self.data_reader; 
         return option::Some(MulRecord {
             data: reader_util.read_bytes(length as uint),
             start: start,
