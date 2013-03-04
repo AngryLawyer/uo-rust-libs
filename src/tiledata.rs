@@ -86,7 +86,7 @@ impl TileDataReader {
         option::Some(MapTileData{
             flags: tile_data_reader.read_le_u32(),
             texture_id: tile_data_reader.read_le_u16(),
-            name: str::from_bytes(tile_data_reader.read_bytes(20))
+            name: tile_data_reader.read_c_str()
         })
     }
 
@@ -111,7 +111,7 @@ impl TileDataReader {
         let hue = tile_data_reader.read_u8();
         let _unknown3 = tile_data_reader.read_le_u16();
         let height = tile_data_reader.read_u8();
-        let name = str::from_bytes(tile_data_reader.read_bytes(20));  //FIXME: This might be overrunning the null character, and reading broken data
+        let name = tile_data_reader.read_c_str();
 
         option::Some(StaticTileData{
             flags: flags,
