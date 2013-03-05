@@ -34,7 +34,7 @@ impl MapReader {
     /**
      * Read a specific block from a map
      */
-    fn read_block(&self, id: uint) -> Block {
+    pub fn read_block(&self, id: uint) -> Block {
         //Cycle to id * 196 + Offset
         self.data_reader.seek(((id * BLOCK_SIZE) + OFFSET) as int, io::SeekSet);
         let map_reader = self.data_reader;
@@ -53,7 +53,7 @@ impl MapReader {
     /**
      * Read the whole map!
      */
-    fn read_map(&self, max_blocks: uint) -> Map {
+    pub fn read_map(&self, max_blocks: uint) -> Map {
         let mut map: Map = ~[];
         let mut index = 0;
         while index < max_blocks {
