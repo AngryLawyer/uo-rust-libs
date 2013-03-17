@@ -11,8 +11,8 @@ mod skills {
             result::Ok(skill_reader) => {
                 match skill_reader.read_skill(0) {
                     option::Some(skill) => {
-                        assert skill.name == ~"Alchemy";
-                        assert skill.clickable == false;
+                        fail_unless!(skill.name == ~"Alchemy");
+                        fail_unless!(skill.clickable == false);
                     },
                     option::None => {
                         fail!(~"No skill at 0");
@@ -45,7 +45,7 @@ mod skills {
                 fail!(msg);
             },
             result::Ok(skill_list) => {
-                assert skill_list.len() >= 49 //49 skills in the original UO
+                fail_unless!(skill_list.len() >= 49) //49 skills in the original UO
             }
         }
     }
@@ -66,7 +66,7 @@ mod map {
                     option::None => {
                         match staticReader.read_block(200 + (200 * 512)) {
                             option::Some(Statics) => {
-                                assert(Statics.len() > 0);
+                                fail_unless!(Statics.len() > 0);
                             },
                             option::None => {
                                 fail!(~"Expected tile at 200x200 but found none");
@@ -96,11 +96,11 @@ mod art {
             result::Ok(tileReader) => {
                 match tileReader.read_tile(100) {
                     option::Some(tile) => {
-                        assert tile.raw_image.len() == 1012; 
+                        fail_unless!(tile.raw_image.len() == 1012); 
                         let bitmap = tile.with_transparency(0xF000);
-                        assert bitmap.len() == (44*44);
-                        assert bitmap[0] == 0xF000;
-                        assert bitmap[21] != 0xF000;
+                        fail_unless!(bitmap.len() == (44*44));
+                        fail_unless!(bitmap[0] == 0xF000);
+                        fail_unless!(bitmap[21] != 0xF000);
                     },
                     option::None => {
                         fail!(~"Couldn't read tile 100")
@@ -127,7 +127,7 @@ mod art {
                     option::Some(static_tile) => {
                         let bitmap = static_tile.with_transparency(0xF000);
                         //warn!("%u, %u, %u", bitmap.len(), static_tile.width as uint, static_tile.height as uint);
-                        //assert bitmap.len() == (static_tile.width + static_tile.height) as uint;
+                        //fail_unless!(bitmap.len() == (static_tile.width + static_tile.height) as uint);
                     },
                     option::None => {
                         fail!(~"Couldn't read tile 0x4000");

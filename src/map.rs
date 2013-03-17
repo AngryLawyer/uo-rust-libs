@@ -37,7 +37,7 @@ impl MapReader {
     pub fn read_block(&self, id: uint) -> Block {
         //Cycle to id * 196 + Offset
         self.data_reader.seek(((id * BLOCK_SIZE) + OFFSET) as int, io::SeekSet);
-        let map_reader = self.data_reader;
+        let map_reader = self.data_reader as ReaderUtil;
         //Read the 64 cells
         let mut block: Block = ~[];
         //Read 64 cells
@@ -88,7 +88,7 @@ impl StaticReader {
     pub fn read_block(&self, id: uint) -> option::Option<Statics> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
-                assert record.data.len() % 7 == 0;
+                fail_unless!(record.data.len() % 7 == 0);
                 let mut statics:Statics = ~[];
                 let mut data_source = byte_helpers::Buffer(copy record.data);
                 for uint::range_step(0, record.data.len(), 7) |_i| {

@@ -13,8 +13,8 @@ pub struct MulRecord {
 }
 
 pub struct MulReader {
-    idx_reader: io::Reader,
-    data_reader: io::Reader
+    idx_reader: @io::Reader,
+    data_reader: @io::Reader
 }
 
 pub fn MulReader(idx_path: &path::Path, mul_path: &path::Path) -> result::Result<MulReader, ~str>{
