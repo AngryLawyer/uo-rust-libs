@@ -57,7 +57,7 @@ pub struct StaticTileData {
 }
 
 pub struct TileDataReader {
-    data_reader: io::Reader
+    data_reader: @io::Reader
 }
 
 // Tile data is odd, as we have [(unknown, (LAND_TILE_DATA) *32) * 512]

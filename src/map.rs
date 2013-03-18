@@ -26,7 +26,7 @@ const BLOCK_SIZE: uint = 196;
 const OFFSET: uint = 4;
 
 pub struct MapReader {
-    data_reader: io::Reader
+    data_reader: @io::Reader
 }
 
 impl MapReader {
@@ -37,14 +37,13 @@ impl MapReader {
     pub fn read_block(&self, id: uint) -> Block {
         //Cycle to id * 196 + Offset
         self.data_reader.seek(((id * BLOCK_SIZE) + OFFSET) as int, io::SeekSet);
-        let map_reader = self.data_reader as ReaderUtil;
         //Read the 64 cells
         let mut block: Block = ~[];
         //Read 64 cells
         for uint::range(0, 64) |_index| {
             block.push(Cell{
-                graphic: map_reader.read_le_u16(),
-                altitude: map_reader.read_i8()
+                graphic: self.data_reader.read_le_u16(),
+                altitude: self.data_reader.read_i8()
             });
         }
         block
