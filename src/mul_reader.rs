@@ -1,8 +1,8 @@
 use core::io;
 use core::io::ReaderUtil;
 
-const undef_record:u32 = 0xFEFEFEFF;
-const INDEX_SIZE: uint = 12;
+static undef_record:u32 = 0xFEFEFEFF;
+static INDEX_SIZE: uint = 12;
 
 pub struct MulRecord {
     data: ~[u8],

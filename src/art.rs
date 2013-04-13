@@ -49,7 +49,7 @@ impl Tile for StaticTile {
                 image.grow(run_pair.offset as uint, &transparency_color);
                 image.push_all(run_pair.run);
                 current_width += run_pair.offset as uint + run_pair.run.len();
-                fail_unless!(current_width <= self.width as uint)
+                assert!(current_width <= self.width as uint)
             }
             if current_width < self.width as uint {
                 image.grow((self.width as uint) - current_width, &transparency_color)
@@ -66,7 +66,7 @@ pub struct RunPair {
 
 pub type Row = ~[RunPair];
 
-const expected_tile_size: uint = 2048;
+static expected_tile_size: uint = 2048;
 
 pub struct TileReader {
     mul_reader: mul_reader::MulReader
@@ -136,7 +136,7 @@ impl TileReader {
                                 run: byte_helpers::u8vec_to_u16vec(data_source.read_items((run_length as uint) * 2))
                             });
                             current_row_width += x_offset as uint + run_length as uint;
-                            fail_unless!(current_row_width <= width as uint);
+                            assert!(current_row_width <= width as uint);
                         }
                     }
                     rows.push(row);

@@ -6,7 +6,7 @@ pub struct Buffer<T> {
     pos: uint
 }
 
-pub pure fn Buffer<T>(items: ~[T]) -> Buffer<T> {
+pub fn Buffer<T>(items: ~[T]) -> Buffer<T> {
     let len = vec::len(items);
     Buffer {
         items: items,
@@ -16,10 +16,10 @@ pub pure fn Buffer<T>(items: ~[T]) -> Buffer<T> {
 }
 
 impl<T: Copy> Buffer<T> {
-    pure fn eof(&self) -> bool {return self.pos == self.length;}
+    fn eof(&self) -> bool {return self.pos == self.length;}
 
     pub fn read_items(&mut self, number: uint) -> ~[T] {
-        fail_unless!(number + self.pos <= self.length);
+        assert!(number + self.pos <= self.length);
         let return_data = vec::from_slice(vec::slice(self.items, self.pos, self.pos + number));
         self.pos += number;
         return return_data;
@@ -85,7 +85,7 @@ pub fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
     let len = vec::len(input);
     let mut i:uint = 0;
     
-    fail_unless!(len % 2 == 0);
+    assert!(len % 2 == 0);
 
     while (i < (len / 2)) {
         output.push((input[i * 2] as u16 + ((input[(i * 2) + 1] as u16) << 8)));

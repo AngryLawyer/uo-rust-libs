@@ -3,7 +3,7 @@ use core::io::ReaderUtil;
 use mul_reader;
 use byte_helpers;
 
-#[deriving_eq]
+#[deriving(Eq)]
 pub enum Flags {
     pub BackgroundFlag =    0x00000001, 
     pub WeaponFlag =        0x00000002, 
@@ -61,13 +61,13 @@ pub struct TileDataReader {
 }
 
 // Tile data is odd, as we have [(unknown, (LAND_TILE_DATA) *32) * 512]
-const GROUP_HEADER_SIZE:uint = 4;
-const MAP_TILE_SIZE:uint = 26;
-const STATIC_TILE_SIZE:uint = 37;
-const STATIC_OFFSET:uint = 428032; 
+static GROUP_HEADER_SIZE:uint = 4;
+static MAP_TILE_SIZE:uint = 26;
+static STATIC_TILE_SIZE:uint = 37;
+static STATIC_OFFSET:uint = 428032; 
 
 impl TileDataReader {
-    static fn new(tile_data_path: &path::Path) -> result::Result<TileDataReader, ~str> {
+    pub fn new(tile_data_path: &path::Path) -> result::Result<TileDataReader, ~str> {
         match io::file_reader(tile_data_path) {
             result::Ok(data_reader) => {
                 result::Ok(TileDataReader {

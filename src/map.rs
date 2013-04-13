@@ -22,8 +22,8 @@ pub struct StaticLocation {
     remainder: u16
 }
 
-const BLOCK_SIZE: uint = 196;
-const OFFSET: uint = 4;
+static BLOCK_SIZE: uint = 196;
+static OFFSET: uint = 4;
 
 pub struct MapReader {
     data_reader: @io::Reader
@@ -87,7 +87,7 @@ impl StaticReader {
     pub fn read_block(&self, id: uint) -> option::Option<Statics> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
-                fail_unless!(record.data.len() % 7 == 0);
+                assert!(record.data.len() % 7 == 0);
                 let mut statics:Statics = ~[];
                 let mut data_source = byte_helpers::Buffer(copy record.data);
                 for uint::range_step(0, record.data.len(), 7) |_i| {
