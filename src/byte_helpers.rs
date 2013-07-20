@@ -1,23 +1,22 @@
-use std::vec;
-
 pub struct Buffer<T> {
     items: ~[T],
     length: uint,
     pos: uint
 }
 
-pub fn Buffer<T>(items: ~[T]) -> Buffer<T> {
-    let len = items.len();
-
-    Buffer {
-        items: items,
-        length: len,
-        pos: 0
-    }
-}
-
 impl<T: Clone> Buffer<T> {
-    fn eof(&self) -> bool {return self.pos == self.length;}
+
+    pub fn new(items: ~[T]) -> Buffer<T> {
+        let len = items.len();
+
+        Buffer {
+            items: items,
+            length: len,
+            pos: 0
+        }
+    }
+
+    fn eof(&self) -> bool {self.pos == self.length}
 
     pub fn read_items(&mut self, number: uint) -> ~[T] {
         assert!(number + self.pos <= self.length);
@@ -27,7 +26,7 @@ impl<T: Clone> Buffer<T> {
     }
 
     pub fn seek(&mut self, pos: uint) {
-        pos <= self.length;
+        assert!(pos <= self.length);
         self.pos = pos;
     }
 }
@@ -38,7 +37,7 @@ pub fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
     let mut pos = 0u;
     let mut i = 0;
 
-    let size:uint = bytes.len();
+    let size = bytes.len();
 
     while i < size {
         val += bytes[i] as uint << pos;

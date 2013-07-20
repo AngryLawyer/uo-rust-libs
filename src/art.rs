@@ -22,7 +22,7 @@ pub struct MapTile {
 impl Tile for MapTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
-        let mut data_source = byte_helpers::Buffer(self.raw_image.clone());
+        let mut data_source = byte_helpers::Buffer::new(self.raw_image.clone());
 
         for uint::range(0, 44) |i| {
             
@@ -87,7 +87,7 @@ impl TileReader {
                     return option::None;
                 }
 
-                let mut data_source = byte_helpers::Buffer(record.data);
+                let mut data_source = byte_helpers::Buffer::new(record.data);
                 let record_header = byte_helpers::bytes_to_le_uint(data_source.read_items(4));
                 let raw_image: ~[pixel] = byte_helpers::u8vec_to_u16vec(data_source.read_items(1012 * 2));
 
@@ -103,7 +103,7 @@ impl TileReader {
     pub fn read_static(&self, id: uint) -> option::Option<StaticTile> {
         match self.mul_reader.read(id) {    
             option::Some(record) => {
-                let mut data_source = byte_helpers::Buffer(record.data);
+                let mut data_source = byte_helpers::Buffer::new(record.data);
                 let data_size: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16; //Might not be size :P
                 let trigger: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
                 let width: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;

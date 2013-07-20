@@ -94,7 +94,7 @@ impl StaticReader {
                 assert!(record.data.len() % 7 == 0);
                 let mut statics:Statics = ~[];
                 let len = record.data.len();
-                let mut data_source = byte_helpers::Buffer(record.data);
+                let mut data_source = byte_helpers::Buffer::new(record.data);
                 for uint::range_step(0, len, 7) |_i| {
                     let object_id: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
                     let x: u8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as u8;
