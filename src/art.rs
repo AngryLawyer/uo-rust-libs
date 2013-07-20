@@ -161,7 +161,7 @@ impl TileReader {
 }
 
 pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<TileReader, ~str> {
-    match mul_reader::MulReader(index_path, mul_path) {
+    match mul_reader::MulReader::new(index_path, mul_path) {
         result::Err(message) => result::Err(message),
         result::Ok(mul_reader) => {
             result::Ok(TileReader{

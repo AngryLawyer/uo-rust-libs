@@ -21,31 +21,18 @@ pub struct MulReader {
     data_reader: @io::Reader
 }
 
-pub fn MulReader(idx_path: &path::Path, mul_path: &path::Path) -> result::Result<MulReader, ~str>{
-    //Try to load the two readers
-
-    match io::file_reader(idx_path) {
-        result::Ok(idx_reader) => {
-            match io::file_reader(mul_path) {
-                result::Ok(data_reader) => {
-                    result::Ok(MulReader {
-                        idx_reader: idx_reader,
-                        data_reader: data_reader
-                    })
-                },
-                result::Err(error_message) => {
-                    result::Err(error_message)
-                }
-            }
-        },
-        result::Err(error_message) => {
-            result::Err(error_message)
-        }
-    }
-
-}
-
 impl MulReader {
+
+    pub fn new(idx_path: &path::Path, mul_path: &path::Path) -> result::Result<MulReader, ~str> {
+        io::file_reader(idx_path).chain(|idx_reader| {
+            io::file_reader(mul_path).chain(|data_reader| {
+                result::Ok(MulReader {
+                    idx_reader: idx_reader,
+                    data_reader: data_reader
+                })
+            })
+        })
+    }
 
     pub fn read(&self, index: uint) -> option::Option<MulRecord> {
         //Wind the idx reader to the index position
