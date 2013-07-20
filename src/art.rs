@@ -1,5 +1,10 @@
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
-
+use std::result;
+use std::option;
+use std::path;
+use std::uint;
+use std::io;
+use std::vec;
 use mul_reader;
 use byte_helpers;
 
@@ -17,7 +22,7 @@ pub struct MapTile {
 impl Tile for MapTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
-        let mut data_source = byte_helpers::Buffer(copy self.raw_image);
+        let mut data_source = byte_helpers::Buffer(self.raw_image.clone());
 
         for uint::range(0, 44) |i| {
             
@@ -43,9 +48,9 @@ impl Tile for StaticTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
 
-        for self.raw_image_rows.each |row| {
+        for self.raw_image_rows.iter().advance |row| {
             let mut current_width = 0;
-            for row.each |run_pair| {
+            for row.iter().advance |run_pair| {
                 image.grow(run_pair.offset as uint, &transparency_color);
                 image.push_all(run_pair.run);
                 current_width += run_pair.offset as uint + run_pair.run.len();
@@ -77,12 +82,12 @@ impl TileReader {
     pub fn read_tile(&self, id: uint) -> option::Option<MapTile> {
         match self.mul_reader.read(id) {
             option::Some(record) => {
-                if (vec::len(record.data) != expected_tile_size) {
-                    io::println(fmt!("%u BAD SIZE AT %u VERSUS %u", id, vec::len(record.data), expected_tile_size));
+                if (record.data.len() != expected_tile_size) {
+                    io::println(fmt!("%u BAD SIZE AT %u VERSUS %u", id, record.data.len(), expected_tile_size));
                     return option::None;
                 }
 
-                let mut data_source = byte_helpers::Buffer(copy record.data);
+                let mut data_source = byte_helpers::Buffer(record.data);
                 let record_header = byte_helpers::bytes_to_le_uint(data_source.read_items(4));
                 let raw_image: ~[pixel] = byte_helpers::u8vec_to_u16vec(data_source.read_items(1012 * 2));
 
@@ -98,7 +103,7 @@ impl TileReader {
     pub fn read_static(&self, id: uint) -> option::Option<StaticTile> {
         match self.mul_reader.read(id) {    
             option::Some(record) => {
-                let mut data_source = byte_helpers::Buffer(copy record.data);
+                let mut data_source = byte_helpers::Buffer(record.data);
                 let data_size: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16; //Might not be size :P
                 let trigger: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
                 let width: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
@@ -119,7 +124,7 @@ impl TileReader {
                 let data_start_pos = data_source.pos;
                 let mut rows = ~[];
 
-                for offset_table.each |offset| {
+                for offset_table.iter().advance |offset| {
                     data_source.seek(data_start_pos as uint + (*offset as uint * 2));
                     let mut current_row_width: uint = 0;
                     let mut row = ~[];

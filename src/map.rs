@@ -1,5 +1,9 @@
-use core::io;
-use core::io::ReaderUtil;
+use std::io;
+use std::io::ReaderUtil;
+use std::result;
+use std::path;
+use std::option;
+use std::uint;
 use mul_reader;
 use byte_helpers;
 
@@ -89,8 +93,9 @@ impl StaticReader {
             option::Some(record) => {
                 assert!(record.data.len() % 7 == 0);
                 let mut statics:Statics = ~[];
-                let mut data_source = byte_helpers::Buffer(copy record.data);
-                for uint::range_step(0, record.data.len(), 7) |_i| {
+                let len = record.data.len();
+                let mut data_source = byte_helpers::Buffer(record.data);
+                for uint::range_step(0, len, 7) |_i| {
                     let object_id: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
                     let x: u8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as u8;
                     let y: u8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as u8;

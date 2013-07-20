@@ -1,5 +1,8 @@
-use core::io;
-use core::io::ReaderUtil;
+use std::io;
+use std::io::ReaderUtil;
+use std::option;
+use std::result;
+use std::path;
 use mul_reader;
 use byte_helpers;
 

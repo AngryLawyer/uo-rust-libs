@@ -1,5 +1,9 @@
-use core::io;
-use core::io::ReaderUtil;
+use std::io;
+use std::io::ReaderUtil;
+use std::option;
+use std::result;
+use std::path;
+use std::u32;
 
 static undef_record:u32 = 0xFEFEFEFF;
 static INDEX_SIZE: uint = 12;

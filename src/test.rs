@@ -1,6 +1,8 @@
 mod skills {
     use skills;
-    use path;
+    use std::path;
+    use std::option;
+    use std::result;
 
     #[test]
     fn test_skills() {
@@ -53,7 +55,9 @@ mod skills {
 
 mod map {
     use map;
-    use path;
+    use std::path;
+    use std::option;
+    use std::result;
 
     #[test]
     fn test_read_map_statics() {
@@ -85,7 +89,9 @@ mod map {
 mod art {
     use art;
     use art::Tile;
-    use path;
+    use std::path;
+    use std::option;
+    use std::result;
 
     #[test]
     fn test_read_tile() {
@@ -139,8 +145,12 @@ mod art {
 }
 
 mod tiledata {
-    use path;
+    use std::path;
+    use std::io;
+    use std::result;
     use tiledata;
+    use std::uint;
+    use std::option;
     #[test]
     fn test_read_map_tile_data() {
         match ::tiledata::TileDataReader::new(&path::Path(~"files/tiledata.mul")) {
@@ -152,7 +162,7 @@ mod tiledata {
                 for uint::range(0, 128) |idx| {
                     match tile_data_reader.read_map_tile_data(idx) {
                         option::Some(tile_data) => {
-                            out.push(copy tile_data.name)
+                            out.push(tile_data.name)
                         },
                         option::None => {
                             fail!(fmt!("Couldn't read tile %u", idx))
@@ -186,7 +196,7 @@ mod tiledata {
                     match tile_data_reader.read_static_tile_data(idx) {
                         option::Some(tile_data) => {
                             if tile_data.flags & ::tiledata::Unknown2Flag as u32 == 0 {
-                                out.push(copy tile_data.name)
+                                out.push(tile_data.name)
                             }
                         },
                         option::None => {
@@ -196,7 +206,7 @@ mod tiledata {
                 }
                 io::print(~"STATIC DATA: (");
                 let mut first = false;
-                for out.each |name| {
+                for out.iter().advance |name| {
                     if !first {
                         first = true
                     } else {

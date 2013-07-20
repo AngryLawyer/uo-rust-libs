@@ -1,4 +1,4 @@
-use core::vec;
+use std::vec;
 
 pub struct Buffer<T> {
     items: ~[T],
@@ -7,7 +7,8 @@ pub struct Buffer<T> {
 }
 
 pub fn Buffer<T>(items: ~[T]) -> Buffer<T> {
-    let len = vec::len(items);
+    let len = items.len();
+
     Buffer {
         items: items,
         length: len,
@@ -15,14 +16,14 @@ pub fn Buffer<T>(items: ~[T]) -> Buffer<T> {
     }
 }
 
-impl<T: Copy> Buffer<T> {
+impl<T: Clone> Buffer<T> {
     fn eof(&self) -> bool {return self.pos == self.length;}
 
     pub fn read_items(&mut self, number: uint) -> ~[T] {
         assert!(number + self.pos <= self.length);
-        let return_data = vec::from_slice(vec::slice(self.items, self.pos, self.pos + number));
+        let return_data = self.items.slice(self.pos, self.pos + number);
         self.pos += number;
-        return return_data;
+        return return_data.to_owned();
     }
 
     pub fn seek(&mut self, pos: uint) {
@@ -33,8 +34,11 @@ impl<T: Copy> Buffer<T> {
 
 pub fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
 
-    let mut val = 0u, pos = 0u, i = 0;
-    let size:uint = vec::len(bytes);
+    let mut val = 0u;
+    let mut pos = 0u;
+    let mut i = 0;
+
+    let size:uint = bytes.len();
 
     while i < size {
         val += bytes[i] as uint << pos;
@@ -46,7 +50,9 @@ pub fn bytes_to_le_uint(bytes: ~[u8]) -> uint {
 }
 
 pub fn bytes_to_be_uint(bytes: ~[u8]) -> uint {
-    let mut val = 0u, i = vec::len(bytes);
+    let mut val = 0u;
+    let mut i = bytes.len(); 
+
     while i > 0u {
         i -= 1u;
         val += (bytes[i] as uint) << i * 8u;
@@ -69,7 +75,10 @@ pub fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
             (n >> 56) as u8] 
         }
         _ => {
-            let mut bytes: ~[u8] = ~[], i = size, n = n;
+            let mut bytes: ~[u8] = ~[];
+            let mut i = size;
+            let mut n = n;
+
             while i > 0u {
                 bytes.push((n & 255_u64) as u8);
                 n >>= 8_u64;
@@ -82,7 +91,7 @@ pub fn uint_to_le_bytes(n: u64, size: uint) -> ~[u8] {
 
 pub fn u8vec_to_u16vec(input: ~[u8]) -> ~[u16] {
     let mut output: ~[u16] = ~[];
-    let len = vec::len(input);
+    let len = input.len();
     let mut i:uint = 0;
     
     assert!(len % 2 == 0);

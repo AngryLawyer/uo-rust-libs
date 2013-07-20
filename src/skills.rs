@@ -1,3 +1,8 @@
+use std::result;
+use std::option;
+use std::path;
+use std::str;
+use std::vec;
 use mul_reader;
 
 pub struct Skill {
@@ -15,8 +20,8 @@ impl SkillReader {
             option::None => option::None,
             option::Some(record) => {
                 option::Some(Skill {
-                    clickable: (*vec::head(record.data) == 1),
-                    name: str::from_bytes(vec::const_slice(record.data, 1, record.data.len() - 1))
+                    clickable: (*record.data.head() == 1),
+                    name: str::from_bytes(record.data.slice(1, record.data.len() - 1))
                 })
             }
         }
