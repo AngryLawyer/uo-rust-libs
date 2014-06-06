@@ -1,52 +1,52 @@
-use std::{result, option, path, str};
-use mul_reader;
+use mul_reader::MulReader;
 
 pub struct Skill {
     clickable: bool,
-    name: ~str
+    name: String
 }
 
-pub struct SkillReader {
-    mul_reader: mul_reader::MulReader
-}
-
-impl SkillReader {
-    pub fn read_skill(&self, id: uint) -> option::Option<Skill>{
-        self.mul_reader.read(id).chain(|record| {
-            option::Some(Skill {
-                clickable: (*record.data.head() == 1),
-                name: str::from_bytes(record.data.slice(1, record.data.len() - 1))
-            })
-        })
+impl Skill {
+    pub fn new (clickable: bool, name: String) -> Skill {
+        Skill {
+            clickable: clickable,
+            name: name
+        }
     }
 }
 
-pub fn SkillReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<SkillReader, ~str> {
-    mul_reader::MulReader::new(index_path, mul_path).chain(|mul_reader| {
-        result::Ok(SkillReader {
-            mul_reader: mul_reader
-        })
-    })
+pub struct Skills {
+    skills: Vec<Skill>
 }
 
-pub fn load_skills(index_path: &path::Path, mul_path: &path::Path) -> result::Result<~[Skill], ~str> {
+impl Skills {
 
-    SkillReader(index_path, mul_path).chain(|reader| {
-        let mut result:~[Skill] = ~[];
-        let mut id:uint = 0;
+    pub fn new (index_path: &Path, mul_path: &Path) -> Result<Skills, &'static str> {
+        let maybe_reader = MulReader::new(index_path, mul_path);
+        match maybe_reader {
+            Ok(mut reader) => {
+
+                //Unpack the lot
+                let mut result: Vec<Skill> = vec!();
+                let mut id = 0;
         
-        loop {
-            match reader.read_skill(id) {
-                option::Some(skill) => {
-                    result.push(skill);
-                },
-                option::None => {
-                    break;
+                loop {
+                    match reader.read(id) {
+                        Some(record) => {
+                            let slice = record.data.slice(1, record.data.len() - 1);
+                            result.push(Skill::new(*record.data.get(0) == 1, slice.to_owned().into_ascii().into_str()))
+                        },
+                        _ => {
+                            break;
+                        }
+                    }
+                    id += 1;
                 }
-            }
-            id += 1;
-        }
 
-        result::Ok(result)
-   })
+                Ok(Skills {
+                    skills: result
+                })
+            },
+            Err(io_error) => Err(io_error.desc)
+        }
+    }
 }

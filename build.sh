@@ -1,7 +1,7 @@
 #!/bin/bash
 
 function compile {
-    rustc src/UORustLibs.rc -o bin/UORustLibs
+    rustc src/lib.rs --out-dir bin
 }
 
 function test {
