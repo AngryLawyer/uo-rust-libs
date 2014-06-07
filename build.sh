@@ -1,10 +1,12 @@
 #!/bin/bash
 
 function compile {
+    mkdir bin
     rustc src/lib.rs --out-dir bin
 }
 
 function test {
+    mkdir bin
     rustc --test src/lib.rs -o bin/test && bin/test
 }
 
