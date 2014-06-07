@@ -5,7 +5,7 @@ function compile {
 }
 
 function test {
-    rustc src/UORustLibs.rc -o bin/test --test && bin/test
+    rustc --test src/lib.rs -o bin/test && bin/test
 }
 
 if [ "$#" -eq 0 ]; then

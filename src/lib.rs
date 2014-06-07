@@ -15,5 +15,7 @@ pub mod skills;
 //pub mod map;
 //pub mod tiledata;
 
-//#[cfg(test)]
-//mod test;
+#[cfg(test)]
+mod tests {
+    mod skills;
+}
