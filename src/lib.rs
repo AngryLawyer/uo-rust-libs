@@ -17,5 +17,6 @@ pub mod skills;
 
 #[cfg(test)]
 mod tests {
+    mod mul_reader;
     mod skills;
 }
