@@ -4,7 +4,9 @@
 #![desc = "UO data file libraries"]
 #![license = "MIT"]
 
-//extern mod std;
+#[cfg(test)]
+extern crate debug;
+
 
 //pub mod byte_helpers;
 pub mod mul_reader;

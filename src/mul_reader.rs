@@ -1,5 +1,5 @@
 use std::num::Bounded;
-use std::io::{File, Open, Read, IoResult, SeekSet};
+use std::io::{File, Open, Read, Write, IoResult, SeekSet};
 
 static undef_record:u32 = 0xFEFEFEFF;
 static INDEX_SIZE: uint = 12;
@@ -58,5 +58,57 @@ impl MulReader {
             opt1: opt1,
             opt2: opt2
         });
+    }
+}
+
+pub struct MulWriter {
+    idx_writer: File,
+    data_writer: File
+}
+
+impl MulWriter{
+
+    pub fn new(idx_path: &Path, mul_path: &Path) -> IoResult<MulWriter> {
+        let idx = File::open_mode(idx_path, Open, Write);
+        let mul = File::open_mode(mul_path, Open, Write);
+
+        match (idx, mul) {
+            (Ok(idx_writer), Ok(data_writer)) => Ok(MulWriter {
+                idx_writer: idx_writer,
+                data_writer: data_writer
+            }),
+            (Err(err), _) => Err(err),
+            (_, Err(err)) => Err(err)
+        }
+    }
+
+    pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) {
+
+        let idx_size = match self.idx_writer.stat() {
+            Ok(file_stat) => file_stat.size as i64,
+            Err(msg) => fail!(msg) //FIXME: Shouldn't just kill the whole program
+        };
+
+        let mul_size = match self.data_writer.stat() {
+            Ok(file_stat) => file_stat.size as i64,
+            Err(msg) => fail!(msg) //FIXME: Shouldn't just kill the whole program
+        };
+
+        //Wind the files to the end
+        self.idx_writer.seek(idx_size, SeekSet);
+        self.data_writer.seek(mul_size, SeekSet);
+
+        //Fill up our fields
+        let start = mul_size as u32;
+        let length = data.len() as u32;
+        let opt1 = match opt1 { Some(value) => value, None => 0} as u16;
+        let opt2 = match opt2 { Some(value) => value, None => 0} as u16;
+
+        //Check for empty cell
+        self.data_writer.write(data.as_slice());
+        self.idx_writer.write_le_u32(start);
+        self.idx_writer.write_le_u32(length);
+        self.idx_writer.write_le_u16(opt1);
+        self.idx_writer.write_le_u16(opt2);
     }
 }

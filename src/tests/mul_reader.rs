@@ -1,4 +1,5 @@
-use mul_reader::MulReader;
+use mul_reader::{MulReader, MulWriter};
+use std::path::BytesContainer;
 
 #[test]
 fn test_load_mulreader() {
@@ -41,6 +42,18 @@ fn test_read_impossible_entry() {
                     //Passed
                 }
             }
+        },
+        Err(message) => fail!(message)
+    }
+}
+
+#[test]
+fn test_write_simple_mul() {
+    match MulWriter::new(&Path::new("./bin/test_mul_out.idx"), &Path::new("./bin/test_mul_out.mul")) {
+        Ok(mut mul_writer) => {
+            let mut out_buffer = Vec::from_slice(String::from_str("Bakery").to_c_str().as_bytes());
+            out_buffer.unshift(1);
+            mul_writer.append(&out_buffer, None, None);
         },
         Err(message) => fail!(message)
     }
