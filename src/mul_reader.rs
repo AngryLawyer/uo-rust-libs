@@ -1,7 +1,7 @@
 use std::num::Bounded;
-use std::io::{File, Open, Read, Write, IoResult, SeekSet, OtherIoError, IoError};
+use std::io::{File, FileMode, Open, Read, Write, IoResult, SeekSet, OtherIoError, IoError};
 
-static undef_record:u32 = 0xFEFEFEFF;
+static UNDEF_RECORD:u32 = 0xFEFEFEFF;
 static INDEX_SIZE: uint = 12;
 
 pub struct MulRecord {
@@ -50,7 +50,7 @@ impl MulReader {
         match data {
             Ok((start, length, opt1, opt2)) => {
                 //Check for empty cell
-                if start == undef_record || start == Bounded::max_value() { 
+                if start == UNDEF_RECORD || start == Bounded::max_value() { 
                     Err(IoError {
                         kind: OtherIoError,
                         desc: "Trying to read out-of-bounds record",
@@ -86,9 +86,9 @@ pub struct MulWriter {
 
 impl MulWriter{
 
-    pub fn new(idx_path: &Path, mul_path: &Path) -> IoResult<MulWriter> {
-        let idx = File::open_mode(idx_path, Open, Write);
-        let mul = File::open_mode(mul_path, Open, Write);
+    pub fn new(idx_path: &Path, mul_path: &Path, method: FileMode) -> IoResult<MulWriter> {
+        let idx = File::open_mode(idx_path, method, Write);
+        let mul = File::open_mode(mul_path, method, Write);
 
         match (idx, mul) {
             (Ok(idx_writer), Ok(data_writer)) => Ok(MulWriter {

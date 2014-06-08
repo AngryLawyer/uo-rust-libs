@@ -1,3 +1,4 @@
+use std::io::Truncate;
 use mul_reader::{MulReader, MulWriter};
 
 #[test]
@@ -48,7 +49,7 @@ fn test_read_impossible_entry() {
 
 #[test]
 fn test_write_simple_mul() {
-    match MulWriter::new(&Path::new("./bin/test_mul_out.idx"), &Path::new("./bin/test_mul_out.mul")) {
+    match MulWriter::new(&Path::new("./bin/test_mul_out.idx"), &Path::new("./bin/test_mul_out.mul"), Truncate) {
         Ok(mut mul_writer) => {
             let mut out_buffer = Vec::from_slice(String::from_str("Bakery").to_c_str().as_bytes());
             out_buffer.unshift(1);
