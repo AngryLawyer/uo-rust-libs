@@ -50,7 +50,7 @@ impl MulReader {
         match data {
             Ok((start, length, opt1, opt2)) => {
                 //Check for empty cell
-                if (start == undef_record || start == Bounded::max_value()) { 
+                if start == undef_record || start == Bounded::max_value() { 
                     Err(IoError {
                         kind: OtherIoError,
                         desc: "Trying to read out-of-bounds record",
@@ -100,33 +100,46 @@ impl MulWriter{
         }
     }
 
-    pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) {
+    pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) -> IoResult<()> {
 
-        let idx_size = match self.idx_writer.stat() {
-            Ok(file_stat) => file_stat.size as i64,
-            Err(msg) => fail!(msg) //FIXME: Shouldn't just kill the whole program
+        let sizes = self.idx_writer.stat().and_then(|idx_stat| {
+            self.data_writer.stat().and_then(|data_stat| {
+                Ok((idx_stat.size as i64, data_stat.size as i64))
+            })
+        });
+
+        if sizes.is_err() {
+            return Err(sizes.unwrap_err());
         };
 
-        let mul_size = match self.data_writer.stat() {
-            Ok(file_stat) => file_stat.size as i64,
-            Err(msg) => fail!(msg) //FIXME: Shouldn't just kill the whole program
+        let (idx_size, mul_size) = match sizes {
+            Ok(result) => result,
+            Err(_) => fail!("Should be impossible")
         };
 
         //Wind the files to the end
-        self.idx_writer.seek(idx_size, SeekSet);
-        self.data_writer.seek(mul_size, SeekSet);
+        let seek_result = self.idx_writer.seek(idx_size, SeekSet).and_then(|()| {
+            self.data_writer.seek(mul_size, SeekSet)
+        });
 
-        //Fill up our fields
-        let start = mul_size as u32;
-        let length = data.len() as u32;
-        let opt1 = match opt1 { Some(value) => value, None => 0} as u16;
-        let opt2 = match opt2 { Some(value) => value, None => 0} as u16;
-
-        //Check for empty cell
-        self.data_writer.write(data.as_slice());
-        self.idx_writer.write_le_u32(start);
-        self.idx_writer.write_le_u32(length);
-        self.idx_writer.write_le_u16(opt1);
-        self.idx_writer.write_le_u16(opt2);
+        match seek_result {
+            Ok(_) => {
+                //Fill up our fields
+                let start = mul_size as u32;
+                let length = data.len() as u32;
+                let opt1 = match opt1 { Some(value) => value, None => 0} as u16;
+                let opt2 = match opt2 { Some(value) => value, None => 0} as u16;
+                self.data_writer.write(data.as_slice()).and_then(|()| {
+                    self.idx_writer.write_le_u32(start).and_then(|()| {
+                        self.idx_writer.write_le_u32(length).and_then(|()| {
+                            self.idx_writer.write_le_u16(opt1).and_then(|()| {
+                                self.idx_writer.write_le_u16(opt2)
+                            })
+                        })
+                    })
+                })
+            },
+            Err(err) => Err(err)
+        }
     }
 }

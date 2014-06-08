@@ -1,5 +1,4 @@
 use mul_reader::{MulReader, MulWriter};
-use std::path::BytesContainer;
 
 #[test]
 fn test_load_mulreader() {
@@ -53,7 +52,12 @@ fn test_write_simple_mul() {
         Ok(mut mul_writer) => {
             let mut out_buffer = Vec::from_slice(String::from_str("Bakery").to_c_str().as_bytes());
             out_buffer.unshift(1);
-            mul_writer.append(&out_buffer, None, None);
+            match mul_writer.append(&out_buffer, None, None) {
+                Ok(_) => {
+                    //Success
+                },
+                Err(message) => fail!(message)
+            }
         },
         Err(message) => fail!(message)
     }

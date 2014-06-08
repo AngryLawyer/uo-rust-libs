@@ -1,4 +1,5 @@
 use mul_reader::MulReader;
+use std::io::IoResult;
 
 pub struct Skill {
     clickable: bool,
@@ -20,8 +21,7 @@ pub struct Skills {
 
 impl Skills {
 
-    //FIXME: Should return IoError
-    pub fn new (index_path: &Path, mul_path: &Path) -> Result<Skills, &'static str> {
+    pub fn new (index_path: &Path, mul_path: &Path) -> IoResult<Skills> {
         let maybe_reader = MulReader::new(index_path, mul_path);
         match maybe_reader {
             Ok(mut reader) => {
@@ -47,7 +47,7 @@ impl Skills {
                     skills: result
                 })
             },
-            Err(io_error) => Err(io_error.desc)
+            Err(io_error) => Err(io_error)
         }
     }
 }
