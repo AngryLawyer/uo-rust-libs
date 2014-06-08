@@ -1,5 +1,5 @@
 use std::num::Bounded;
-use std::io::{File, Open, Read, Write, IoResult, SeekSet};
+use std::io::{File, Open, Read, Write, IoResult, SeekSet, OtherIoError, IoError};
 
 static undef_record:u32 = 0xFEFEFEFF;
 static INDEX_SIZE: uint = 12;
@@ -33,31 +33,49 @@ impl MulReader {
         }
     }
 
-    //FIXME: This shouldn't use unwrap
-    pub fn read(&mut self, index: uint) -> Option<MulRecord> {
+    pub fn read(&mut self, index: uint) -> IoResult<MulRecord> {
         //Wind the idx reader to the index position
-        self.idx_reader.seek((index * INDEX_SIZE) as i64, SeekSet);
-
-        let start = self.idx_reader.read_le_uint_n(4).unwrap() as u32;
-        let length = self.idx_reader.read_le_uint_n(4).unwrap() as u32;
-        let opt1 = self.idx_reader.read_le_uint_n(2).unwrap() as u16;
-        let opt2 = self.idx_reader.read_le_uint_n(2).unwrap() as u16;
-
-        //Check for empty cell
-        if (start == undef_record || start == Bounded::max_value()) { 
-            //error!("Trying to read out of bounds record %u, with a start of %u", index, start as uint);
-            return None;
-        };
-        
-        self.data_reader.seek(start as i64, SeekSet);
-
-        return Some(MulRecord {
-            data: self.data_reader.read_exact(length as uint).unwrap(),
-            start: start,
-            length: length,
-            opt1: opt1,
-            opt2: opt2
+        let data = self.idx_reader.seek((index * INDEX_SIZE) as i64, SeekSet).and_then(|()| {
+            self.idx_reader.read_le_uint_n(4).and_then(|start| {
+                self.idx_reader.read_le_uint_n(4).and_then(|length| {
+                    self.idx_reader.read_le_uint_n(2).and_then(|opt1| {
+                        self.idx_reader.read_le_uint_n(2).and_then(|opt2| {
+                            Ok((start as u32, length as u32, opt1 as u16, opt2 as u16))
+                        })
+                    })
+                })
+            })
         });
+
+        match data {
+            Ok((start, length, opt1, opt2)) => {
+                //Check for empty cell
+                if (start == undef_record || start == Bounded::max_value()) { 
+                    Err(IoError {
+                        kind: OtherIoError,
+                        desc: "Trying to read out-of-bounds record",
+                        detail: Some(format!("Trying to read out of bounds record {}, with a start of {}", index, start))
+                    })
+                } else {
+                    let maybe_data = self.data_reader.seek(start as i64, SeekSet).and_then(|()| {
+                        self.data_reader.read_exact(length as uint)
+                    });
+                    match maybe_data {
+                        Ok(data) => {
+                            Ok(MulRecord {
+                                data: data,
+                                start: start,
+                                length: length,
+                                opt1: opt1,
+                                opt2: opt2
+                            })
+                        },
+                        Err(err) => Err(err)
+                    }
+                }
+            },
+            Err(err) => Err(err)
+        }
     }
 }
 

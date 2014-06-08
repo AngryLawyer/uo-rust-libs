@@ -20,6 +20,7 @@ pub struct Skills {
 
 impl Skills {
 
+    //FIXME: Should return IoError
     pub fn new (index_path: &Path, mul_path: &Path) -> Result<Skills, &'static str> {
         let maybe_reader = MulReader::new(index_path, mul_path);
         match maybe_reader {
@@ -31,7 +32,7 @@ impl Skills {
         
                 loop {
                     match reader.read(id) {
-                        Some(record) => {
+                        Ok(record) => {
                             let slice = record.data.slice(1, record.data.len() - 1);
                             result.push(Skill::new(*record.data.get(0) == 1, slice.to_owned().into_ascii().into_str()))
                         },

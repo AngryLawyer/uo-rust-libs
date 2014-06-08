@@ -17,11 +17,11 @@ fn test_read_first_entry() {
         Ok(mut mul_reader) => {
             let record = mul_reader.read(0);
             match record {
-                Some(_record) => {
+                Ok(_record) => {
                     //Passed
                 },
-                None => {
-                    fail!("Couldn't find a record!")
+                Err(err) => {
+                    fail!(err.desc)
                 }
             }
         },
@@ -35,10 +35,10 @@ fn test_read_impossible_entry() {
         Ok(mut mul_reader) => {
             let record = mul_reader.read(999999);
             match record {
-                Some(_record) => {
+                Ok(_record) => {
                     fail!("Unexpectedly read a result from a known impossible address")
                 },
-                None => {
+                Err(_) => {
                     //Passed
                 }
             }

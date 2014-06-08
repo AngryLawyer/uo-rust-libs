@@ -8,6 +8,8 @@ function compile {
 function test {
     mkdir bin
     rustc --test src/lib.rs -o bin/test && bin/test
+    rm bin/*.mul
+    rm bin/*.idx
 }
 
 if [ "$#" -eq 0 ]; then
