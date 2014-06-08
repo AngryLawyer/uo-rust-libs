@@ -7,11 +7,16 @@ pub struct Skill {
 }
 
 impl Skill {
-    pub fn new (clickable: bool, name: String) -> Skill {
+    pub fn new(clickable: bool, name: String) -> Skill {
         Skill {
             clickable: clickable,
             name: name
         }
+    }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let vec = vec!(if self.clickable {1} else {0});
+        vec.append(self.name.to_c_str().as_bytes())
     }
 }
 
@@ -21,7 +26,7 @@ pub struct Skills {
 
 impl Skills {
 
-    pub fn new (index_path: &Path, mul_path: &Path) -> IoResult<Skills> {
+    pub fn new(index_path: &Path, mul_path: &Path) -> IoResult<Skills> {
         let maybe_reader = MulReader::new(index_path, mul_path);
         match maybe_reader {
             Ok(mut reader) => {
