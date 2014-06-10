@@ -14,6 +14,7 @@ pub mod mul_reader;
 
 //pub mod art;
 pub mod skills;
+pub mod hues;
 //pub mod map;
 //pub mod tiledata;
 
@@ -21,4 +22,5 @@ pub mod skills;
 mod tests {
     mod mul_reader;
     mod skills;
+    mod hues;
 }

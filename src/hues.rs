@@ -1,4 +1,4 @@
-use mul_reader;
+/*use mul_reader;
 
 pub struct HueEntry {
     color_table: ~[u16],
@@ -58,4 +58,4 @@ pub fn HueReader(hues_path: &path::Path) -> result::Result<HueReader, ~str> {
             result::Err(error_message)
         }
     }
-}
+}*/
