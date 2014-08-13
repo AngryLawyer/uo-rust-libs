@@ -39,7 +39,7 @@ impl Skills {
                     match reader.read(id) {
                         Ok(record) => {
                             let slice = record.data.slice(1, record.data.len() - 1);
-                            result.push(Skill::new(*record.data.get(0) == 1, slice.to_owned().into_ascii().into_str()))
+                            result.push(Skill::new(record.data[0] == 1, slice.to_vec().into_ascii().into_string()))
                         },
                         _ => {
                             break;

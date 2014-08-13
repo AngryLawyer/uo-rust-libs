@@ -1,4 +1,4 @@
-#![crate_id="uorustlibs#0.0.1"]
+#![crate_name="uorustlibs"]
 #![crate_type = "lib"]
 
 #![desc = "UO data file libraries"]
