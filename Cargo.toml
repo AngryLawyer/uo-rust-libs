@@ -1,0 +1,10 @@
+[package]
+
+name = "uo-rust-libs"
+version = "0.0.1"
+authors = ["Tony Aldridge <tony@angry-lawyer.com>"]
+
+[lib]
+
+name = "uorustlibs"
+path = "src/lib.rs"
