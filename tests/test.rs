@@ -1,4 +1,4 @@
-mod skills {
+/*mod skills {
     use skills;
     use std::path;
     use std::option;
@@ -218,4 +218,4 @@ mod tiledata {
             }
         }
     }
-}
+}*/

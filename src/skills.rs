@@ -15,8 +15,9 @@ impl Skill {
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        let vec = vec!(if self.clickable {1} else {0});
-        vec.append(self.name.to_c_str().as_bytes())
+        let mut vec = vec![if self.clickable {1} else {0}];
+        vec.push_all(self.name.to_c_str().as_bytes());
+        vec
     }
 }
 
@@ -32,7 +33,7 @@ impl Skills {
             Ok(mut reader) => {
 
                 //Unpack the lot
-                let mut result: Vec<Skill> = vec!();
+                let mut result = vec![];
                 let mut id = 0;
         
                 loop {

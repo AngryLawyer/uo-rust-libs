@@ -1,4 +1,4 @@
-use std::io::Truncate;
+/*use std::io::Truncate;
 use mul_reader::{MulReader, MulWriter};
 
 #[test]
@@ -62,4 +62,4 @@ fn test_write_simple_mul() {
         },
         Err(message) => fail!(message)
     }
-}
+}*/
