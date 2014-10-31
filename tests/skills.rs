@@ -7,7 +7,7 @@ fn test_load_skills() {
         Ok(_skills) => {
             //Passed
         },
-        Err(message) => fail!("{}", message)
+        Err(message) => panic!("{}", message)
     }
 }
 

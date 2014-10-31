@@ -1,7 +1,9 @@
-/*use std::io::Truncate;
-use mul_reader::{MulReader, MulWriter};
+extern crate uorustlibs;
+use uorustlibs::mul_reader::{MulReader, MulWriter};
 
-#[test]
+use std::io::Truncate;
+
+/*#[test]
 fn test_load_mulreader() {
     match MulReader::new(&Path::new("./src/tests/testdata/test_skills.idx"), &Path::new("./src/tests/testdata/test_skills.mul")) {
         Ok(_mul_reader) => {
