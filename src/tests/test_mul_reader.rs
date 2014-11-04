@@ -50,7 +50,7 @@ fn test_read_impossible_entry() {
 
 #[test]
 fn test_write_simple_mul() {
-    match MulWriter::new(&Path::new("./bin/test_mul_out.idx"), &Path::new("./bin/test_mul_out.mul"), Truncate) {
+    match MulWriter::new(&Path::new("./target/test_mul_out.idx"), &Path::new("./target/test_mul_out.mul"), Truncate) {
         Ok(mut mul_writer) => {
             let mut out_buffer = "Bakery".to_c_str().as_bytes().to_vec();
             out_buffer.insert(0, 1);
