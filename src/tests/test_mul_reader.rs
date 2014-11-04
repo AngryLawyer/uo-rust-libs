@@ -8,7 +8,7 @@ fn test_load_mulreader() {
         Ok(_mul_reader) => {
             //Passed
         },
-        Err(message) => panic!(message)
+        Err(message) => panic!("{}", message)
     }
 }
 
@@ -26,7 +26,7 @@ fn test_read_first_entry() {
                 }
             }
         },
-        Err(message) => panic!(message)
+        Err(message) => panic!("{}", message)
     }
 }
 
@@ -44,7 +44,7 @@ fn test_read_impossible_entry() {
                 }
             }
         },
-        Err(message) => panic!(message)
+        Err(message) => panic!("{}", message)
     }
 }
 
@@ -58,9 +58,9 @@ fn test_write_simple_mul() {
                 Ok(_) => {
                     //Success
                 },
-                Err(message) => panic!(message)
+                Err(message) => panic!("{}", message)
             }
         },
-        Err(message) => panic!(message)
+        Err(message) => panic!("{}", message)
     }
 }
