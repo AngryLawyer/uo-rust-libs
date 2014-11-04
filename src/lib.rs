@@ -11,4 +11,5 @@ pub mod hues;
 #[cfg(test)]
 mod tests {
     mod test_skills;
+    mod test_mul_reader;
 }
