@@ -22,7 +22,7 @@ impl Skill {
 }
 
 pub struct Skills {
-    skills: Vec<Skill>
+    pub skills: Vec<Skill>
 }
 
 impl Skills {

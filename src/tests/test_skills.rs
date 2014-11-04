@@ -1,9 +1,8 @@
-extern crate uorustlibs;
-use uorustlibs::skills::{Skills, Skill};
+use skills::{Skills, Skill};
 
 #[test]
 fn test_load_skills() {
-    match Skills::new(&Path::new("./tests/testdata/test_skills.idx"), &Path::new("./tests/testdata/test_skills.mul")) {
+    match Skills::new(&Path::new("./testdata/test_skills.idx"), &Path::new("./testdata/test_skills.mul")) {
         Ok(_skills) => {
             //Passed
         },

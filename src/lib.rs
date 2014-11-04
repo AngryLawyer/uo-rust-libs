@@ -7,3 +7,8 @@ pub mod skills;
 pub mod hues;
 //pub mod map;
 //pub mod tiledata;
+
+#[cfg(test)]
+mod tests {
+    mod test_skills;
+}
