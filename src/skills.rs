@@ -1,3 +1,8 @@
+//! Skill objects represent named skills that appear in UO's Skills menu.
+//! They also contain a flag denoting whether they are clicked to activate
+//!
+//! Skills are represented in the muls as `|clickable:u8|name:[u8]|`
+
 use mul_reader::MulReader;
 use std::io::IoResult;
 
@@ -14,6 +19,9 @@ impl Skill {
         }
     }
 
+    /**
+     * Convert a skill back into its canonical mul representation
+     */
     pub fn serialize(&self) -> Vec<u8> {
         let mut vec = vec![if self.clickable {1} else {0}];
         vec.push_all(self.name.to_c_str().as_bytes());

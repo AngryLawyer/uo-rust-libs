@@ -1,17 +1,31 @@
+//! Methods for reading from standardized Mul and Idx files
+//!
+//! IDX files are defined as `|index:u32|size:u32|opt1:u16|opt2:u16|`
+//!
+//! Where index and size represent references into the equivalent Mul file
+//!
+//! Index values of `0xFEFEFEFF` are considered undefined, and should be skipped
+
 use std::num::Bounded;
 use std::io::{File, FileMode, Open, Read, Write, IoResult, SeekSet, OtherIoError, IoError};
 
 static UNDEF_RECORD: u32 = 0xFEFEFEFF;
 static INDEX_SIZE: u32 = 12;
 
+/**
+ * An individual record, read from a Mul file
+ */
 pub struct MulRecord {
-    pub data: Vec<u8>,
-    pub start: u32,
-    pub length: u32,
-    pub opt1: u16,
+    pub data: Vec<u8>, ///Raw Mul data
+    pub start: u32, ///The index position in the Mul of this item
+    pub length: u32, ///The total length in the Mul of this item
+    pub opt1: u16, ///An implementation-specific variable
     pub opt2: u16
 }
 
+/**
+ * Read Mul records out of am idx and a mul
+ */
 pub struct MulReader {
     idx_reader: File,
     data_reader: File
@@ -59,6 +73,9 @@ impl MulReader {
     }
 }
 
+/**
+ * Write new records onto existing Mul and Idx files
+ */
 pub struct MulWriter {
     idx_writer: File,
     data_writer: File
