@@ -7,8 +7,8 @@ use mul_reader::MulReader;
 use std::io::IoResult;
 
 pub struct Skill {
-    clickable: bool,
-    name: String
+    pub clickable: bool,
+    pub name: String
 }
 
 impl Skill {
@@ -22,10 +22,10 @@ impl Skill {
     /**
      * Convert a skill back into its canonical mul representation
      */
-    pub fn serialize(&self) -> Vec<u8> {
+    pub fn serialize(&self) -> IoResult<Vec<u8>> {
         let mut vec = vec![if self.clickable {1} else {0}];
         vec.push_all(self.name.to_c_str().as_bytes());
-        vec
+        Ok(vec)
     }
 }
 

@@ -12,4 +12,5 @@ pub mod hues;
 mod tests {
     mod test_skills;
     mod test_mul_reader;
+    mod test_hues;
 }

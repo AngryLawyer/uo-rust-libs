@@ -16,10 +16,15 @@ static INDEX_SIZE: u32 = 12;
  * An individual record, read from a Mul file
  */
 pub struct MulRecord {
-    pub data: Vec<u8>, ///Raw Mul data
-    pub start: u32, ///The index position in the Mul of this item
-    pub length: u32, ///The total length in the Mul of this item
-    pub opt1: u16, ///An implementation-specific variable
+    ///Raw Mul data
+    pub data: Vec<u8>,
+    ///The index position in the Mul of this item
+    pub start: u32,
+    ///The total length in the Mul of this item
+    pub length: u32,
+    ///An implementation-specific variable
+    pub opt1: u16,
+    ///An implementation-specific variable
     pub opt2: u16
 }
 
