@@ -1,7 +1,13 @@
-use hues::{Hue, HueGroup};
+use hues::{Hue, HueGroup, HueReader};
 
 #[test]
 fn test_load_hues() {
+    let mut reader = HueReader::new(&Path::new("./testdata/test_hues.mul")).ok().expect("Couldn't load test_hues.mul");
+
+    let first = reader.read_hue_group(0).ok().expect("Couldn't read index 0");
+    assert_eq!(first.entries[0].name, "Hoojama".to_string());
+    let second = reader.read_hue_group(1).ok().expect("Couldn't read index 1");
+    assert_eq!(second.entries[0].name, "Zooomj".to_string());
 }
 
 #[test]
