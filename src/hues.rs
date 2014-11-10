@@ -7,6 +7,7 @@
 //! `|color_table:[u16..32]|table_start:u16|table_end:u16|name:[u8..20]|`
 //!
 use std::io::{File, Open, Read, IoResult, SeekSet, MemWriter};
+use utils::MEMWRITER_ERROR;
 
 /**
  * An individual Hue
@@ -22,6 +23,18 @@ pub struct Hue {
     pub name: String
 }
 
+impl Clone for Hue {
+
+    fn clone(&self) -> Hue {
+        Hue {
+            color_table: self.color_table,
+            table_start: self.table_start,
+            table_end: self.table_end,
+            name: self.name.clone()
+        }
+    }
+}
+
 impl Hue {
     pub fn new(color_table: [u16, ..32], table_start: u16, table_end: u16, name: String) -> Hue {
         Hue {
@@ -35,23 +48,23 @@ impl Hue {
     /**
      * Convert a hue back into its canonical mul representation
      */
-    pub fn serialize(&self) -> IoResult<Vec<u8>> {
+    pub fn serialize(&self) -> Vec<u8> {
         let mut writer = MemWriter::new();
         for color in self.color_table.iter() {
-            try!(writer.write_le_u16(*color));
+            writer.write_le_u16(*color).ok().expect(MEMWRITER_ERROR);
         }
-        try!(writer.write_le_u16(self.table_start));
-        try!(writer.write_le_u16(self.table_end));
+        writer.write_le_u16(self.table_start).ok().expect(MEMWRITER_ERROR);
+        writer.write_le_u16(self.table_end).ok().expect(MEMWRITER_ERROR);
 
         let raw_string = self.name.clone().to_c_str();
         
-        try!(writer.write(raw_string.as_bytes()));
-        try!(writer.write(Vec::from_elem(20 - raw_string.len() - 1, 0).as_slice()));
+        writer.write(raw_string.as_bytes()).ok().expect(MEMWRITER_ERROR);
+        writer.write(Vec::from_elem(20 - raw_string.len() - 1, 0).as_slice()).ok().expect(MEMWRITER_ERROR);
 
         let output = writer.unwrap();
         assert_eq!(output.len(), ENTRY_SIZE);
 
-        Ok(output)
+        output
     }
 }
 
@@ -62,6 +75,25 @@ pub struct HueGroup {
     ///Unknown usage
     pub header: u32,
     pub entries: [Hue, ..8]
+}
+
+impl HueGroup {
+
+    pub fn new(header: u32, entries: [Hue, ..8]) -> HueGroup {
+        HueGroup {
+            header: header,
+            entries: entries
+        }
+    }
+
+    pub fn serialize(&self) -> Vec<u8> {
+        let mut writer = MemWriter::new();
+        writer.write_le_u32(self.header).ok().expect(MEMWRITER_ERROR);
+        for hue in self.entries.iter() {
+            writer.write(hue.serialize().as_slice()).ok().expect(MEMWRITER_ERROR);
+        }
+        writer.unwrap()
+    }
 }
 
 //A hue_entry is (32 * 2) + 2 + 2 + 20 bytes = 88 bytes
