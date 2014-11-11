@@ -144,13 +144,23 @@ impl HueReader {
         for idx in range(0u, 32) {
             color_table[idx] = try!(self.data_reader.read_le_u16());
         }
+
+        let table_start = try!(self.data_reader.read_le_u16());
+        let table_end = try!(self.data_reader.read_le_u16());
+
+        let raw_name = try!(self.data_reader.read_exact(20));
+
+        //Slice it down into a normal string size
+        let trimmed_name: Vec<u8> = raw_name.into_iter().take_while(|&element| element != 0).collect();
+        
+        let name = trimmed_name.into_ascii().into_string();
+
         Ok(Hue::new(
             color_table,
-            try!(self.data_reader.read_le_u16()),
-            try!(self.data_reader.read_le_u16()),
-            try!(self.data_reader.read_exact(20)).into_ascii().into_string()
+            table_start,
+            table_end,
+            name
         ))
 
     }
 }
-
