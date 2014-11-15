@@ -8,17 +8,18 @@
 //!
 use std::io::{File, Open, Read, IoResult, SeekSet, MemWriter};
 use utils::MEMWRITER_ERROR;
+use color::Color16;
 
 /**
  * An individual Hue
  */
 pub struct Hue {
     ///32 color values
-    pub color_table: [u16, ..32],
-    ///Unknown usage
-    pub table_start: u16,
-    ///Unknown usage
-    pub table_end: u16,
+    pub color_table: [Color16, ..32],
+    ///The first hue value in the table
+    pub table_start: Color16,
+    ///The last hue value in the table
+    pub table_end: Color16,
     ///A label for the hue
     pub name: String
 }
@@ -36,7 +37,7 @@ impl Clone for Hue {
 }
 
 impl Hue {
-    pub fn new(color_table: [u16, ..32], table_start: u16, table_end: u16, name: String) -> Hue {
+    pub fn new(color_table: [Color16, ..32], table_start: Color16, table_end: Color16, name: String) -> Hue {
         Hue {
             color_table: color_table,
             table_start: table_start,
