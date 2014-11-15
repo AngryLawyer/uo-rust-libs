@@ -153,7 +153,12 @@ impl HueReader {
         //Slice it down into a normal string size
         let trimmed_name: Vec<u8> = raw_name.into_iter().take_while(|&element| element != 0).collect();
         
-        let name = trimmed_name.into_ascii().into_string();
+        let maybe_name = trimmed_name.into_ascii_opt();
+        
+        let name = match maybe_name {
+            Some(name) => name.into_string(),
+            None => "Error".to_string()
+        };
 
         Ok(Hue::new(
             color_table,
