@@ -1,8 +1,9 @@
-//pub mod byte_helpers;
+#![feature(struct_variant)]
+
 pub mod mul_reader;
 pub mod utils;
 
-//pub mod art;
+pub mod art;
 pub mod color;
 pub mod skills;
 pub mod hues;
@@ -14,4 +15,6 @@ mod tests {
     mod test_skills;
     mod test_mul_reader;
     mod test_hues;
+    mod test_art;
+//    mod test_tiledata;
 }

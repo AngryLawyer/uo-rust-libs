@@ -1,16 +1,12 @@
+//! Art objects represent both tiles and static graphics.
+
+use mul_reader::MulReader;
+use std::io::{IoResult, MemReader};
+use color::Color16;
+
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
-use std::result;
-use std::option;
-use std::path;
-use std::uint;
-use std::io;
-use std::vec;
-use mul_reader;
-use byte_helpers;
 
-type pixel = u16;
-
-pub trait Tile {
+/*pub trait Tile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel];
 }
 
@@ -64,19 +60,50 @@ impl Tile for StaticTile {
     }
 }
 
+static expected_tile_size: uint = 2048;*/
+pub const STATIC_OFFSET: u32 = 0x4000;
+
 pub struct RunPair {
     offset: u16,
-    run: ~[pixel]
+    run: Vec<Color16>
 }
 
-pub type Row = ~[RunPair];
+pub type StaticRow = Vec<RunPair>;
 
-static expected_tile_size: uint = 2048;
-
-pub struct TileReader {
-    mul_reader: mul_reader::MulReader
+pub enum Art {
+    Tile { header: u32, image_data: [Color16, ..1936] },
+    Static { size: u16, trigger: u16, width: u16, height: u16, rows: Vec<StaticRow> }
 }
 
+pub struct ArtReader {
+    mul_reader: MulReader
+}
+
+impl ArtReader {
+    pub fn new(index_path: &Path, mul_path: &Path) -> IoResult<ArtReader> {
+        let mul_reader = try!(MulReader::new(index_path, mul_path));
+        Ok(ArtReader {
+            mul_reader: mul_reader
+        })
+    }
+
+    pub fn read(&mut self, id: u32) -> IoResult<Art> {
+        let raw = try!(self.mul_reader.read(id));
+        let mut reader = MemReader::new(raw.data);
+        if id >= STATIC_OFFSET {
+            //It's a static, so deal with accordingly
+            let size = reader.read_le_u16();
+            let trigger = reader.read_le_u16();
+
+        } else {
+            //It's a map tile
+            let header = reader.read_le_u32();
+        }
+        panic!("Not yet implemented");
+    }
+}
+
+/*
 impl TileReader {
 
     pub fn read_tile(&self, id: uint) -> option::Option<MapTile> {
@@ -319,4 +346,4 @@ pub fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make 
 
         vec::concat(rows)
     ]);
-}*/
+}*/*/
