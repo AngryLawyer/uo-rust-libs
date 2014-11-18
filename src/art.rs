@@ -1,7 +1,7 @@
 //! Art objects represent both tiles and static graphics.
 
 use mul_reader::MulReader;
-use std::io::{IoResult, MemReader};
+use std::io::{IoResult, MemReader, IoError, OtherIoError};
 use color::Color16;
 
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
@@ -59,8 +59,8 @@ impl Tile for StaticTile {
         image 
     }
 }
-
-static expected_tile_size: uint = 2048;*/
+*/
+pub const TILE_SIZE: u32 = 2048;
 pub const STATIC_OFFSET: u32 = 0x4000;
 
 pub struct RunPair {
@@ -70,9 +70,22 @@ pub struct RunPair {
 
 pub type StaticRow = Vec<RunPair>;
 
+pub struct Tile {
+    header: u32,
+    image_data: [Color16, ..1022] 
+}
+
+pub struct Static { 
+    size: u16,
+    trigger: u16,
+    width: u16,
+    height: u16,
+    rows: Vec<StaticRow> 
+}
+
 pub enum Art {
-    Tile { header: u32, image_data: [Color16, ..1936] },
-    Static { size: u16, trigger: u16, width: u16, height: u16, rows: Vec<StaticRow> }
+    TileWrapper(Tile),
+    StaticWrapper(Static)
 }
 
 pub struct ArtReader {
@@ -92,14 +105,29 @@ impl ArtReader {
         let mut reader = MemReader::new(raw.data);
         if id >= STATIC_OFFSET {
             //It's a static, so deal with accordingly
-            let size = reader.read_le_u16();
-            let trigger = reader.read_le_u16();
-
+            let size = try!(reader.read_le_u16());
+            let trigger = try!(reader.read_le_u16());
+            panic!("Not yet implemented");
         } else {
             //It's a map tile
-            let header = reader.read_le_u32();
+            //TODO: Assert the length of this
+            if raw.length != TILE_SIZE {
+                Err(IoError{
+                    kind: OtherIoError,
+                    desc: "Invalid tile size",
+                    detail: Some(format!("Got tile size of {}, expected {}", raw.length, TILE_SIZE))
+                })
+            } else {
+                let header = try!(reader.read_le_u32());
+                let body = [0, ..1022];
+                for &mut pixel in body.iter() {
+                    pixel = try!(reader.read_le_u16());
+                }
+                Ok(TileWrapper(Tile {
+                    header: header, image_data: body
+                }))
+            }
         }
-        panic!("Not yet implemented");
     }
 }
 
