@@ -10,11 +10,6 @@ use color::Color16;
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel];
 }
 
-pub struct MapTile {
-    header: u32,
-    raw_image: ~[pixel]
-}
-
 impl Tile for MapTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
@@ -30,14 +25,6 @@ impl Tile for MapTile {
         };
         image
     }
-}
-
-pub struct StaticTile {
-    data_size: u16,
-    trigger: u16,
-    width: u16,
-    height: u16,
-    raw_image_rows: ~[Row]
 }
 
 impl Tile for StaticTile {
@@ -64,28 +51,28 @@ pub const TILE_SIZE: u32 = 2048;
 pub const STATIC_OFFSET: u32 = 0x4000;
 
 pub struct RunPair {
-    offset: u16,
-    run: Vec<Color16>
+    pub offset: u16,
+    pub run: Vec<Color16>
 }
 
 pub type StaticRow = Vec<RunPair>;
 
 pub struct Tile {
-    header: u32,
-    image_data: [Color16, ..1022] 
+    pub header: u32,
+    pub image_data: [Color16, ..1022]
 }
 
 pub struct Static { 
-    size: u16,
-    trigger: u16,
-    width: u16,
-    height: u16,
-    rows: Vec<StaticRow> 
+    pub size: u16,
+    pub trigger: u16,
+    pub width: u16,
+    pub height: u16,
+    pub rows: Vec<StaticRow>
 }
 
-pub enum Art {
-    TileWrapper(Tile),
-    StaticWrapper(Static)
+pub enum TileOrStatic {
+    Tile(Tile),
+    Static(Static)
 }
 
 pub struct ArtReader {
@@ -100,13 +87,13 @@ impl ArtReader {
         })
     }
 
-    pub fn read(&mut self, id: u32) -> IoResult<Art> {
+    pub fn read(&mut self, id: u32) -> IoResult<TileOrStatic> {
         let raw = try!(self.mul_reader.read(id));
         let mut reader = MemReader::new(raw.data);
         if id >= STATIC_OFFSET {
             //It's a static, so deal with accordingly
-            let size = try!(reader.read_le_u16());
-            let trigger = try!(reader.read_le_u16());
+            //let size = try!(reader.read_le_u16());
+            //let trigger = try!(reader.read_le_u16());
             panic!("Not yet implemented");
         } else {
             //It's a map tile
@@ -119,11 +106,11 @@ impl ArtReader {
                 })
             } else {
                 let header = try!(reader.read_le_u32());
-                let body = [0, ..1022];
-                for &mut pixel in body.iter() {
-                    pixel = try!(reader.read_le_u16());
+                let mut body = [0, ..1022];
+                for idx in range(0, 1022) {
+                    body[idx] = try!(reader.read_le_u16());
                 }
-                Ok(TileWrapper(Tile {
+                Ok(TileOrStatic::Tile(Tile {
                     header: header, image_data: body
                 }))
             }

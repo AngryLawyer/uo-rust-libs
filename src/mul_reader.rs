@@ -6,7 +6,7 @@
 //!
 //! Index values of `0xFEFEFEFF` are considered undefined, and should be skipped
 
-use std::num::Bounded;
+use std::num::Int;
 use std::io::{File, FileMode, Open, Read, Write, IoResult, SeekSet, OtherIoError, IoError};
 
 static UNDEF_RECORD: u32 = 0xFEFEFEFF;
@@ -52,7 +52,7 @@ impl MulReader {
         //Wind the idx reader to the index position
         try!(self.idx_reader.seek((index * INDEX_SIZE) as i64, SeekSet));
         let start = try!(self.idx_reader.read_le_u32());
-        if start == UNDEF_RECORD || start == Bounded::max_value() { 
+        if start == UNDEF_RECORD || start == Int::max_value() {
             //Check for empty cell
             Err(IoError {
                 kind: OtherIoError,

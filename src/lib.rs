@@ -1,5 +1,3 @@
-#![feature(struct_variant)]
-
 pub mod mul_reader;
 pub mod utils;
 
