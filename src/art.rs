@@ -2,15 +2,11 @@
 
 use mul_reader::MulReader;
 use std::io::{IoResult, MemReader, IoError, OtherIoError};
-use color::Color16;
+use color::{Color16, Color32};
 
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
 
-/*pub trait Tile {
-    fn with_transparency(&self, transparency_color: pixel) -> ~[pixel];
-}
-
-impl Tile for MapTile {
+/*impl Tile for MapTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
         let mut data_source = byte_helpers::Buffer::new(self.raw_image.clone());
@@ -47,6 +43,11 @@ impl Tile for StaticTile {
     }
 }
 */
+
+pub trait Art {
+    fn to_32bit(&self) -> Vec<Color32>;
+}
+
 pub const TILE_SIZE: u32 = 2048;
 pub const STATIC_OFFSET: u32 = 0x4000;
 
@@ -60,6 +61,24 @@ pub type StaticRow = Vec<RunPair>;
 pub struct Tile {
     pub header: u32,
     pub image_data: [Color16, ..1022]
+}
+
+impl Art for Tile {
+    fn to_32bit(&self) -> Vec<Color32> {
+        let mut image = vec![];
+
+        /*let mut data_source = byte_helpers::Buffer::new(self.raw_image.clone());
+
+        for uint::range(0, 44) |i| {
+            
+            let slice_size: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
+            image.grow((22 - (slice_size / 2)), &transparency_color);
+            let slice_data = data_source.read_items(slice_size);
+            image.push_all(slice_data);
+            image.grow((22 - (slice_size / 2)), &transparency_color);
+        };*/
+        image
+    }
 }
 
 pub struct Static { 
