@@ -10,6 +10,7 @@ pub mod hues;
 
 #[cfg(test)]
 mod tests {
+    mod test_color;
     mod test_skills;
     mod test_mul_reader;
     mod test_hues;
