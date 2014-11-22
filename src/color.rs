@@ -15,7 +15,7 @@ impl Color for Color16 {
     }
 
     fn from_rgba(r: u8, g: u8, b: u8, _a: u8) -> Color16 {
-        ((r as u16 & 0x1f) << 10) + ((g as u16 & 0x1f) << 5) + ((b as u16 & 0x1f) << 8)
+        ((r as u16 >> 3) << 10) + ((g as u16 >> 3) << 5) + (b as u16 >> 3)
     }
 }
 
@@ -29,6 +29,6 @@ impl Color for Color32 {
     }
 
     fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> Color32 {
-        ((r as u32 & 0xff) << 24) + ((g as u32 & 0xff) << 16) + ((b as u32 & 0xff) << 8) + (a as u32 & 0xff)
+        ((r as u32) << 24) + ((g as u32) << 16) + ((b as u32) << 8) + (a as u32)
     }
 }
