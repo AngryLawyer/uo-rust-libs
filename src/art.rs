@@ -2,7 +2,8 @@
 
 use mul_reader::MulReader;
 use std::io::{IoResult, MemReader, IoError, OtherIoError};
-use color::{Color16, Color32};
+use color::{Color, Color16, Color32};
+use utils::DataBuffer;
 
 //NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
 
@@ -45,7 +46,12 @@ impl Tile for StaticTile {
 */
 
 pub trait Art {
-    fn to_32bit(&self) -> Vec<Color32>;
+    /**
+     * Convert to a 32bit array
+     *
+     * Returns (width, height, colors)
+     */
+    fn to_32bit(&self) -> (u32, u32, Vec<Color32>);
 }
 
 pub const TILE_SIZE: u32 = 2048;
@@ -64,20 +70,27 @@ pub struct Tile {
 }
 
 impl Art for Tile {
-    fn to_32bit(&self) -> Vec<Color32> {
-        let mut image = vec![];
+    fn to_32bit(&self) -> (u32, u32, Vec<Color32>) {
+        let mut image: Vec<Color32> = vec![];
 
-        /*let mut data_source = byte_helpers::Buffer::new(self.raw_image.clone());
+        let mut reader = DataBuffer::new(&self.image_data);
 
-        for uint::range(0, 44) |i| {
+        for i in range(0, 44) {
             
-            let slice_size: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
-            image.grow((22 - (slice_size / 2)), &transparency_color);
-            let slice_data = data_source.read_items(slice_size);
-            image.push_all(slice_data);
-            image.grow((22 - (slice_size / 2)), &transparency_color);
-        };*/
-        image
+            let slice_size = if (i >= 22) {
+                (44 - i) * 2
+            } else {
+                (i + 1) * 2
+            };
+
+            image.grow((22 - (slice_size / 2)), 0);
+            for pixel_idx in range(0, slice_size) {
+                let (r, g, b, a) = reader.read().to_rgba();
+                image.push(Color::from_rgba(r, g, b, a));
+            }
+            image.grow((22 - (slice_size / 2)), 0);
+        };
+        (44, 44, image)
     }
 }
 
@@ -116,7 +129,6 @@ impl ArtReader {
             panic!("Not yet implemented");
         } else {
             //It's a map tile
-            //TODO: Assert the length of this
             if raw.length != TILE_SIZE {
                 Err(IoError{
                     kind: OtherIoError,
