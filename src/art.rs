@@ -147,6 +147,18 @@ impl ArtReader {
             }
         }
     }
+
+    pub fn read_tile(&mut self, id: u32) -> IoResult<Tile> {
+        match self.read(id) {
+            Ok(TileOrStatic::Tile(tile)) => Ok(tile),
+            Ok(_) => Err(IoError {
+                kind: OtherIoError,
+                desc: "Index out of bounts",
+                detail: None
+            }),
+            Err(e) => Err(e)
+        }
+    }
 }
 
 /*
