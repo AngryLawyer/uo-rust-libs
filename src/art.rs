@@ -77,14 +77,14 @@ impl Art for Tile {
 
         for i in range(0, 44) {
             
-            let slice_size = if (i >= 22) {
+            let slice_size = if i >= 22 {
                 (44 - i) * 2
             } else {
                 (i + 1) * 2
             };
 
             image.grow((22 - (slice_size / 2)), 0);
-            for pixel_idx in range(0, slice_size) {
+            for _pixel_idx in range(0, slice_size) {
                 let (r, g, b, a) = reader.read().to_rgba();
                 image.push(Color::from_rgba(r, g, b, a));
             }
@@ -258,19 +258,19 @@ pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) -> result::Res
             while (reader.eof() != true) {
                 let item: option::Option<mul_reader::MulRecord> = reader.read_bytes();
                 if option::is_some(&item) {
-                    let unwrapped: mul_reader::MulRecord = option::unwrap(item);
-                    //let record_header = byte_helpers::bytes_to_le_uint(vec::slice(unwrapped.data, 0, 3));
+                    let to_innerped: mul_reader::MulRecord = option::to_inner(item);
+                    //let record_header = byte_helpers::bytes_to_le_uint(vec::slice(to_innerped.data, 0, 3));
 
                     if (index < 0x4000) {
-                        let maybe_map_tile: option::Option<MapTile> = parse_map_tile(unwrapped);
+                        let maybe_map_tile: option::Option<MapTile> = parse_map_tile(to_innerped);
                         if option::is_some(&maybe_map_tile) {
-                            let tuple = (index, option::unwrap(maybe_map_tile));
+                            let tuple = (index, option::to_inner(maybe_map_tile));
                             map_tiles.push(tuple);
                         }
                     } else if (index < 0x8000){
-                        let maybe_static_tile: option::Option<StaticTile> = parse_static_tile(unwrapped);
+                        let maybe_static_tile: option::Option<StaticTile> = parse_static_tile(to_innerped);
                         if option::is_some(&maybe_static_tile) {
-                            let tuple = (index, option::unwrap(maybe_static_tile));
+                            let tuple = (index, option::to_inner(maybe_static_tile));
                             static_tiles.push(tuple);
                         }
                     }

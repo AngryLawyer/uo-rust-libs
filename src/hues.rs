@@ -62,7 +62,7 @@ impl Hue {
         writer.write(raw_string.as_bytes()).ok().expect(MEMWRITER_ERROR);
         writer.write(Vec::from_elem(20 - raw_string.len() - 1, 0).as_slice()).ok().expect(MEMWRITER_ERROR);
 
-        let output = writer.unwrap();
+        let output = writer.into_inner();
         assert_eq!(output.len(), ENTRY_SIZE);
 
         output
@@ -93,7 +93,7 @@ impl HueGroup {
         for hue in self.entries.iter() {
             writer.write(hue.serialize().as_slice()).ok().expect(MEMWRITER_ERROR);
         }
-        writer.unwrap()
+        writer.into_inner()
     }
 }
 
