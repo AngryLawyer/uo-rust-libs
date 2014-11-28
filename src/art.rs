@@ -5,26 +5,7 @@ use std::io::{IoResult, MemReader, IoError, OtherIoError};
 use color::{Color, Color16, Color32};
 use utils::DataBuffer;
 
-//NOTE: apparently, when looking up statics by ID, they're offset by 0x4000.
-
-/*impl Tile for MapTile {
-    fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
-        let mut image: ~[pixel] = ~[];
-        let mut data_source = byte_helpers::Buffer::new(self.raw_image.clone());
-
-        for uint::range(0, 44) |i| {
-            
-            let slice_size: uint = if (i >= 22) {(44 - i) * 2} else {(i + 1) * 2};
-            image.grow((22 - (slice_size / 2)), &transparency_color);
-            let slice_data = data_source.read_items(slice_size);
-            image.push_all(slice_data);
-            image.grow((22 - (slice_size / 2)), &transparency_color);
-        };
-        image
-    }
-}
-
-impl Tile for StaticTile {
+/*impl Tile for StaticTile {
     fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
         let mut image: ~[pixel] = ~[];
 
@@ -124,9 +105,19 @@ impl ArtReader {
         let mut reader = MemReader::new(raw.data);
         if id >= STATIC_OFFSET {
             //It's a static, so deal with accordingly
-            //let size = try!(reader.read_le_u16());
-            //let trigger = try!(reader.read_le_u16());
-            panic!("Not yet implemented");
+            let size = try!(reader.read_le_u16());
+            let trigger = try!(reader.read_le_u16());
+            let width = try!(reader.read_le_u16());
+            let height = try!(reader.read_le_u16());
+            if (width == 0 || height >= 1024 || height == 0 || height >= 1024) {
+                Err(IoError{
+                    kind: OtherIoError,
+                    desc: "Invalid image dimensions",
+                    detail: Some(format!("Got invalid width and height of {}, {}", width, height))
+                })
+            } else {
+                panic!("Not yet implemented");
+            }
         } else {
             //It's a map tile
             if raw.length != TILE_SIZE {
@@ -153,7 +144,19 @@ impl ArtReader {
             Ok(TileOrStatic::Tile(tile)) => Ok(tile),
             Ok(_) => Err(IoError {
                 kind: OtherIoError,
-                desc: "Index out of bounts",
+                desc: "Index out of bounds",
+                detail: None
+            }),
+            Err(e) => Err(e)
+        }
+    }
+
+    pub fn read_static(&mut self, id: u32)-> IoResult<Static> {
+        match self.read(id + STATIC_OFFSET) {
+            Ok(TileOrStatic::Static(stat)) => Ok(stat),
+            Ok(_) => Err(IoError {
+                kind: OtherIoError,
+                desc: "Index out of bounds",
                 detail: None
             }),
             Err(e) => Err(e)
@@ -163,27 +166,6 @@ impl ArtReader {
 
 /*
 impl TileReader {
-
-    pub fn read_tile(&self, id: uint) -> option::Option<MapTile> {
-        match self.mul_reader.read(id) {
-            option::Some(record) => {
-                if (record.data.len() != expected_tile_size) {
-                    io::println(fmt!("%u BAD SIZE AT %u VERSUS %u", id, record.data.len(), expected_tile_size));
-                    return option::None;
-                }
-
-                let mut data_source = byte_helpers::Buffer::new(record.data);
-                let record_header = byte_helpers::bytes_to_le_uint(data_source.read_items(4));
-                let raw_image: ~[pixel] = byte_helpers::u8vec_to_u16vec(data_source.read_items(1012 * 2));
-
-                option::Some(MapTile{
-                    header: record_header as u32,
-                    raw_image: raw_image 
-                })
-            },
-            option::None => option::None
-        }
-    }
 
     pub fn read_static(&self, id: uint) -> option::Option<StaticTile> {
         match self.mul_reader.read(id) {    
