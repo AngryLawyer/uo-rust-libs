@@ -1,7 +1,7 @@
 //! Art objects represent both tiles and static graphics.
 
 use mul_reader::MulReader;
-use std::io::{IoResult, MemReader, IoError, OtherIoError};
+use std::io::{IoResult, MemReader, IoError, OtherIoError, SeekStyle};
 use color::{Color, Color16, Color32};
 use utils::DataBuffer;
 
@@ -109,14 +109,56 @@ impl ArtReader {
             let trigger = try!(reader.read_le_u16());
             let width = try!(reader.read_le_u16());
             let height = try!(reader.read_le_u16());
-            if (width == 0 || height >= 1024 || height == 0 || height >= 1024) {
+            if width == 0 || height >= 1024 || height == 0 || height >= 1024 {
                 Err(IoError{
                     kind: OtherIoError,
                     desc: "Invalid image dimensions",
                     detail: Some(format!("Got invalid width and height of {}, {}", width, height))
                 })
             } else {
-                panic!("Not yet implemented");
+                //Load our offset table
+                let mut offset_table = vec![];
+                for _index in range(0, height) {
+                    offset_table.push(try!(reader.read_le_u16()));
+                }
+    
+                let data_start_pos = try!(reader.tell());
+                let mut rows = vec![];
+
+                for &offset in offset_table.iter() {
+                    try!(reader.seek((data_start_pos + offset as u64 * 2) as i64, SeekStyle::SeekSet));
+                    let mut current_row_width = 0;
+                    let mut row = vec![];
+
+                    loop {
+                        let x_offset = try!(reader.read_le_u16());
+                        let run_length = try!(reader.read_le_u16());
+                        if x_offset + run_length == 0 {
+                            break
+                        } else {
+                            let mut run = vec![];
+                            for _index in range(0, run_length) {
+                                run.push(try!(reader.read_le_u16()));
+                            }
+
+                            row.push(RunPair {
+                                offset: x_offset,
+                                run: run
+                            });
+                            current_row_width += x_offset + run_length;
+                            assert!(current_row_width < width);
+                        }
+                    }
+                    rows.push(row);
+                }
+
+                Ok(TileOrStatic::Static(Static {
+                    size: size,
+                    trigger: trigger,
+                    width: width,
+                    height: height,
+                    rows: rows
+                }))
             }
         } else {
             //It's a map tile
@@ -227,55 +269,6 @@ impl TileReader {
     }
 }
 
-pub fn TileReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<TileReader, ~str> {
-    match mul_reader::MulReader::new(index_path, mul_path) {
-        result::Err(message) => result::Err(message),
-        result::Ok(mul_reader) => {
-            result::Ok(TileReader{
-                mul_reader: mul_reader
-            })
-        }
-    }
-}
-
-/*pub fn load_tiles(root_path: ~str) -> (~[(uint, MapTile)], ~[(uint, StaticTile)]) { //TODO: Find a better return type for this
-    match mul_reader::reader(root_path, ~"artidx.mul", ~"art.mul") {
-        result::Err(message) => {
-            io::println(fmt!("Error reading art tiles - %s", message));
-            fail
-        },
-        result::Ok(reader) => {
-            let mut map_tiles: ~[(uint, MapTile)] = ~[];
-            let mut static_tiles: ~[(uint, StaticTile)] = ~[];
-
-            let mut index:uint = 0;
-            while (reader.eof() != true) {
-                let item: option::Option<mul_reader::MulRecord> = reader.read_bytes();
-                if option::is_some(&item) {
-                    let to_innerped: mul_reader::MulRecord = option::to_inner(item);
-                    //let record_header = byte_helpers::bytes_to_le_uint(vec::slice(to_innerped.data, 0, 3));
-
-                    if (index < 0x4000) {
-                        let maybe_map_tile: option::Option<MapTile> = parse_map_tile(to_innerped);
-                        if option::is_some(&maybe_map_tile) {
-                            let tuple = (index, option::to_inner(maybe_map_tile));
-                            map_tiles.push(tuple);
-                        }
-                    } else if (index < 0x8000){
-                        let maybe_static_tile: option::Option<StaticTile> = parse_static_tile(to_innerped);
-                        if option::is_some(&maybe_static_tile) {
-                            let tuple = (index, option::to_inner(maybe_static_tile));
-                            static_tiles.push(tuple);
-                        }
-                    }
-                }
-                index += 1;
-            }
-
-            (map_tiles, static_tiles)
-        }
-    }
-}
 
 fn parse_static_tile(record: mul_reader::MulRecord) -> option::Option<StaticTile> {
 
@@ -386,4 +379,4 @@ pub fn to_bitmap(width: u32, height: u32, data: ~[u16]) -> ~[u8] { //TODO: Make 
 
         vec::concat(rows)
     ]);
-}*/*/
+}*/
