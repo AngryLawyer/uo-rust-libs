@@ -75,6 +75,30 @@ impl Art for Tile {
     }
 }
 
+impl Art for Static {
+    fn to_32bit(&self) -> (u32, u32, Vec<Color32>) {
+        let mut image: Vec<Color32> = vec![];
+
+        for row in self.rows.iter() {
+            let mut current_width = 0;
+            for run_pair in row.iter() {
+                image.grow(run_pair.offset as uint, 0);
+                for pixel in run_pair.run.iter() {
+                    let (r, g, b, a) = pixel.to_rgba();
+                    image.push(Color::from_rgba(r, g, b, a));
+                }
+                current_width += run_pair.offset as uint + run_pair.run.len();
+                assert!(current_width <= self.width as uint)
+            }
+            if current_width < self.width as uint {
+                image.grow((self.width as uint) - current_width, 0)
+            }
+        };
+
+        (self.width as u32, self.height as u32, image)
+    }
+}
+
 pub struct Static { 
     pub size: u16,
     pub trigger: u16,
@@ -146,7 +170,7 @@ impl ArtReader {
                                 run: run
                             });
                             current_row_width += x_offset + run_length;
-                            assert!(current_row_width < width);
+                            //assert!(current_row_width < width);
                         }
                     }
                     rows.push(row);
