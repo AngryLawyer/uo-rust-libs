@@ -89,6 +89,11 @@ impl Art for Static {
     }
 
     fn serialize(&self) -> Vec<u8> {
+        let mut writer = vec![];
+        writer.write_le_u16(self.size).ok().expect(MEMWRITER_ERROR);
+        writer.write_le_u16(self.trigger).ok().expect(MEMWRITER_ERROR);
+        writer.write_le_u16(self.width).ok().expect(MEMWRITER_ERROR);
+        writer.write_le_u16(self.height).ok().expect(MEMWRITER_ERROR);
         unimplemented!();
     }
 }
