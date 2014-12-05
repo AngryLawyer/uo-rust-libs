@@ -13,3 +13,9 @@ fn test_load_tile() {
         Err(err) => panic!("{}", err)
     };
 }
+
+#[test]
+fn dump_art() {
+    use mul_reader::MulWriter;
+    let mul_writer = MulWriter::new(&Path::new("./testdata/test_art.idx"), &Path::new("./testdata/test_art.mul")).ok().expect("Can't open files for writing");
+}

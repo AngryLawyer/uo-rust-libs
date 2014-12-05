@@ -4,27 +4,7 @@ use mul_reader::MulReader;
 use std::io::{IoResult, MemReader, IoError, OtherIoError, SeekStyle};
 use color::{Color, Color16, Color32};
 use utils::DataBuffer;
-
-/*impl Tile for StaticTile {
-    fn with_transparency(&self, transparency_color: pixel) -> ~[pixel] {
-        let mut image: ~[pixel] = ~[];
-
-        for self.raw_image_rows.iter().advance |row| {
-            let mut current_width = 0;
-            for row.iter().advance |run_pair| {
-                image.grow(run_pair.offset as uint, &transparency_color);
-                image.push_all(run_pair.run);
-                current_width += run_pair.offset as uint + run_pair.run.len();
-                assert!(current_width <= self.width as uint)
-            }
-            if current_width < self.width as uint {
-                image.grow((self.width as uint) - current_width, &transparency_color)
-            }
-        }
-        image 
-    }
-}
-*/
+use utils::MEMWRITER_ERROR;
 
 pub trait Art {
     /**
@@ -33,6 +13,7 @@ pub trait Art {
      * Returns (width, height, colors)
      */
     fn to_32bit(&self) -> (u32, u32, Vec<Color32>);
+    fn serialize(&self) -> Vec<u8>;
 }
 
 pub const TILE_SIZE: u32 = 2048;
@@ -73,6 +54,15 @@ impl Art for Tile {
         };
         (44, 44, image)
     }
+
+    fn serialize(&self) -> Vec<u8> {
+        let mut writer = vec![];
+        writer.write_le_u32(self.header).ok().expect(MEMWRITER_ERROR);
+        for &pixel in self.image_data.iter() {
+            writer.write_le_u16(pixel).ok().expect(MEMWRITER_ERROR);
+        }
+        writer
+    }
 }
 
 impl Art for Static {
@@ -96,6 +86,10 @@ impl Art for Static {
         };
 
         (self.width as u32, self.height as u32, image)
+    }
+
+    fn serialize(&self) -> Vec<u8> {
+        unimplemented!();
     }
 }
 
