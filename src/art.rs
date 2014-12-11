@@ -94,6 +94,18 @@ impl Art for Static {
         writer.write_le_u16(self.trigger).ok().expect(MEMWRITER_ERROR);
         writer.write_le_u16(self.width).ok().expect(MEMWRITER_ERROR);
         writer.write_le_u16(self.height).ok().expect(MEMWRITER_ERROR);
+
+        //TODO: Generate a lookup table
+
+        //Write our rows
+        for row in self.rows.iter() {
+            for pair in row.iter() {
+                writer.write(pair.serialize());
+            }
+            //We write a "newline" after each row
+            writer.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
+            writer.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
+        }
         unimplemented!();
     }
 }
