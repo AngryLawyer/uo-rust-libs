@@ -95,18 +95,33 @@ impl Art for Static {
         writer.write_le_u16(self.width).ok().expect(MEMWRITER_ERROR);
         writer.write_le_u16(self.height).ok().expect(MEMWRITER_ERROR);
 
-        //TODO: Generate a lookup table
+        let mut rows = vec![];
 
         //Write our rows
         for row in self.rows.iter() {
+            let mut row = vec![];
             for pair in row.iter() {
-                writer.write(pair.serialize());
+                row.write(pair.serialize());
             }
             //We write a "newline" after each row
-            writer.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
-            writer.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
+            row.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
+            row.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
+            rows.push(row);
         }
-        unimplemented!();
+
+        let mut lookup_table = vec![];
+        let mut last_position = 8u;
+        //Generate a lookup table
+        for row in rows.iter() {
+            lookup_table.write_le_u16(last_position as u16);
+            last_position += row.len();
+        }
+        writer.write(lookup_table.as_slice());
+        for row in rows.iter() {
+            writer.write(row.as_slice());
+        }
+
+        writer
     }
 }
 
