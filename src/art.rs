@@ -24,6 +24,19 @@ pub struct RunPair {
     pub run: Vec<Color16>
 }
 
+impl RunPair {
+    fn serialize(&self) -> Vec<u8> {
+        let mut writer = vec![];
+
+        writer.write_le_u16(self.offset).ok().expect(MEMWRITER_ERROR);
+        writer.write_le_u16(self.run.len() as u16 * 2).ok().expect(MEMWRITER_ERROR);
+        for &color in self.run.iter() {
+            writer.write_le_u16(color).ok().expect(MEMWRITER_ERROR);
+        }
+        writer
+    }
+}
+
 pub type StaticRow = Vec<RunPair>;
 
 pub struct Tile {
@@ -99,26 +112,26 @@ impl Art for Static {
 
         //Write our rows
         for row in self.rows.iter() {
-            let mut row = vec![];
+            let mut out = vec![];
             for pair in row.iter() {
-                row.write(pair.serialize());
+                out.write(pair.serialize().as_slice()).ok().expect(MEMWRITER_ERROR);
             }
-            //We write a "newline" after each row
-            row.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
-            row.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
-            rows.push(row);
+            //We write a "newline" after each out
+            out.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
+            out.write_le_u16(0).ok().expect(MEMWRITER_ERROR);
+            rows.push(out);
         }
 
         let mut lookup_table = vec![];
         let mut last_position = 8u;
         //Generate a lookup table
         for row in rows.iter() {
-            lookup_table.write_le_u16(last_position as u16);
+            lookup_table.write_le_u16(last_position as u16).ok().expect(MEMWRITER_ERROR);
             last_position += row.len();
         }
-        writer.write(lookup_table.as_slice());
+        writer.write(lookup_table.as_slice()).ok().expect(MEMWRITER_ERROR);
         for row in rows.iter() {
-            writer.write(row.as_slice());
+            writer.write(row.as_slice()).ok().expect(MEMWRITER_ERROR);
         }
 
         writer
