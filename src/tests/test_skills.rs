@@ -1,4 +1,5 @@
 use skills::{Skills, Skill};
+use std::path::Path;
 
 #[test]
 fn test_load_skills() {

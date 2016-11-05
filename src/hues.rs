@@ -6,9 +6,14 @@
 //! Individual HueEntries are defined as
 //! `|color_table:[u16..32]|table_start:u16|table_end:u16|name:[u8..20]|`
 //!
-use std::io::{File, Open, Read, IoResult, SeekSet, MemWriter};
+use std::io::{Cursor, Result, SeekFrom, Seek, Read, Write};
+use std::fs::{File};
+use std::path::Path;
+use std::str::{from_utf8};
+use std::ascii::AsciiExt;
 use utils::MEMWRITER_ERROR;
 use color::Color16;
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 /**
  * An individual Hue
@@ -50,22 +55,21 @@ impl Hue {
      * Convert a hue back into its canonical mul representation
      */
     pub fn serialize(&self) -> Vec<u8> {
-        let mut writer = MemWriter::new();
+        let mut writer = vec![];
         for color in self.color_table.iter() {
-            writer.write_le_u16(*color).ok().expect(MEMWRITER_ERROR);
+            writer.write_u16::<LittleEndian>(*color).ok().expect(MEMWRITER_ERROR);
         }
-        writer.write_le_u16(self.table_start).ok().expect(MEMWRITER_ERROR);
-        writer.write_le_u16(self.table_end).ok().expect(MEMWRITER_ERROR);
+        writer.write_u16::<LittleEndian>(self.table_start).ok().expect(MEMWRITER_ERROR);
+        writer.write_u16::<LittleEndian>(self.table_end).ok().expect(MEMWRITER_ERROR);
 
-        let raw_string = self.name.clone().to_c_str();
+        //let raw_string = CString::new(self.name.clone()).unwrap();
         
-        writer.write(raw_string.as_bytes()).ok().expect(MEMWRITER_ERROR);
-        writer.write(Vec::from_elem(20 - raw_string.len() - 1, 0).as_slice()).ok().expect(MEMWRITER_ERROR);
+        writer.write(self.name.as_bytes()).ok().expect(MEMWRITER_ERROR);
+        writer.write(vec![0; 20 - self.name.len()].as_slice()).ok().expect(MEMWRITER_ERROR);
 
-        let output = writer.into_inner();
-        assert_eq!(output.len(), ENTRY_SIZE);
+        assert_eq!(writer.len(), ENTRY_SIZE as usize);
 
-        output
+        writer 
     }
 }
 
@@ -88,8 +92,8 @@ impl HueGroup {
     }
 
     pub fn serialize(&self) -> Vec<u8> {
-        let mut writer = MemWriter::new();
-        writer.write_le_u32(self.header).ok().expect(MEMWRITER_ERROR);
+        let mut writer = Cursor::new(vec![]);
+        writer.write_u32::<LittleEndian>(self.header).ok().expect(MEMWRITER_ERROR);
         for hue in self.entries.iter() {
             writer.write(hue.serialize().as_slice()).ok().expect(MEMWRITER_ERROR);
         }
@@ -98,17 +102,17 @@ impl HueGroup {
 }
 
 //A hue_entry is (32 * 2) + 2 + 2 + 20 bytes = 88 bytes
-const ENTRY_SIZE: uint = 88;
+const ENTRY_SIZE: u32 = 88;
 //8 entries to a group, plus a 4 byte header. 708 bytes.
-const GROUP_SIZE: uint = (ENTRY_SIZE * 8) + 4;
+const GROUP_SIZE: u32 = (ENTRY_SIZE * 8) + 4;
 
 pub struct HueReader {
     data_reader: File
 }
 
 impl HueReader {
-    pub fn new(hues_path: &Path) -> IoResult<HueReader> {
-        let data_reader = try!(File::open_mode(hues_path, Open, Read));
+    pub fn new(hues_path: &Path) -> Result<HueReader> {
+        let data_reader = try!(File::open(hues_path));
 
         Ok(HueReader {
             data_reader: data_reader
@@ -118,10 +122,10 @@ impl HueReader {
     /**
      * Read the given indexed group
      */
-    pub fn read_hue_group(&mut self, id: u32) -> IoResult<HueGroup> {
-        try!(self.data_reader.seek((id as uint * GROUP_SIZE) as i64, SeekSet));
+    pub fn read_hue_group(&mut self, id: u32) -> Result<HueGroup> {
+        try!(self.data_reader.seek(SeekFrom::Start((id * GROUP_SIZE) as u64)));
 
-        let header = try!(self.data_reader.read_le_u32());
+        let header = try!(self.data_reader.read_u32::<LittleEndian>());
 
         let entries: [Hue; 8] = [
             try!(self.read_hue()),
@@ -140,25 +144,30 @@ impl HueReader {
         })
     }
 
-    fn read_hue(&mut self) -> IoResult<Hue> {
+    fn read_hue(&mut self) -> Result<Hue> {
         let mut color_table = [0u16; 32];
-        for idx in range(0u, 32) {
-            color_table[idx] = try!(self.data_reader.read_le_u16());
+        for idx in 0..32 {
+            color_table[idx] = try!(self.data_reader.read_u16::<LittleEndian>());
         }
 
-        let table_start = try!(self.data_reader.read_le_u16());
-        let table_end = try!(self.data_reader.read_le_u16());
+        let table_start = try!(self.data_reader.read_u16::<LittleEndian>());
+        let table_end = try!(self.data_reader.read_u16::<LittleEndian>());
 
-        let raw_name = try!(self.data_reader.read_exact(20));
+        let mut raw_name = [0; 20];
+        try!(self.data_reader.read_exact(&mut raw_name));
 
         //Slice it down into a normal string size
-        let trimmed_name: Vec<u8> = raw_name.into_iter().take_while(|&element| element != 0).collect();
+        let trimmed_name: Vec<u8> = raw_name.into_iter().take_while(|&element| *element != 0).cloned().collect();
         
-        let maybe_name = trimmed_name.into_ascii_opt();
-        
-        let name = match maybe_name {
-            Some(name) => name.into_string(),
-            None => "Error".to_string()
+        let name = match from_utf8(trimmed_name.as_slice()) {
+            Ok(s) => {
+                if s.is_ascii() {
+                    s.to_string()
+                } else {
+                    "Error".to_string()
+                }
+            },
+            Err(_) => "Error".to_string()
         };
 
         Ok(Hue::new(

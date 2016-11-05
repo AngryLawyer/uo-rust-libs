@@ -4,7 +4,10 @@
 //! Skills are represented in the muls as `|clickable:u8|name:[u8]|`
 
 use mul_reader::MulReader;
-use std::io::IoResult;
+use std::io::Result;
+use std::path::Path;
+use std::ffi::CString;
+use std::str::from_utf8;
 
 pub struct Skill {
     pub clickable: bool,
@@ -24,7 +27,8 @@ impl Skill {
      */
     pub fn serialize(&self) -> Vec<u8> {
         let mut vec = vec![if self.clickable {1} else {0}];
-        vec.push_all(self.name.to_c_str().as_bytes());
+        let name = CString::new(self.name.clone());  //FIXME: There must be a way to do this without copying?
+        vec.extend_from_slice(name.unwrap().as_bytes_with_nul());
         vec
     }
 }
@@ -35,7 +39,7 @@ pub struct Skills {
 
 impl Skills {
 
-    pub fn new(index_path: &Path, mul_path: &Path) -> IoResult<Skills> {
+    pub fn new(index_path: &Path, mul_path: &Path) -> Result<Skills> {
         let maybe_reader = MulReader::new(index_path, mul_path);
         match maybe_reader {
             Ok(mut reader) => {
@@ -47,8 +51,8 @@ impl Skills {
                 loop {
                     match reader.read(id) {
                         Ok(record) => {
-                            let slice = record.data.slice(1, record.data.len() - 1);
-                            result.push(Skill::new(record.data[0] == 1, slice.to_vec().into_ascii().into_string()))
+                            let slice = &record.data[1 .. record.data.len() - 1];
+                            result.push(Skill::new(record.data[0] == 1, String::from(from_utf8(slice).unwrap())));
                         },
                         _ => {
                             break;
