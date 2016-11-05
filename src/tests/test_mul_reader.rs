@@ -1,6 +1,7 @@
-use mul_reader::{MulReader, MulWriter};
+use mul_reader::{MulReader, MulWriter, MulWriterMode};
+use std::path::Path;
+use std::ffi::CString;
 
-use std::io::Truncate;
 
 #[test]
 fn test_load_mulreader() {
@@ -22,7 +23,7 @@ fn test_read_first_entry() {
                     //Passed
                 },
                 Err(err) => {
-                    panic!(err.desc)
+                    panic!(err)
                 }
             }
         },
@@ -50,9 +51,9 @@ fn test_read_impossible_entry() {
 
 #[test]
 fn test_write_simple_mul() {
-    match MulWriter::new(&Path::new("./target/test_mul_out.idx"), &Path::new("./target/test_mul_out.mul"), Truncate) {
+    match MulWriter::new(&Path::new("./target/test_mul_out.idx"), &Path::new("./target/test_mul_out.mul"), MulWriterMode::Truncate) {
         Ok(mut mul_writer) => {
-            let mut out_buffer = "Bakery".to_c_str().as_bytes().to_vec();
+            let mut out_buffer = CString::new("Bakery").unwrap().into_bytes();
             out_buffer.insert(0, 1);
             match mul_writer.append(&out_buffer, None, None) {
                 Ok(_) => {

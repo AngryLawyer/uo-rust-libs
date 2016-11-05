@@ -15,7 +15,7 @@ use color::Color16;
  */
 pub struct Hue {
     ///32 color values
-    pub color_table: [Color16, ..32],
+    pub color_table: [Color16; 32],
     ///The first hue value in the table
     pub table_start: Color16,
     ///The last hue value in the table
@@ -37,7 +37,7 @@ impl Clone for Hue {
 }
 
 impl Hue {
-    pub fn new(color_table: [Color16, ..32], table_start: Color16, table_end: Color16, name: String) -> Hue {
+    pub fn new(color_table: [Color16; 32], table_start: Color16, table_end: Color16, name: String) -> Hue {
         Hue {
             color_table: color_table,
             table_start: table_start,
@@ -75,12 +75,12 @@ impl Hue {
 pub struct HueGroup {
     ///Unknown usage
     pub header: u32,
-    pub entries: [Hue, ..8]
+    pub entries: [Hue; 8]
 }
 
 impl HueGroup {
 
-    pub fn new(header: u32, entries: [Hue, ..8]) -> HueGroup {
+    pub fn new(header: u32, entries: [Hue; 8]) -> HueGroup {
         HueGroup {
             header: header,
             entries: entries
@@ -123,7 +123,7 @@ impl HueReader {
 
         let header = try!(self.data_reader.read_le_u32());
 
-        let entries: [Hue, ..8] = [
+        let entries: [Hue; 8] = [
             try!(self.read_hue()),
             try!(self.read_hue()),
             try!(self.read_hue()),
@@ -141,7 +141,7 @@ impl HueReader {
     }
 
     fn read_hue(&mut self) -> IoResult<Hue> {
-        let mut color_table = [0u16, ..32];
+        let mut color_table = [0u16; 32];
         for idx in range(0u, 32) {
             color_table[idx] = try!(self.data_reader.read_le_u16());
         }

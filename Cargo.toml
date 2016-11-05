@@ -8,3 +8,6 @@ authors = ["Tony Aldridge <tony@angry-lawyer.com>"]
 
 name = "uorustlibs"
 path = "src/lib.rs"
+
+[dependencies]
+byteorder = "0.5"

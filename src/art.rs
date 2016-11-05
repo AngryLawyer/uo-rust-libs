@@ -41,7 +41,7 @@ pub type StaticRow = Vec<RunPair>;
 
 pub struct Tile {
     pub header: u32,
-    pub image_data: [Color16, ..1022]
+    pub image_data: [Color16; 1022]
 }
 
 impl Art for Tile {
@@ -123,10 +123,10 @@ impl Art for Static {
         }
 
         let mut lookup_table = vec![];
-        let mut last_position = 8u;
+        let mut last_position = 8;
         //Generate a lookup table
         for row in rows.iter() {
-            lookup_table.write_le_u16(last_position as u16).ok().expect(MEMWRITER_ERROR);
+            lookup_table.write_le_u16(last_position).ok().expect(MEMWRITER_ERROR);
             last_position += row.len();
         }
         writer.write(lookup_table.as_slice()).ok().expect(MEMWRITER_ERROR);

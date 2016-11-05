@@ -6,8 +6,11 @@
 //!
 //! Index values of `0xFEFEFEFF` are considered undefined, and should be skipped
 
-use std::num::Int;
-use std::io::{File, FileMode, Open, Read, Write, IoResult, SeekSet, OtherIoError, IoError};
+use std::fs::{File, OpenOptions};
+use std::io::{Result, SeekFrom, Error, ErrorKind, Seek, Read, Write};
+use std::path::Path;
+
+use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
 static UNDEF_RECORD: u32 = 0xFEFEFEFF;
 static INDEX_SIZE: u32 = 12;
@@ -38,9 +41,9 @@ pub struct MulReader {
 
 impl MulReader {
 
-    pub fn new(idx_path: &Path, mul_path: &Path) -> IoResult<MulReader> {
-        let idx_reader = try!(File::open_mode(idx_path, Open, Read));
-        let data_reader = try!(File::open_mode(mul_path, Open, Read));
+    pub fn new(idx_path: &Path, mul_path: &Path) -> Result<MulReader> {
+        let idx_reader = try!(File::open(idx_path));
+        let data_reader = try!(File::open(mul_path));
 
         Ok(MulReader {
             idx_reader: idx_reader,
@@ -48,24 +51,21 @@ impl MulReader {
         })
     }
 
-    pub fn read(&mut self, index: u32) -> IoResult<MulRecord> {
+    pub fn read(&mut self, index: u32) -> Result<MulRecord> {
         //Wind the idx reader to the index position
-        try!(self.idx_reader.seek((index * INDEX_SIZE) as i64, SeekSet));
-        let start = try!(self.idx_reader.read_le_u32());
-        if start == UNDEF_RECORD || start == Int::max_value() {
+        try!(self.idx_reader.seek(SeekFrom::Start((index * INDEX_SIZE) as u64)));
+        let start = try!(self.idx_reader.read_u32::<LittleEndian>());
+        if start == UNDEF_RECORD || start == u32::max_value() {
             //Check for empty cell
-            Err(IoError {
-                kind: OtherIoError,
-                desc: "Trying to read out-of-bounds record",
-                detail: Some(format!("Trying to read out of bounds record {}, with a start of {}", index, start))
-            })
+            Err(Error::new(ErrorKind::Other, format!("Trying to read out of bounds record {}, with a start of {}", index, start)))
         } else {
-            let length = try!(self.idx_reader.read_le_u32());
-            let opt1 = try!(self.idx_reader.read_le_u16());
-            let opt2 = try!(self.idx_reader.read_le_u16());
-            try!(self.data_reader.seek(start as i64, SeekSet));
+            let length = try!(self.idx_reader.read_u32::<LittleEndian>());
+            let mut data = vec![0; length as usize];
+            let opt1 = try!(self.idx_reader.read_u16::<LittleEndian>());
+            let opt2 = try!(self.idx_reader.read_u16::<LittleEndian>());
+            try!(self.data_reader.seek(SeekFrom::Start(start as u64)));
 
-            let data = try!(self.data_reader.read_exact(length as uint));
+            try!(self.data_reader.read_exact(data.as_mut_slice()));
 
             Ok(MulRecord {
                 data: data,
@@ -86,11 +86,19 @@ pub struct MulWriter {
     data_writer: File
 }
 
+pub enum MulWriterMode {
+    Append,
+    Truncate
+}
+
 impl MulWriter {
 
-    pub fn new(idx_path: &Path, mul_path: &Path, method: FileMode) -> IoResult<MulWriter> {
-        let idx_writer = try!(File::open_mode(idx_path, method, Write));
-        let data_writer = try!(File::open_mode(mul_path, method, Write));
+    pub fn new(idx_path: &Path, mul_path: &Path, mode: MulWriterMode) -> Result<MulWriter> {
+        let mut options = OpenOptions::new();
+        let options = options.write(true).create(true).truncate(match mode { MulWriterMode::Append => false, MulWriterMode::Truncate => true});
+
+        let idx_writer = try!(options.open(idx_path));
+        let data_writer = try!(options.open(mul_path));
 
         Ok(MulWriter {
             idx_writer: idx_writer,
@@ -98,14 +106,14 @@ impl MulWriter {
         })
     }
 
-    pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) -> IoResult<()> {
+    pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) -> Result<()> {
 
-        let idx_size = try!(self.idx_writer.stat()).size as i64;
-        let mul_size = try!(self.data_writer.stat()).size as i64;
+        let idx_size = try!(self.idx_writer.metadata()).len();
+        let mul_size = try!(self.data_writer.metadata()).len();
 
         //Wind the files to the end
-        try!(self.idx_writer.seek(idx_size, SeekSet));
-        try!(self.data_writer.seek(mul_size, SeekSet));
+        try!(self.idx_writer.seek(SeekFrom::Start(idx_size)));
+        try!(self.data_writer.seek(SeekFrom::Start(mul_size)));
 
         //Fill up our fields
         let start = mul_size as u32;
@@ -114,10 +122,10 @@ impl MulWriter {
         let opt2 = match opt2 { Some(value) => value, None => 0} as u16;
 
         try!(self.data_writer.write(data.as_slice()));
-        try!(self.idx_writer.write_le_u32(start));
-        try!(self.idx_writer.write_le_u32(length));
-        try!(self.idx_writer.write_le_u16(opt1));
-        try!(self.idx_writer.write_le_u16(opt2));
+        try!(self.idx_writer.write_u32::<LittleEndian>(start));
+        try!(self.idx_writer.write_u32::<LittleEndian>(length));
+        try!(self.idx_writer.write_u16::<LittleEndian>(opt1));
+        try!(self.idx_writer.write_u16::<LittleEndian>(opt2));
 
         Ok(())
     }
