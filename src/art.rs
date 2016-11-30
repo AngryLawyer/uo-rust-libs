@@ -7,6 +7,11 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use utils::MEMWRITER_ERROR;
 use std::path::Path;
 
+#[cfg(feature = "use-sdl2")]
+use sdl2::surface::Surface;
+#[cfg(feature = "use-sdl2")]
+use sdl2::pixels::PixelFormatEnum;
+
 pub trait Art {
     /**
      * Convert to a 32bit array
@@ -15,6 +20,9 @@ pub trait Art {
      */
     fn to_32bit(&self) -> (u32, u32, Vec<Color32>);
     fn serialize(&self) -> Vec<u8>;
+
+    #[cfg(feature = "use-sdl2")]
+    fn to_surface(&self) -> Surface;
 }
 
 pub const TILE_SIZE: u32 = 2048;
@@ -52,7 +60,7 @@ impl Art for Tile {
         let mut read_idx = 0;
 
         for i in 0..44 {
-            
+
             let slice_size = if i >= 22 {
                 (44 - i) * 2
             } else {
@@ -77,6 +85,36 @@ impl Art for Tile {
             writer.write_u16::<LittleEndian>(pixel).ok().expect(MEMWRITER_ERROR);
         }
         writer
+    }
+
+    #[cfg(feature = "use-sdl2")]
+    fn to_surface(&self) -> Surface {
+        let mut surface = Surface::new(44, 44, PixelFormatEnum::RGBA8888).unwrap();
+        surface.with_lock_mut(|bitmap| {
+            let mut read_idx = 0;
+
+            for y in 0..44 {
+
+                let slice_width = if y >= 22 {
+                    (44 - y) * 2
+                } else {
+                    (y + 1) * 2
+                };
+
+                let offset_left = 22 - (slice_width / 2);
+                for pixel_idx in 0..slice_width {
+                    let x = offset_left + pixel_idx;
+                    let (r, g, b, a) = self.image_data[read_idx].to_rgba();
+                    let target = ((y * 44) + x) * 4;
+                    bitmap[target] = a;
+                    bitmap[target + 1] = b;
+                    bitmap[target + 2] = g;
+                    bitmap[target + 3] = r;
+                    read_idx += 1;
+                }
+            };
+        });
+        surface
     }
 }
 
@@ -138,9 +176,14 @@ impl Art for Static {
 
         writer
     }
+
+    #[cfg(feature = "use-sdl2")]
+    fn to_surface(&self) -> Surface {
+        unimplemented!()
+    }
 }
 
-pub struct Static { 
+pub struct Static {
     pub size: u16,
     pub trigger: u16,
     pub width: u16,
@@ -182,7 +225,7 @@ impl ArtReader {
                 for _index in 0..height {
                     offset_table.push(try!(reader.read_u16::<LittleEndian>()));
                 }
-    
+
                 let data_start_pos = reader.position();
                 let mut rows = vec![];
 

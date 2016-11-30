@@ -1,4 +1,7 @@
 extern crate byteorder;
+#[cfg(feature = "use-sdl2")]
+extern crate sdl2;
+
 pub mod mul_reader;
 pub mod utils;
 
