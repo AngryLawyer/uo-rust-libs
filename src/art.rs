@@ -4,7 +4,7 @@ use mul_reader::MulReader;
 use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write};
 use color::{Color, Color16, Color32};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use utils::MEMWRITER_ERROR;
+use utils::{MEMWRITER_ERROR, SURFACE_ERROR};
 use std::path::Path;
 
 #[cfg(feature = "use-sdl2")]
@@ -89,7 +89,7 @@ impl Art for Tile {
 
     #[cfg(feature = "use-sdl2")]
     fn to_surface(&self) -> Surface {
-        let mut surface = Surface::new(44, 44, PixelFormatEnum::RGBA8888).unwrap();
+        let mut surface = Surface::new(44, 44, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
         surface.with_lock_mut(|bitmap| {
             let mut read_idx = 0;
 
@@ -179,7 +179,24 @@ impl Art for Static {
 
     #[cfg(feature = "use-sdl2")]
     fn to_surface(&self) -> Surface {
-        unimplemented!()
+        let mut surface = Surface::new(self.width as u32, self.height as u32, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
+
+        for row in self.rows.iter() {
+            let mut current_width = 0;
+            for run_pair in row.iter() {
+                //image.extend_from_slice(vec![0; run_pair.offset as usize].as_slice());
+                for pixel in run_pair.run.iter() {
+                    let (r, g, b, a) = pixel.to_rgba();
+                    //image.push(Color::from_rgba(r, g, b, a));
+                }
+                current_width += run_pair.offset  + run_pair.run.len() as u16;
+                assert!(current_width <= self.width)
+            }
+            if current_width < self.width {
+                //image.extend_from_slice(vec![0; (self.width - current_width) as usize].as_slice());
+            }
+        };
+        surface
     }
 }
 
