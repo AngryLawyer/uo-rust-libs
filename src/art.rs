@@ -180,22 +180,29 @@ impl Art for Static {
     #[cfg(feature = "use-sdl2")]
     fn to_surface(&self) -> Surface {
         let mut surface = Surface::new(self.width as u32, self.height as u32, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
+        let mut surface_target: usize = 0;
 
-        for row in self.rows.iter() {
-            let mut current_width = 0;
-            for run_pair in row.iter() {
-                //image.extend_from_slice(vec![0; run_pair.offset as usize].as_slice());
-                for pixel in run_pair.run.iter() {
-                    let (r, g, b, a) = pixel.to_rgba();
-                    //image.push(Color::from_rgba(r, g, b, a));
+        surface.with_lock_mut(|bitmap| {
+            for row in self.rows.iter() {
+                let mut current_width = 0;
+                for run_pair in row.iter() {
+                    surface_target += (run_pair.offset as usize * 4);
+                    for pixel in run_pair.run.iter() {
+                        let (r, g, b, a) = pixel.to_rgba();
+                        bitmap[surface_target] = a;
+                        bitmap[surface_target + 1] = b;
+                        bitmap[surface_target + 2] = g;
+                        bitmap[surface_target + 3] = r;
+                        surface_target += 4;
+                    }
+                    current_width += run_pair.offset  + run_pair.run.len() as u16;
+                    assert!(current_width <= self.width)
                 }
-                current_width += run_pair.offset  + run_pair.run.len() as u16;
-                assert!(current_width <= self.width)
-            }
-            if current_width < self.width {
-                //image.extend_from_slice(vec![0; (self.width - current_width) as usize].as_slice());
-            }
-        };
+                if current_width < self.width {
+                    surface_target += ((self.width - current_width) as usize * 4);
+                }
+            };
+        });
         surface
     }
 }
