@@ -1,122 +1,128 @@
-/*use std::io;
-use std::io::ReaderUtil;
-use std::option;
-use std::result;
-use std::path;
-use mul_reader;
-use byte_helpers;
+use std::io::{Result, SeekFrom, Seek, Read};
+use std::fs::{File};
+use std::path::Path;
+use std::str::{from_utf8};
+use byteorder::{LittleEndian, ReadBytesExt};
 
-#[deriving(Eq)]
 pub enum Flags {
-    pub BackgroundFlag =    0x00000001, 
-    pub WeaponFlag =        0x00000002, 
-    pub TransparentFlag =   0x00000004, 
-    pub TranslucentFlag =   0x00000008, 
-    pub WallFlag =          0x00000010, 
-    pub DamagingFlag =      0x00000020, 
-    pub ImpassableFlag =    0x00000040, 
-    pub WetFlag =           0x00000080, 
-    pub UnknownFlag =       0x00000100, 
-    pub SurfaceFlag =       0x00000200, 
-    pub BridgeFlag =        0x00000400, 
-    pub StackableFlag =     0x00000800, 
-    pub WindowFlag =        0x00001000, 
-    pub NoShootFlag =       0x00002000, 
-    pub PrefixAFlag =       0x00004000, 
-    pub PrefixAnFlag =      0x00008000, 
-    pub InternalFlag =      0x00010000, 
-    pub FoliageFlag =       0x00020000, 
-    pub PartialHueFlag =    0x00040000, 
-    pub Unknown1Flag =      0x00080000, 
-    pub MapFlag =           0x00100000, 
-    pub ContainerFlag =     0x00200000, 
-    pub WearableFlag =      0x00400000, 
-    pub LightSourceFlag =   0x00800000, 
-    pub AnimatedFlag =      0x01000000, 
-    pub NoDiagonalFlag =    0x02000000, 
-    pub Unknown2Flag =      0x04000000, 
-    pub ArmorFlag =         0x08000000, 
-    pub RoofFlag =          0x10000000, 
-    pub DoorFlag =          0x20000000, 
-    pub StairBackFlag =     0x40000000,
-    pub StairRightFlag =    0x80000000
-}
-
-pub struct MapTileData {
-    flags: u32,
-    texture_id: u16,
-    name: ~str
-}
-
-pub struct StaticTileData {
-    flags: u32,
-    weight: u8,
-    quality_layer_light_id: u8,
-    quantity_weapon_class_armor_class: u8,
-    anim_id: u16,
-    hue: u8,
-    height_capacity: u8,
-    name: ~str
-}
-
-pub struct TileDataReader {
-    data_reader: @io::Reader
+    BackgroundFlag =    0x00000001, 
+    WeaponFlag =        0x00000002, 
+    TransparentFlag =   0x00000004, 
+    TranslucentFlag =   0x00000008, 
+    WallFlag =          0x00000010, 
+    DamagingFlag =      0x00000020, 
+    ImpassableFlag =    0x00000040, 
+    WetFlag =           0x00000080, 
+    UnknownFlag =       0x00000100, 
+    SurfaceFlag =       0x00000200, 
+    BridgeFlag =        0x00000400, 
+    StackableFlag =     0x00000800, 
+    WindowFlag =        0x00001000, 
+    NoShootFlag =       0x00002000, 
+    PrefixAFlag =       0x00004000, 
+    PrefixAnFlag =      0x00008000, 
+    InternalFlag =      0x00010000, 
+    FoliageFlag =       0x00020000, 
+    PartialHueFlag =    0x00040000, 
+    Unknown1Flag =      0x00080000, 
+    MapFlag =           0x00100000, 
+    ContainerFlag =     0x00200000, 
+    WearableFlag =      0x00400000, 
+    LightSourceFlag =   0x00800000, 
+    AnimatedFlag =      0x01000000, 
+    NoDiagonalFlag =    0x02000000, 
+    Unknown2Flag =      0x04000000, 
+    ArmorFlag =         0x08000000, 
+    RoofFlag =          0x10000000, 
+    DoorFlag =          0x20000000, 
+    StairBackFlag =     0x40000000,
+    StairRightFlag =    0x80000000
 }
 
 // Tile data is odd, as we have [(unknown, (LAND_TILE_DATA) *32) * 512]
-static GROUP_HEADER_SIZE:uint = 4;
-static MAP_TILE_SIZE:uint = 26;
-static STATIC_TILE_SIZE:uint = 37;
-static STATIC_OFFSET:uint = 428032; 
+static GROUP_HEADER_SIZE:u32 = 4;
+static MAP_TILE_SIZE:u32 = 26;
+static STATIC_TILE_SIZE:u32 = 37;
+static STATIC_OFFSET:u32 = 428032; 
+
+pub struct MapTileData {
+    pub flags: u32,
+    pub texture_id: u16,
+    pub name: String
+}
+
+pub struct StaticTileData {
+    pub flags: u32,
+    pub weight: u8,
+    pub quality_layer_light_id: u8,
+    pub quantity_weapon_class_armor_class: u8,
+    pub anim_id: u16,
+    pub hue: u8,
+    pub height_capacity: u8,
+    pub name: String
+}
+
+pub struct TileDataReader {
+    data_reader: File
+}
 
 impl TileDataReader {
-    pub fn new(tile_data_path: &path::Path) -> result::Result<TileDataReader, ~str> {
-        match io::file_reader(tile_data_path) {
-            result::Ok(data_reader) => {
-                result::Ok(TileDataReader {
-                    data_reader: data_reader
-                })
-            },
-            result::Err(error_message) => {
-                result::Err(error_message)
-            }
-        }
-    }
+    pub fn new(mul_path: &Path) -> Result<TileDataReader> {
+        let data_reader = try!(File::open(mul_path));
 
-    pub fn read_map_tile_data(&self, idx: uint) -> option::Option<MapTileData> {
-        self.data_reader.seek(self.calculate_map_tile_offset(idx) as int, io::SeekSet);
-        let tile_data_reader = self.data_reader;
-        option::Some(MapTileData{
-            flags: tile_data_reader.read_le_u32(),
-            texture_id: tile_data_reader.read_le_u16(),
-            name: tile_data_reader.read_c_str()
+        Ok(TileDataReader {
+            data_reader: data_reader
         })
     }
 
-    fn calculate_map_tile_offset(&self, idx: uint) -> uint {
-        //For every 32, we have to add an unknown header
-        let group_header_jumps = ((idx / 32) + 1) * GROUP_HEADER_SIZE;
-        (idx * MAP_TILE_SIZE) + group_header_jumps
+    pub fn read_map_tile_data(&mut self, idx: u32) -> Result<MapTileData> {
+        let offset = self.calculate_map_tile_offset(idx);
+        try!(self.data_reader.seek(SeekFrom::Start(offset)));
+        let flags = try!(self.data_reader.read_u32::<LittleEndian>());
+        let texture_id = try!(self.data_reader.read_u16::<LittleEndian>());
+        let reader = &self.data_reader;
+
+        let raw_name = try!(reader.bytes().take_while(|ref c| match *c {
+            &Ok(n)  => n != 0,
+            &Err(_) => true,
+        }).collect::<Result<Vec<u8>>>());
+
+        Ok(MapTileData {
+            flags: flags,
+            texture_id: texture_id,
+            name: String::from(from_utf8(&raw_name).unwrap())
+        })
     }
 
-    pub fn read_static_tile_data(&self, idx: uint) -> option::Option<StaticTileData> {
-        self.data_reader.seek(self.calculate_static_tile_offset(idx) as int, io::SeekSet);
-        let tile_data_reader = self.data_reader;
+    fn calculate_map_tile_offset(&self, idx: u32) -> u64 {
+        //For every 32, we have to add an unknown header
+        let group_header_jumps = ((idx / 32) + 1) * GROUP_HEADER_SIZE;
+        ((idx * MAP_TILE_SIZE) + group_header_jumps) as u64
+    }
 
-        let flags = tile_data_reader.read_le_u32();
-        let weight = tile_data_reader.read_u8();
-        let quality  = tile_data_reader.read_u8();
-        let _unknown = tile_data_reader.read_le_u16();
-        let _unknown1 = tile_data_reader.read_u8();
-        let quantity = tile_data_reader.read_u8();
-        let anim_id = tile_data_reader.read_le_u16();
-        let _unknown2 = tile_data_reader.read_u8();
-        let hue = tile_data_reader.read_u8();
-        let _unknown3 = tile_data_reader.read_le_u16();
-        let height = tile_data_reader.read_u8();
-        let name = tile_data_reader.read_c_str();
+    pub fn read_static_tile_data(&mut self, idx: u32) -> Result<StaticTileData> {
+        let offset = self.calculate_static_tile_offset(idx);
+        try!(self.data_reader.seek(SeekFrom::Start(offset)));
 
-        option::Some(StaticTileData{
+        let flags = try!(self.data_reader.read_u32::<LittleEndian>());
+        let weight = try!(self.data_reader.read_u8());
+        let quality = try!(self.data_reader.read_u8());
+        let _unknown = try!(self.data_reader.read_u16::<LittleEndian>());
+        let _unknown1 = try!(self.data_reader.read_u8());
+        let quantity = try!(self.data_reader.read_u8());
+        let anim_id = try!(self.data_reader.read_u16::<LittleEndian>());
+        let _unknown2 = try!(self.data_reader.read_u8());
+        let hue = try!(self.data_reader.read_u8());
+        let _unknown3 = try!(self.data_reader.read_u16::<LittleEndian>());
+        let height = try!(self.data_reader.read_u8());
+
+        let reader = &self.data_reader;
+        let raw_name = try!(reader.bytes().take_while(|ref c| match *c {
+            &Ok(n)  => n != 0,
+            &Err(_) => true,
+        }).collect::<Result<Vec<u8>>>());
+
+        Ok(StaticTileData {
             flags: flags,
             weight: weight,
             quality_layer_light_id: quality,
@@ -124,14 +130,13 @@ impl TileDataReader {
             anim_id: anim_id,
             hue: hue,
             height_capacity: height,
-            name: name 
+            name: String::from(from_utf8(&raw_name).unwrap())
         })
     }
 
-    fn calculate_static_tile_offset(&self, idx: uint) -> uint {
+    fn calculate_static_tile_offset(&self, idx: u32) -> u64 {
         //For every 32, we have to add an unknown header
         let group_header_jumps = ((idx / 32) + 1) * GROUP_HEADER_SIZE;
-        (idx * STATIC_TILE_SIZE) + group_header_jumps + STATIC_OFFSET
+        ((idx * STATIC_TILE_SIZE) + group_header_jumps + STATIC_OFFSET) as u64
     }
-
-}*/
+}
