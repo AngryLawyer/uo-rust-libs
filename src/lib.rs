@@ -12,7 +12,6 @@ pub mod skills;
 pub mod hues;
 //pub mod map;
 pub mod tiledata;
-pub mod art_and_data;
 
 #[cfg(test)]
 mod tests {
