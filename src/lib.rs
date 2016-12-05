@@ -10,7 +10,7 @@ pub mod color;
 pub mod art;
 pub mod skills;
 pub mod hues;
-//pub mod map;
+pub mod map;
 pub mod tiledata;
 
 #[cfg(test)]

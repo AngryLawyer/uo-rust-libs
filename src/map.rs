@@ -1,130 +1,148 @@
-use std::io;
-use std::io::ReaderUtil;
-use std::result;
-use std::path;
-use std::option;
-use std::uint;
-use mul_reader;
-use byte_helpers;
+use std::io::{Cursor, Result, SeekFrom, Seek, Error, ErrorKind};
+use std::fs::{File};
+use std::path::Path;
+use byteorder::{LittleEndian, ReadBytesExt};
+use mul_reader::MulReader;
 
-pub type Map = ~[Block];
+pub const BLOCK_SIZE: usize = 196;
+pub const OFFSET: u32 = 4;
+pub const MAP0_SIZE: u32 = 393216;
 
-pub type Block = ~[Cell];
-
+#[derive(Clone, Copy)]
 pub struct Cell {
-    graphic: u16,
-    altitude: i8,
+    pub graphic: u16,
+    pub altitude: i8,
 }
 
-pub type Statics = ~[StaticLocation];
+pub struct Block {
+    pub header: [u32; 4],
+    pub cells: [Cell; 64]
+}
 
 pub struct StaticLocation {
-    object_id: u16,
-    x: u8,
-    y: u8,
-    altitude: i8,
-    remainder: u16
+    pub object_id: u16,
+    pub x: u8,
+    pub y: u8,
+    pub altitude: i8,
+    pub unknown: u16
 }
 
-static BLOCK_SIZE: uint = 196;
-static OFFSET: uint = 4;
+impl StaticLocation {
+    pub fn color_idx(&self) -> u16 {
+        self.object_id + 16384
+    }
+}
 
 pub struct MapReader {
-    data_reader: @io::Reader
+    data_reader: File,
+    width: u32,
+    height: u32
 }
 
 impl MapReader {
 
+    pub fn new(map_path: &Path, width: u32, height: u32) -> Result<MapReader> {
+        let data_reader = try!(File::open(map_path));
+
+        Ok(MapReader {
+            data_reader: data_reader,
+            width: width,
+            height: height
+        })
+    }
+
     /**
      * Read a specific block from a map
      */
-    pub fn read_block(&self, id: uint) -> Block {
-        //Cycle to id * 196 + Offset
-        self.data_reader.seek(((id * BLOCK_SIZE) + OFFSET) as int, io::SeekSet);
+    pub fn read_block(&mut self, id: u32) -> Result<Block> {
+        //Cycle to id * 192
+        try!(self.data_reader.seek(SeekFrom::Start((id * BLOCK_SIZE as u32) as u64)));
+        //Read the header
         //Read the 64 cells
-        let mut block: Block = ~[];
+        let mut block = Block {
+            header: [
+                try!(self.data_reader.read_u32::<LittleEndian>()),
+                try!(self.data_reader.read_u32::<LittleEndian>()),
+                try!(self.data_reader.read_u32::<LittleEndian>()),
+                try!(self.data_reader.read_u32::<LittleEndian>())
+            ],
+            cells: [Cell {graphic: 0, altitude: 0}; 64]
+        };
         //Read 64 cells
-        for uint::range(0, 64) |_index| {
-            block.push(Cell{
-                graphic: self.data_reader.read_le_u16(),
-                altitude: self.data_reader.read_i8()
-            });
+        for i in 0..64 {
+            block.cells[i] = Cell{
+                graphic: try!(self.data_reader.read_u16::<LittleEndian>()),
+                altitude: try!(self.data_reader.read_i8())
+            };
         }
-        block
+        Ok(block)
     }
 
-    /**
-     * Read the whole map!
-     */
-    pub fn read_map(&self, max_blocks: uint) -> Map {
-        let mut map: Map = ~[];
-        let mut index = 0;
-        while index < max_blocks {
-            map.push(self.read_block(index));
-            index += 1;
-        }
-        map
-    }
-}
-
-/**
- * Create a handle to a mapreader, and read out given blocks as needed
- */
-pub fn MapReader(mul_path: &path::Path) -> result::Result<MapReader, ~str> {
-    match io::file_reader(mul_path) {
-        result::Ok(data_reader) => {
-            result::Ok(MapReader {
-                data_reader: data_reader
-            })
-        },
-        result::Err(error_message) => {
-            result::Err(error_message)
+    pub fn read_block_from_coordinates(&mut self, x: u32, y: u32) -> Result<Block> {
+        let width = self.width;
+        let height = self.height;
+        if x < width && y < height {
+            self.read_block(x + (y * width))
+        } else {
+            Err(Error::new(
+                ErrorKind::Other,
+                format!("{} {} is Outside of valid map coordinates", x, y)
+            ))
         }
     }
 }
 
 pub struct StaticReader {
-    mul_reader: mul_reader::MulReader
+    mul_reader: MulReader,
+    width: u32,
+    height: u32
 }
 
 impl StaticReader {
-    pub fn read_block(&self, id: uint) -> option::Option<Statics> {
-        match self.mul_reader.read(id) {
-            option::Some(record) => {
-                assert!(record.data.len() % 7 == 0);
-                let mut statics:Statics = ~[];
-                let len = record.data.len();
-                let mut data_source = byte_helpers::Buffer::new(record.data);
-                for uint::range_step(0, len, 7) |_i| {
-                    let object_id: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
-                    let x: u8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as u8;
-                    let y: u8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as u8;
-                    let altitude: i8 = byte_helpers::bytes_to_le_uint(data_source.read_items(1)) as i8;
-                    let remainder: u16 = byte_helpers::bytes_to_le_uint(data_source.read_items(2)) as u16;
-                    statics.push(StaticLocation{
-                        object_id: object_id,
-                        x: x,
-                        y: y,
-                        altitude: altitude,
-                        remainder: remainder
-                    });
-                }
-                option::Some(statics)
-            }
-            option::None => {
-                option::None
-            }
-        }
-    }
-}
 
-pub fn StaticReader(index_path: &path::Path, mul_path: &path::Path) -> result::Result<StaticReader, ~str> {
-    match mul_reader::MulReader::new(index_path, mul_path) {
-        result::Err(message) => result::Err(message),
-        result::Ok(mul_reader) => {
-            result::Ok(StaticReader{
-                mul_reader: mul_reader
-            })
+    pub fn new(index_path: &Path, mul_path: &Path, width: u32, height: u32) -> Result<StaticReader> {
+        let mul_reader = try!(MulReader::new(index_path, mul_path));
+
+        Ok(StaticReader {
+            mul_reader: mul_reader,
+            width: width,
+            height: height
+        })
+    }
+
+    pub fn read_block(&mut self, id: u32) -> Result<Vec<StaticLocation>> {
+        let raw = try!(self.mul_reader.read(id));
+        let len = raw.data.len();
+        assert!(len % 7 == 0);
+        let mut reader = Cursor::new(raw.data);
+        let mut statics = vec![];
+        for _i in 0..(len / 7) {
+            let object_id = try!(reader.read_u16::<LittleEndian>());
+            let x = try!(reader.read_u8());
+            let y = try!(reader.read_u8());
+            let altitude = try!(reader.read_i8());
+            let unknown = try!(reader.read_u16::<LittleEndian>());
+            statics.push(StaticLocation{
+                object_id: object_id,
+                x: x,
+                y: y,
+                altitude: altitude,
+                unknown: unknown
+            });
+        };
+        Ok(statics)
+    }
+
+    pub fn read_block_from_coordinates(&mut self, x: u32, y: u32) -> Result<Vec<StaticLocation>> {
+        let width = self.width;
+        let height = self.height;
+        if x < width && y < height {
+            self.read_block(x + (y * width))
+        } else {
+            Err(Error::new(
+                ErrorKind::Other,
+                format!("{} {} is Outside of valid map coordinates", x, y)
+            ))
         }
     }
 }
