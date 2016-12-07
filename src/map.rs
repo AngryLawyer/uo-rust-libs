@@ -15,7 +15,7 @@ pub struct Cell {
 }
 
 pub struct Block {
-    pub header: [u32; 4],
+    pub header: u32,
     pub cells: [Cell; 64]
 }
 
@@ -58,14 +58,8 @@ impl MapReader {
         //Cycle to id * 192
         try!(self.data_reader.seek(SeekFrom::Start((id * BLOCK_SIZE as u32) as u64)));
         //Read the header
-        //Read the 64 cells
         let mut block = Block {
-            header: [
-                try!(self.data_reader.read_u32::<LittleEndian>()),
-                try!(self.data_reader.read_u32::<LittleEndian>()),
-                try!(self.data_reader.read_u32::<LittleEndian>()),
-                try!(self.data_reader.read_u32::<LittleEndian>())
-            ],
+            header: try!(self.data_reader.read_u32::<LittleEndian>()),
             cells: [Cell {graphic: 0, altitude: 0}; 64]
         };
         //Read 64 cells
@@ -82,11 +76,11 @@ impl MapReader {
         let width = self.width;
         let height = self.height;
         if x < width && y < height {
-            self.read_block(x + (y * width))
+            self.read_block(y + (x * height))
         } else {
             Err(Error::new(
                 ErrorKind::Other,
-                format!("{} {} is Outside of valid map coordinates", x, y)
+                format!("{} {} is outside of valid map coordinates", x, y)
             ))
         }
     }
@@ -137,11 +131,11 @@ impl StaticReader {
         let width = self.width;
         let height = self.height;
         if x < width && y < height {
-            self.read_block(x + (y * width))
+            self.read_block(y + (x * height))
         } else {
             Err(Error::new(
                 ErrorKind::Other,
-                format!("{} {} is Outside of valid map coordinates", x, y)
+                format!("{} {} is outside of valid map coordinates", x, y)
             ))
         }
     }
