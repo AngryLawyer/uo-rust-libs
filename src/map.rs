@@ -15,9 +15,23 @@ pub struct Cell {
     pub altitude: i8,
 }
 
+#[derive(Copy)]
 pub struct Block {
     pub header: u32,
     pub cells: [Cell; 64]
+}
+
+impl Clone for Block {
+    fn clone(&self) -> Self {
+        let mut cells = [Cell {graphic: 0, altitude: 0}; 64];
+        for i in 0..64 {
+            cells[i] = self.cells[i].clone();
+        }
+        Block {
+            header: self.header,
+            cells: cells
+        }
+    }
 }
 
 pub struct StaticLocation {
