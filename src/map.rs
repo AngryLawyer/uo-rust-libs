@@ -9,6 +9,15 @@ pub const BLOCK_SIZE: usize = 196;
 pub const OFFSET: u32 = 4;
 pub const MAP0_SIZE: u32 = 393216;
 
+pub mod map_size {
+    pub const FELUCCA: (u32, u32) = (7168, 4096);
+    pub const TRAMMEL: (u32, u32) = (7168, 4096);
+    pub const ILSHENAR: (u32, u32) = (2304, 1600);
+    pub const MALAS: (u32, u32) = (2560, 2048);
+    pub const TOKUNO: (u32, u32) = (1448, 1448);
+    pub const TER_MUR: (u32, u32) = (1280, 4096);
+}
+
 #[derive(Clone, Copy)]
 pub struct Cell {
     pub graphic: u16,
@@ -17,7 +26,7 @@ pub struct Cell {
 
 #[derive(Copy)]
 pub struct Block {
-    pub header: u32,
+    pub checksum: u32,  //Not actually used
     pub cells: [Cell; 64]
 }
 
@@ -28,18 +37,19 @@ impl Clone for Block {
             cells[i] = self.cells[i].clone();
         }
         Block {
-            header: self.header,
+            checksum: self.checksum,
             cells: cells
         }
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct StaticLocation {
     pub object_id: u16,
     pub x: u8,
     pub y: u8,
     pub altitude: i8,
-    pub unknown: u16
+    pub checksum: u16  //Not actually used
 }
 
 impl StaticLocation {
@@ -74,7 +84,7 @@ impl MapReader {
         try!(self.data_reader.seek(SeekFrom::Start((id * BLOCK_SIZE as u32) as u64)));
         //Read the header
         let mut block = Block {
-            header: try!(self.data_reader.read_u32::<LittleEndian>()),
+            checksum: try!(self.data_reader.read_u32::<LittleEndian>()),
             cells: [Cell {graphic: 0, altitude: 0}; 64]
         };
         //Read 64 cells
@@ -130,13 +140,13 @@ impl StaticReader {
             let x = try!(reader.read_u8());
             let y = try!(reader.read_u8());
             let altitude = try!(reader.read_i8());
-            let unknown = try!(reader.read_u16::<LittleEndian>());
+            let checksum = try!(reader.read_u16::<LittleEndian>());
             statics.push(StaticLocation{
                 object_id: object_id,
                 x: x,
                 y: y,
                 altitude: altitude,
-                unknown: unknown
+                checksum: checksum
             });
         };
         Ok(statics)
