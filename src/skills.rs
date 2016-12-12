@@ -47,7 +47,7 @@ impl Skills {
                 //Unpack the lot
                 let mut result = vec![];
                 let mut id = 0;
-        
+
                 loop {
                     match reader.read(id) {
                         Ok(record) => {

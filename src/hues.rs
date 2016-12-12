@@ -1,6 +1,6 @@
 //! Methods for reading hue data out of hues.rs
 //!
-//! Hues are represented in a continuous, unindexed file as groups - 
+//! Hues are represented in a continuous, unindexed file as groups -
 //! `|header: u32|hues: [HueEntry..8]`
 //!
 //! Individual HueEntries are defined as
@@ -62,14 +62,12 @@ impl Hue {
         writer.write_u16::<LittleEndian>(self.table_start).ok().expect(MEMWRITER_ERROR);
         writer.write_u16::<LittleEndian>(self.table_end).ok().expect(MEMWRITER_ERROR);
 
-        //let raw_string = CString::new(self.name.clone()).unwrap();
-        
         writer.write(self.name.as_bytes()).ok().expect(MEMWRITER_ERROR);
         writer.write(vec![0; 20 - self.name.len()].as_slice()).ok().expect(MEMWRITER_ERROR);
 
         assert_eq!(writer.len(), ENTRY_SIZE as usize);
 
-        writer 
+        writer
     }
 }
 
@@ -106,17 +104,26 @@ const ENTRY_SIZE: u32 = 88;
 //8 entries to a group, plus a 4 byte header. 708 bytes.
 const GROUP_SIZE: u32 = (ENTRY_SIZE * 8) + 4;
 
-pub struct HueReader {
-    data_reader: File
+pub struct HueReader<T: Read + Seek> {
+    data_reader: T
 }
 
-impl HueReader {
-    pub fn new(hues_path: &Path) -> Result<HueReader> {
+impl<T: Read + Seek> HueReader<T> {
+    pub fn new(hues_path: &Path) -> Result<HueReader<File>> {
         let data_reader = try!(File::open(hues_path));
 
         Ok(HueReader {
             data_reader: data_reader
         })
+    }
+
+    /**
+     * If we've already got a file-like object, wrap it
+     * */
+    pub fn from_readable(data_reader: T) -> HueReader<T> {
+        HueReader {
+            data_reader: data_reader
+        }
     }
 
     /**
@@ -158,7 +165,7 @@ impl HueReader {
 
         //Slice it down into a normal string size
         let trimmed_name: Vec<u8> = raw_name.into_iter().take_while(|&element| *element != 0).cloned().collect();
-        
+
         let name = match from_utf8(trimmed_name.as_slice()) {
             Ok(s) => {
                 if s.is_ascii() {

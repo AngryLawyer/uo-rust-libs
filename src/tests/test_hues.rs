@@ -29,7 +29,7 @@ fn test_serialize_hue() {
 
     assert_eq!(hue[66], 2);
     assert_eq!(hue[67], 0);
-    
+
     assert_eq!(&hue[68..88], vec!['H' as u8, 'o' as u8, 'o' as u8, 'j' as u8, 'a' as u8, 'm' as u8, 'a' as u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].as_slice());
 }
 
