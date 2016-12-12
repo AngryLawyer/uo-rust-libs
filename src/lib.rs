@@ -12,6 +12,7 @@ pub mod skills;
 pub mod hues;
 pub mod map;
 pub mod tiledata;
+pub mod gump;
 
 #[cfg(test)]
 mod tests {
