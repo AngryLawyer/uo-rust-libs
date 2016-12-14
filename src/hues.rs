@@ -108,7 +108,7 @@ pub struct HueReader<T: Read + Seek> {
     data_reader: T
 }
 
-impl<T: Read + Seek> HueReader<T> {
+impl HueReader<File> {
     pub fn new(hues_path: &Path) -> Result<HueReader<File>> {
         let data_reader = try!(File::open(hues_path));
 
@@ -116,7 +116,9 @@ impl<T: Read + Seek> HueReader<T> {
             data_reader: data_reader
         })
     }
+}
 
+impl<T: Read + Seek> HueReader<T> {
     /**
      * If we've already got a file-like object, wrap it
      * */
