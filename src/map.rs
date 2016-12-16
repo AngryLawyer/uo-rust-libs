@@ -1,4 +1,4 @@
-use std::io::{Cursor, Result, SeekFrom, Seek, Error, ErrorKind};
+use std::io::{Cursor, Result, SeekFrom, Seek, Error, ErrorKind, Read};
 use std::fs::{File};
 use std::path::Path;
 use byteorder::{LittleEndian, ReadBytesExt};
@@ -111,15 +111,14 @@ impl MapReader {
     }
 }
 
-pub struct StaticReader {
-    mul_reader: MulReader,
+pub struct StaticReader<T: Read + Seek> {
+    mul_reader: MulReader<T>,
     width: u32,
     height: u32
 }
 
-impl StaticReader {
-
-    pub fn new(index_path: &Path, mul_path: &Path, width: u32, height: u32) -> Result<StaticReader> {
+impl StaticReader<File> {
+    pub fn new(index_path: &Path, mul_path: &Path, width: u32, height: u32) -> Result<StaticReader<File>> {
         let mul_reader = try!(MulReader::new(index_path, mul_path));
 
         Ok(StaticReader {
@@ -128,6 +127,9 @@ impl StaticReader {
             height: height
         })
     }
+}
+
+impl<T: Read + Seek> StaticReader<T> {
 
     pub fn read_block(&mut self, id: u32) -> Result<Vec<StaticLocation>> {
         let raw = try!(self.mul_reader.read(id));

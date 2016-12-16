@@ -34,14 +34,14 @@ pub struct MulRecord {
 /**
  * Read Mul records out of am idx and a mul
  */
-pub struct MulReader {
-    idx_reader: File,
-    data_reader: File
+pub struct MulReader<T: Read + Seek> {
+    idx_reader: T,
+    data_reader: T
 }
 
-impl MulReader {
+impl MulReader<File> {
 
-    pub fn new(idx_path: &Path, mul_path: &Path) -> Result<MulReader> {
+    pub fn new(idx_path: &Path, mul_path: &Path) -> Result<MulReader<File>> {
         let idx_reader = try!(File::open(idx_path));
         let data_reader = try!(File::open(mul_path));
 
@@ -50,6 +50,9 @@ impl MulReader {
             data_reader: data_reader
         })
     }
+}
+
+impl<T: Read + Seek> MulReader<T> {
 
     pub fn read(&mut self, index: u32) -> Result<MulRecord> {
         //Wind the idx reader to the index position
@@ -81,9 +84,9 @@ impl MulReader {
 /**
  * Write new records onto existing Mul and Idx files
  */
-pub struct MulWriter {
-    idx_writer: File,
-    data_writer: File
+pub struct MulWriter<T: Write + Seek> {
+    idx_writer: T,
+    data_writer: T
 }
 
 pub enum MulWriterMode {
@@ -91,9 +94,9 @@ pub enum MulWriterMode {
     Truncate
 }
 
-impl MulWriter {
+impl MulWriter<File> {
 
-    pub fn new(idx_path: &Path, mul_path: &Path, mode: MulWriterMode) -> Result<MulWriter> {
+    pub fn new(idx_path: &Path, mul_path: &Path, mode: MulWriterMode) -> Result<MulWriter<File>> {
         let mut options = OpenOptions::new();
         let options = options.write(true).create(true).truncate(match mode { MulWriterMode::Append => false, MulWriterMode::Truncate => true});
 
@@ -105,15 +108,15 @@ impl MulWriter {
             data_writer: data_writer
         })
     }
+}
+
+impl<T: Write + Seek> MulWriter<T> {
 
     pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) -> Result<()> {
 
-        let idx_size = try!(self.idx_writer.metadata()).len();
-        let mul_size = try!(self.data_writer.metadata()).len();
-
         //Wind the files to the end
-        try!(self.idx_writer.seek(SeekFrom::Start(idx_size)));
-        try!(self.data_writer.seek(SeekFrom::Start(mul_size)));
+        try!(self.idx_writer.seek(SeekFrom::End(0)));
+        let mul_size = try!(self.data_writer.seek(SeekFrom::End(0)));
 
         //Fill up our fields
         let start = mul_size as u32;

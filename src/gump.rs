@@ -1,6 +1,7 @@
 use mul_reader::MulReader;
 use color::Color16;
-use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write};
+use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write, Read};
+use std::fs::File;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::path::Path;
 
@@ -17,18 +18,21 @@ pub struct Gump {
     data: Vec<GumpPair>
 }
 
-pub struct GumpReader {
-    mul_reader: MulReader
+pub struct GumpReader<T: Read + Seek> {
+    mul_reader: MulReader<T>
 }
 
-impl GumpReader {
+impl GumpReader<File> {
 
-    pub fn new(index_path: &Path, mul_path: &Path) -> Result<GumpReader> {
+    pub fn new(index_path: &Path, mul_path: &Path) -> Result<GumpReader<File>> {
         let mul_reader = try!(MulReader::new(index_path, mul_path));
         Ok(GumpReader {
             mul_reader: mul_reader
         })
     }
+}
+
+impl<T: Read + Seek> GumpReader<T> {
 
     pub fn read_gump(&mut self, index: u32) -> Result<Gump> {
         let raw = try!(self.mul_reader.read(index));

@@ -5,36 +5,36 @@ use std::str::{from_utf8};
 use byteorder::{LittleEndian, ReadBytesExt};
 
 pub enum Flags {
-    BackgroundFlag =    0x00000001, 
-    WeaponFlag =        0x00000002, 
-    TransparentFlag =   0x00000004, 
-    TranslucentFlag =   0x00000008, 
-    WallFlag =          0x00000010, 
-    DamagingFlag =      0x00000020, 
-    ImpassableFlag =    0x00000040, 
-    WetFlag =           0x00000080, 
-    UnknownFlag =       0x00000100, 
-    SurfaceFlag =       0x00000200, 
-    BridgeFlag =        0x00000400, 
-    StackableFlag =     0x00000800, 
-    WindowFlag =        0x00001000, 
-    NoShootFlag =       0x00002000, 
-    PrefixAFlag =       0x00004000, 
-    PrefixAnFlag =      0x00008000, 
-    InternalFlag =      0x00010000, 
-    FoliageFlag =       0x00020000, 
-    PartialHueFlag =    0x00040000, 
-    Unknown1Flag =      0x00080000, 
-    MapFlag =           0x00100000, 
-    ContainerFlag =     0x00200000, 
-    WearableFlag =      0x00400000, 
-    LightSourceFlag =   0x00800000, 
-    AnimatedFlag =      0x01000000, 
-    NoDiagonalFlag =    0x02000000, 
-    Unknown2Flag =      0x04000000, 
-    ArmorFlag =         0x08000000, 
-    RoofFlag =          0x10000000, 
-    DoorFlag =          0x20000000, 
+    BackgroundFlag =    0x00000001,
+    WeaponFlag =        0x00000002,
+    TransparentFlag =   0x00000004,
+    TranslucentFlag =   0x00000008,
+    WallFlag =          0x00000010,
+    DamagingFlag =      0x00000020,
+    ImpassableFlag =    0x00000040,
+    WetFlag =           0x00000080,
+    UnknownFlag =       0x00000100,
+    SurfaceFlag =       0x00000200,
+    BridgeFlag =        0x00000400,
+    StackableFlag =     0x00000800,
+    WindowFlag =        0x00001000,
+    NoShootFlag =       0x00002000,
+    PrefixAFlag =       0x00004000,
+    PrefixAnFlag =      0x00008000,
+    InternalFlag =      0x00010000,
+    FoliageFlag =       0x00020000,
+    PartialHueFlag =    0x00040000,
+    Unknown1Flag =      0x00080000,
+    MapFlag =           0x00100000,
+    ContainerFlag =     0x00200000,
+    WearableFlag =      0x00400000,
+    LightSourceFlag =   0x00800000,
+    AnimatedFlag =      0x01000000,
+    NoDiagonalFlag =    0x02000000,
+    Unknown2Flag =      0x04000000,
+    ArmorFlag =         0x08000000,
+    RoofFlag =          0x10000000,
+    DoorFlag =          0x20000000,
     StairBackFlag =     0x40000000,
     StairRightFlag =    0x80000000
 }
@@ -43,7 +43,7 @@ pub enum Flags {
 static GROUP_HEADER_SIZE:u32 = 4;
 static MAP_TILE_SIZE:u32 = 26;
 static STATIC_TILE_SIZE:u32 = 37;
-static STATIC_OFFSET:u32 = 428032; 
+static STATIC_OFFSET:u32 = 428032;
 
 pub struct MapTileData {
     pub flags: u32,
@@ -63,7 +63,7 @@ pub struct StaticTileData {
 }
 
 pub struct TileDataReader {
-    data_reader: File
+    data_reader: File  //FIXME: This should be a Read + Seek instead of File
 }
 
 impl TileDataReader {

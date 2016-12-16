@@ -1,7 +1,8 @@
 //! Art objects represent both tiles and static graphics.
 
+use std::fs::{File};
 use mul_reader::MulReader;
-use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write};
+use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write, Read};
 use color::{Color, Color16, Color32};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use utils::{MEMWRITER_ERROR, SURFACE_ERROR};
@@ -220,17 +221,21 @@ pub enum TileOrStatic {
     Static(Static)
 }
 
-pub struct ArtReader {
-    mul_reader: MulReader
+pub struct ArtReader<T: Read + Seek> {
+    mul_reader: MulReader<T>
 }
 
-impl ArtReader {
-    pub fn new(index_path: &Path, mul_path: &Path) -> Result<ArtReader> {
+impl ArtReader<File> {
+
+    pub fn new(index_path: &Path, mul_path: &Path) -> Result<ArtReader<File>> {
         let mul_reader = try!(MulReader::new(index_path, mul_path));
         Ok(ArtReader {
             mul_reader: mul_reader
         })
     }
+}
+
+impl <T: Read + Seek> ArtReader<T> {
 
     pub fn read(&mut self, id: u32) -> Result<TileOrStatic> {
         let raw = try!(self.mul_reader.read(id));
