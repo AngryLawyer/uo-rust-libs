@@ -4,7 +4,7 @@
 //! Skills are represented in the muls as `|clickable:u8|name:[u8]|`
 
 use mul_reader::MulReader;
-use std::io::Result;
+use std::io::{Result, Seek, Read};
 use std::path::Path;
 use std::ffi::CString;
 use std::str::from_utf8;
@@ -39,31 +39,34 @@ pub struct Skills {
 
 impl Skills {
 
+    pub fn from_mul<T: Seek + Read>(reader: &mut MulReader<T>) -> Skills {
+        //Unpack the lot
+        let mut result = vec![];
+        let mut id = 0;
+
+        loop {
+            match reader.read(id) {
+                Ok(record) => {
+                    let slice = &record.data[1 .. record.data.len() - 1];
+                    result.push(Skill::new(record.data[0] == 1, String::from(from_utf8(slice).unwrap())));
+                },
+                _ => {
+                    break;
+                }
+            }
+            id += 1;
+        }
+
+        Skills {
+            skills: result
+        }
+    }
+
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<Skills> {
         let maybe_reader = MulReader::new(index_path, mul_path);
         match maybe_reader {
             Ok(mut reader) => {
-
-                //Unpack the lot
-                let mut result = vec![];
-                let mut id = 0;
-
-                loop {
-                    match reader.read(id) {
-                        Ok(record) => {
-                            let slice = &record.data[1 .. record.data.len() - 1];
-                            result.push(Skill::new(record.data[0] == 1, String::from(from_utf8(slice).unwrap())));
-                        },
-                        _ => {
-                            break;
-                        }
-                    }
-                    id += 1;
-                }
-
-                Ok(Skills {
-                    skills: result
-                })
+                Ok(Skills::from_mul(&mut reader))
             },
             Err(io_error) => Err(io_error)
         }

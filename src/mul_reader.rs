@@ -54,6 +54,13 @@ impl MulReader<File> {
 
 impl<T: Read + Seek> MulReader<T> {
 
+    pub fn from_readables(idx_reader: T, data_reader: T) -> MulReader<T> {
+        MulReader {
+            idx_reader: idx_reader,
+            data_reader: data_reader
+        }
+    }
+
     pub fn read(&mut self, index: u32) -> Result<MulRecord> {
         //Wind the idx reader to the index position
         try!(self.idx_reader.seek(SeekFrom::Start((index * INDEX_SIZE) as u64)));

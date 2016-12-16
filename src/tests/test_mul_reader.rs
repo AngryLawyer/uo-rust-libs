@@ -1,51 +1,69 @@
 use mul_reader::{MulReader, MulWriter, MulWriterMode};
 use std::path::Path;
 use std::ffi::CString;
+use std::io::Cursor;
+use byteorder::{LittleEndian, WriteBytesExt};
 
+fn fake_reader() -> MulReader<Cursor<Vec<u8>>> {
+    let mut idx_cursor = Cursor::new(vec![]);
+    idx_cursor.write_u32::<LittleEndian>(0).unwrap();  //Position
+    idx_cursor.write_u32::<LittleEndian>(1).unwrap();  //Length
+    idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt1
+    idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt2
+    idx_cursor.write_u32::<LittleEndian>(1).unwrap();  //Position
+    idx_cursor.write_u32::<LittleEndian>(4).unwrap();  //Length
+    idx_cursor.write_u16::<LittleEndian>(2).unwrap();  //Opt1
+    idx_cursor.write_u16::<LittleEndian>(3).unwrap();  //Opt2
 
-#[test]
-fn test_load_mulreader() {
-    match MulReader::new(&Path::new("./testdata/test_skills.idx"), &Path::new("./testdata/test_skills.mul")) {
-        Ok(_mul_reader) => {
-            //Passed
-        },
-        Err(message) => panic!("{}", message)
-    }
+    let mut data_cursor = Cursor::new(vec![]);
+    data_cursor.write_u8(255).unwrap();
+    data_cursor.write_u32::<LittleEndian>(0xdeadbeef).unwrap();
+    MulReader::from_readables(idx_cursor, data_cursor)
 }
 
 #[test]
-fn test_read_first_entry() {
-    match MulReader::new(&Path::new("./testdata/test_skills.idx"), &Path::new("./testdata/test_skills.mul")) {
-        Ok(mut mul_reader) => {
-            let record = mul_reader.read(0);
-            match record {
-                Ok(_record) => {
-                    //Passed
-                },
-                Err(err) => {
-                    panic!(err)
-                }
-            }
+fn test_read_entries() {
+    let mut mul_reader = fake_reader();
+    let record1 = mul_reader.read(0);
+    let record2 = mul_reader.read(1);
+    match record1 {
+        Ok(record) => {
+            assert_eq!(record.start, 0);
+            assert_eq!(record.length, 1);
+            assert_eq!(record.opt1, 0);
+            assert_eq!(record.opt2, 0);
+            assert_eq!(record.data.len(), 1);
+            assert_eq!(record.data[0], 255);
         },
-        Err(message) => panic!("{}", message)
+        Err(err) => {
+            panic!(err)
+        }
+    };
+    match record2 {
+        Ok(record) => {
+            assert_eq!(record.start, 1);
+            assert_eq!(record.length, 4);
+            assert_eq!(record.opt1, 2);
+            assert_eq!(record.opt2, 3);
+            assert_eq!(record.data.len(), 4);
+        },
+        Err(err) => {
+            panic!(err)
+        }
     }
 }
 
 #[test]
 fn test_read_impossible_entry() {
-    match MulReader::new(&Path::new("./testdata/test_skills.idx"), &Path::new("./testdata/test_skills.mul")) {
-        Ok(mut mul_reader) => {
-            let record = mul_reader.read(999999);
-            match record {
-                Ok(_record) => {
-                    panic!("Unexpectedly read a result from a known impossible address")
-                },
-                Err(_) => {
-                    //Passed
-                }
-            }
+    let mut mul_reader = fake_reader();
+    let record = mul_reader.read(999999);
+    match record {
+        Ok(_record) => {
+            panic!("Unexpectedly read a result from a known impossible address")
         },
-        Err(message) => panic!("{}", message)
+        Err(_) => {
+            //Passed
+        }
     }
 }
 
