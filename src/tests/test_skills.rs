@@ -1,7 +1,3 @@
-use std::io::Cursor;
-
-use byteorder::{LittleEndian, WriteBytesExt};
-
 use mul_reader::{simple_from_vecs};
 use skills::{Skills, Skill};
 

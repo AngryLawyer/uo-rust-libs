@@ -118,13 +118,13 @@ pub struct StaticReader<T: Read + Seek> {
 }
 
 impl StaticReader<File> {
-    pub fn new(index_path: &Path, mul_path: &Path, width: u32, height: u32) -> Result<StaticReader<File>> {
+    pub fn new(index_path: &Path, mul_path: &Path, width_blocks: u32, height_blocks: u32) -> Result<StaticReader<File>> {
         let mul_reader = try!(MulReader::new(index_path, mul_path));
 
         Ok(StaticReader {
             mul_reader: mul_reader,
-            width: width,
-            height: height
+            width: width_blocks,
+            height: height_blocks
         })
     }
 }

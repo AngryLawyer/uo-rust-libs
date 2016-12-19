@@ -7,7 +7,9 @@
 //! Index values of `0xFEFEFEFF` are considered undefined, and should be skipped
 
 use std::fs::{File, OpenOptions};
-use std::io::{Result, SeekFrom, Error, ErrorKind, Seek, Read, Write, Cursor};
+use std::io::{Result, SeekFrom, Error, ErrorKind, Seek, Read, Write};
+#[cfg(test)]
+use std::io::Cursor;
 use std::path::Path;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
