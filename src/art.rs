@@ -1,5 +1,5 @@
-//! Art objects represent both tiles and static graphics.
-
+//! Methods for reading art and static data out of art.mul
+//!
 use std::fs::{File};
 use mul_reader::MulReader;
 use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write, Read};
@@ -236,6 +236,12 @@ impl ArtReader<File> {
 }
 
 impl <T: Read + Seek> ArtReader<T> {
+
+    pub fn from_mul(reader: MulReader<T>) -> ArtReader<T> {
+        ArtReader {
+            mul_reader: reader
+        }
+    }
 
     pub fn read(&mut self, id: u32) -> Result<TileOrStatic> {
         let raw = try!(self.mul_reader.read(id));

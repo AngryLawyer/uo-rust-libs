@@ -1,12 +1,26 @@
-use std::path::Path;
-use art::{ArtReader, TileOrStatic};
+use std::io::{Cursor};
+
+use byteorder::{LittleEndian, WriteBytesExt};
+
+use mul_reader::{simple_from_vecs};
+use art::{ArtReader, TileOrStatic, Art, Tile};
 
 #[test]
 fn test_load_tile() {
-    let mut reader = ArtReader::new(&Path::new("./testdata/test_art.idx"), &Path::new("./testdata/test_art.mul")).ok().expect("Couldn't load test_art.mul");
+    let mut data = Cursor::new(vec![]);
+    data.write_u32::<LittleEndian>(0).unwrap();  // Header
+    for _i in 0..1022 {
+        data.write_u16::<LittleEndian>(0xFFFF).unwrap();
+    }
+
+    let mul_reader = simple_from_vecs(vec![
+        data.into_inner(),
+    ]);
+    let mut reader = ArtReader::from_mul(mul_reader);
     match reader.read(0) {
         Ok(TileOrStatic::Tile(tile)) => {
-            //ok
+            assert_eq!(tile.header, 0);
+            assert_eq!(tile.image_data[0], 0xFFFF);
         },
         Ok(_) => {
             panic!("Got Static instead of Tile");
@@ -14,6 +28,46 @@ fn test_load_tile() {
         Err(err) => panic!("{}", err)
     };
 }
+
+#[test]
+fn test_tile_to_32bit() {
+    let tile = Tile {
+        header: 0,
+        image_data: [0xFFFF; 1022]
+    };
+    let (width, height, data) = tile.to_32bit();
+    assert_eq!(width, 44);
+    assert_eq!(height, 44);
+    assert_eq!(data.len(), 44 * 44);
+
+    // Check the first row
+    for i in 0..44 {
+        if i == 21 || i == 22 {
+            assert_eq!(data[i], 0xFFFFFFFF);
+        } else {
+            assert_eq!(data[i], 0);
+        }
+    }
+
+    // Check the middle row
+    for i in 0..44 {
+        assert_eq!(data[i + (22 * 44)], 0xFFFFFFFF);
+    }
+}
+
+/*#[test]
+fn test_load_static() {
+    let mut reader = ArtReader::new(&Path::new("./testdata/test_art.idx"), &Path::new("./testdata/test_art.mul")).ok().expect("Couldn't load test_art.mul");
+    match reader.read(0) {
+        Ok(TileOrStatic::Static(tile)) => {
+            //ok
+        },
+        Ok(_) => {
+            panic!("Got Static instead of Tile");
+        },
+        Err(err) => panic!("{}", err)
+    };
+}*/
 
 /*#[test]
 fn dump_art() {

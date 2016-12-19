@@ -57,13 +57,13 @@ impl Hue {
     pub fn serialize(&self) -> Vec<u8> {
         let mut writer = vec![];
         for color in self.color_table.iter() {
-            writer.write_u16::<LittleEndian>(*color).ok().expect(MEMWRITER_ERROR);
+            writer.write_u16::<LittleEndian>(*color).expect(MEMWRITER_ERROR);
         }
-        writer.write_u16::<LittleEndian>(self.table_start).ok().expect(MEMWRITER_ERROR);
-        writer.write_u16::<LittleEndian>(self.table_end).ok().expect(MEMWRITER_ERROR);
+        writer.write_u16::<LittleEndian>(self.table_start).expect(MEMWRITER_ERROR);
+        writer.write_u16::<LittleEndian>(self.table_end).expect(MEMWRITER_ERROR);
 
-        writer.write(self.name.as_bytes()).ok().expect(MEMWRITER_ERROR);
-        writer.write(vec![0; 20 - self.name.len()].as_slice()).ok().expect(MEMWRITER_ERROR);
+        writer.write(self.name.as_bytes()).expect(MEMWRITER_ERROR);
+        writer.write(vec![0; 20 - self.name.len()].as_slice()).expect(MEMWRITER_ERROR);
 
         assert_eq!(writer.len(), ENTRY_SIZE as usize);
 
@@ -91,9 +91,9 @@ impl HueGroup {
 
     pub fn serialize(&self) -> Vec<u8> {
         let mut writer = Cursor::new(vec![]);
-        writer.write_u32::<LittleEndian>(self.header).ok().expect(MEMWRITER_ERROR);
+        writer.write_u32::<LittleEndian>(self.header).expect(MEMWRITER_ERROR);
         for hue in self.entries.iter() {
-            writer.write(hue.serialize().as_slice()).ok().expect(MEMWRITER_ERROR);
+            writer.write(hue.serialize().as_slice()).expect(MEMWRITER_ERROR);
         }
         writer.into_inner()
     }
