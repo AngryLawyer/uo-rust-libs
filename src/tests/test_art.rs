@@ -55,6 +55,43 @@ fn test_tile_to_32bit() {
     }
 }
 
+#[test]
+#[cfg(feature = "use-sdl2")]
+fn test_tile_to_surface() {
+    let tile = Tile {
+        header: 0,
+        image_data: [0xFFFF; 1022]
+    };
+    let surface = tile.to_surface();
+    assert_eq!(surface.width(), 44);
+    assert_eq!(surface.height(), 44);
+    let data = surface.without_lock().unwrap();
+    assert_eq!(data.len(), 44 * 44 * 4);
+
+    // Check the first row
+    for i in 0..44 {
+        if i == 21 || i == 22 {
+            assert_eq!(data[(i * 4)], 0xFF);
+            assert_eq!(data[(i * 4) + 1], 0xFF);
+            assert_eq!(data[(i * 4) + 2], 0xFF);
+            assert_eq!(data[(i * 4) + 3], 0xFF);
+        } else {
+            assert_eq!(data[(i * 4)], 0);
+            assert_eq!(data[(i * 4) + 1], 0);
+            assert_eq!(data[(i * 4) + 2], 0);
+            assert_eq!(data[(i * 4) + 3], 0);
+        }
+    }
+
+    // Check the middle row
+    for i in 0..44 {
+        assert_eq!(data[((i + (22 * 44)) * 4)], 0xFF);
+        assert_eq!(data[((i + (22 * 44)) * 4) + 1], 0xFF);
+        assert_eq!(data[((i + (22 * 44)) * 4) + 2], 0xFF);
+        assert_eq!(data[((i + (22 * 44)) * 4) + 3], 0xFF);
+    }
+}
+
 /*#[test]
 fn test_load_static() {
     let mut reader = ArtReader::new(&Path::new("./testdata/test_art.idx"), &Path::new("./testdata/test_art.mul")).ok().expect("Couldn't load test_art.mul");

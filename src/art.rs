@@ -187,7 +187,7 @@ impl Art for Static {
             for row in self.rows.iter() {
                 let mut current_width = 0;
                 for run_pair in row.iter() {
-                    surface_target += (run_pair.offset as usize * 4);
+                    surface_target += run_pair.offset as usize * 4;
                     for pixel in run_pair.run.iter() {
                         let (r, g, b, a) = pixel.to_rgba();
                         bitmap[surface_target] = a;
@@ -200,7 +200,7 @@ impl Art for Static {
                     assert!(current_width <= self.width)
                 }
                 if current_width < self.width {
-                    surface_target += ((self.width - current_width) as usize * 4);
+                    surface_target += (self.width - current_width) as usize * 4;
                 }
             };
         });
