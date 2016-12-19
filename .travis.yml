@@ -9,3 +9,7 @@ script:
 - cargo test --verbose
 - cargo build --features "use-sdl2" --verbose
 - cargo test --features "use-sdl2" --verbose
+
+env:
+  global:
+  - LD_LIBRARY_PATH: "/usr/local/lib"
