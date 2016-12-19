@@ -8,7 +8,7 @@ script:
 - cargo build --verbose
 - cargo test --verbose
 - cargo build --features "use-sdl2" --verbose
-- cargo test --features "use-sdl2" --verbose
+- cargo test --verbose
 
 env:
   global:
