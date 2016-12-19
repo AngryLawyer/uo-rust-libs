@@ -154,6 +154,7 @@ pub fn simple_from_vecs(vectors: Vec<Vec<u8>>) -> MulReader<Cursor<Vec<u8>>> {
         idx_cursor.write_u32::<LittleEndian>(len as u32).unwrap();  //Length
         idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt1
         idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt2
+        idx_reader.write(idx_cursor.get_ref()).unwrap();
         mul_reader.write(&vec).unwrap();
     }
     MulReader::from_readables(idx_reader, mul_reader)

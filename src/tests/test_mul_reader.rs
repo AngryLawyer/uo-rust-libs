@@ -36,7 +36,7 @@ fn test_read_entries() {
             assert_eq!(record.data[0], 255);
         },
         Err(err) => {
-            panic!(err)
+            panic!(format!("{:?}", err))
         }
     };
     match record2 {
@@ -48,7 +48,7 @@ fn test_read_entries() {
             assert_eq!(record.data.len(), 4);
         },
         Err(err) => {
-            panic!(err)
+            panic!(format!("{:?}", err))
         }
     }
 }
@@ -73,7 +73,7 @@ fn test_read_entried_provided_by_helper() {
             assert_eq!(record.data[0], 255);
         },
         Err(err) => {
-            panic!(err)
+            panic!(format!("{:?}", err))
         }
     };
     match record2 {
@@ -85,7 +85,7 @@ fn test_read_entried_provided_by_helper() {
             assert_eq!(record.data.len(), 4);
         },
         Err(err) => {
-            panic!(err)
+            panic!(format!("{:?}", err))
         }
     }
 }
