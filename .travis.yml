@@ -2,5 +2,5 @@ language: rust
 script:
 - cargo build --verbose
 - cargo test --verbose
-- cargo build --features "use-sd2" --verbose
-- cargo test --features "use-sd2" --verbose
+- cargo build --features "use-sdl2" --verbose
+- cargo test --features "use-sdl2" --verbose
