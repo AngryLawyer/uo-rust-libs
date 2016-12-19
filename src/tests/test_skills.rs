@@ -7,8 +7,6 @@ use skills::{Skills, Skill};
 
 #[test]
 fn test_load_skills() {
-    let mut data_cursor = Cursor::new(vec![]);
-    data_cursor.write_u32::<LittleEndian>(0xdeadbeef).unwrap();
     let mut mul_reader = simple_from_vecs(vec![
         vec![1, 'S' as u8, 'a' as u8, 'n' as u8, 'd' as u8, 'w' as u8, 'i' as u8, 'c' as u8, 'h' as u8, 0],
         vec![0, 'B' as u8, 'u' as u8, 'r' as u8, 'g' as u8, 'e' as u8, 'r' as u8, 0],

@@ -1,4 +1,4 @@
-//! Methods for reading hue data out of hues.rs
+//! Methods for reading hue data out of hues.mul
 //!
 //! Hues are represented in a continuous, unindexed file as groups -
 //! `|header: u32|hues: [HueEntry..8]`

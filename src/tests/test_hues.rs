@@ -1,14 +1,34 @@
-use std::path::Path;
+use std::io::{Cursor, Write};
+
+use byteorder::{LittleEndian, WriteBytesExt};
+
 use hues::{Hue, HueGroup, HueReader};
 
 #[test]
 fn test_load_hues() {
-    let mut reader = HueReader::new(&Path::new("./testdata/test_hues.mul")).ok().expect("Couldn't load test_hues.mul");
+    let color_table = [
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0
+    ];
+    let hue = Hue::new(color_table, 1, 2, "Hoojama".to_string());
+    let group = HueGroup::new(5, [hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone()]);
+
+    let mut serialized: Cursor<Vec<u8>> = Cursor::new(vec![]);
+    serialized.write(&group.serialize()).unwrap();
+
+    let hue = Hue::new(color_table, 1, 2, "Llama".to_string());
+    let group = HueGroup::new(5, [hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone()]);
+
+    serialized.write(&group.serialize()).unwrap();
+
+    let mut reader = HueReader::from_readable(serialized);
 
     let first = reader.read_hue_group(0).ok().expect("Couldn't read index 0");
+    let second= reader.read_hue_group(1).ok().expect("Couldn't read index 1");
     assert_eq!(first.entries[0].name, "Hoojama".to_string());
-    let second = reader.read_hue_group(1).ok().expect("Couldn't read index 1");
-    assert_eq!(second.entries[0].name, "Zooomj".to_string());
+    assert_eq!(second.entries[0].name, "Llama".to_string());
 }
 
 #[test]
