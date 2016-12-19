@@ -1,4 +1,4 @@
-use mul_reader::{MulReader, MulWriter, MulWriterMode};
+use mul_reader::{MulReader, MulWriter, MulWriterMode, simple_from_vecs};
 use std::path::Path;
 use std::ffi::CString;
 use std::io::Cursor;
@@ -45,6 +45,43 @@ fn test_read_entries() {
             assert_eq!(record.length, 4);
             assert_eq!(record.opt1, 2);
             assert_eq!(record.opt2, 3);
+            assert_eq!(record.data.len(), 4);
+        },
+        Err(err) => {
+            panic!(err)
+        }
+    }
+}
+
+#[test]
+fn test_read_entried_provided_by_helper() {
+    let mut data_cursor = Cursor::new(vec![]);
+    data_cursor.write_u32::<LittleEndian>(0xdeadbeef).unwrap();
+    let mut mul_reader = simple_from_vecs(vec![
+        vec![255],
+        data_cursor.into_inner()
+    ]);
+    let record1 = mul_reader.read(0);
+    let record2 = mul_reader.read(1);
+    match record1 {
+        Ok(record) => {
+            assert_eq!(record.start, 0);
+            assert_eq!(record.length, 1);
+            assert_eq!(record.opt1, 0);
+            assert_eq!(record.opt2, 0);
+            assert_eq!(record.data.len(), 1);
+            assert_eq!(record.data[0], 255);
+        },
+        Err(err) => {
+            panic!(err)
+        }
+    };
+    match record2 {
+        Ok(record) => {
+            assert_eq!(record.start, 1);
+            assert_eq!(record.length, 4);
+            assert_eq!(record.opt1, 0);
+            assert_eq!(record.opt2, 0);
             assert_eq!(record.data.len(), 4);
         },
         Err(err) => {

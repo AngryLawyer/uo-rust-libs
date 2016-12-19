@@ -7,7 +7,7 @@
 //! Index values of `0xFEFEFEFF` are considered undefined, and should be skipped
 
 use std::fs::{File, OpenOptions};
-use std::io::{Result, SeekFrom, Error, ErrorKind, Seek, Read, Write};
+use std::io::{Result, SeekFrom, Error, ErrorKind, Seek, Read, Write, Cursor};
 use std::path::Path;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -139,4 +139,22 @@ impl<T: Write + Seek> MulWriter<T> {
 
         Ok(())
     }
+}
+
+#[cfg(test)]
+pub fn simple_from_vecs(vectors: Vec<Vec<u8>>) -> MulReader<Cursor<Vec<u8>>> {
+    let mut idx_reader = Cursor::new(vec![]);
+    let mut mul_reader = Cursor::new(vec![]);
+    //For every MUL record, we should have an index record pointing at it
+    for vec in vectors {
+        let len = vec.len();
+        let mul_size = mul_reader.seek(SeekFrom::End(0)).unwrap();
+        let mut idx_cursor = Cursor::new(vec![]);
+        idx_cursor.write_u32::<LittleEndian>(mul_size as u32).unwrap();  //Position
+        idx_cursor.write_u32::<LittleEndian>(len as u32).unwrap();  //Length
+        idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt1
+        idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt2
+        mul_reader.write(&vec).unwrap();
+    }
+    MulReader::from_readables(idx_reader, mul_reader)
 }
