@@ -48,7 +48,7 @@ impl Skills {
             match reader.read(id) {
                 Ok(record) => {
                     let slice = &record.data[1 .. record.data.len() - 1];
-                    result.push(Skill::new(record.data[0] == 1, String::from(from_utf8(slice).unwrap())));
+                    result.push(Skill::new(record.data[0] == 1, String::from(from_utf8(slice).unwrap())));  //FIXME: Don't unwrap
                 },
                 _ => {
                     break;

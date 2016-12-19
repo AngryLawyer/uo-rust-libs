@@ -54,7 +54,7 @@ fn test_read_entries() {
 }
 
 #[test]
-fn test_read_entried_provided_by_helper() {
+fn test_read_entries_provided_by_helper() {
     let mut data_cursor = Cursor::new(vec![]);
     data_cursor.write_u32::<LittleEndian>(0xdeadbeef).unwrap();
     let mut mul_reader = simple_from_vecs(vec![

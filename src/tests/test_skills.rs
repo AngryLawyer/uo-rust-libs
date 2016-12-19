@@ -1,14 +1,27 @@
+use std::io::Cursor;
+
+use byteorder::{LittleEndian, WriteBytesExt};
+
+use mul_reader::{simple_from_vecs};
 use skills::{Skills, Skill};
-use std::path::Path;
 
 #[test]
 fn test_load_skills() {
-    match Skills::new(&Path::new("./testdata/test_skills.idx"), &Path::new("./testdata/test_skills.mul")) {
-        Ok(_skills) => {
-            //Passed
-        },
-        Err(message) => panic!("{}", message)
-    }
+    let mut data_cursor = Cursor::new(vec![]);
+    data_cursor.write_u32::<LittleEndian>(0xdeadbeef).unwrap();
+    let mut mul_reader = simple_from_vecs(vec![
+        vec![1, 'S' as u8, 'a' as u8, 'n' as u8, 'd' as u8, 'w' as u8, 'i' as u8, 'c' as u8, 'h' as u8, 0],
+        vec![0, 'B' as u8, 'u' as u8, 'r' as u8, 'g' as u8, 'e' as u8, 'r' as u8, 0],
+    ]);
+
+    let skills = Skills::from_mul(&mut mul_reader);
+    assert_eq!(skills.skills.len(), 2);
+    let ref skill = skills.skills[0];
+    assert_eq!(skill.clickable, true);
+    assert_eq!(&skill.name, "Sandwich");
+    let ref skill = skills.skills[1];
+    assert_eq!(skill.clickable, false);
+    assert_eq!(&skill.name, "Burger");
 }
 
 #[test]
