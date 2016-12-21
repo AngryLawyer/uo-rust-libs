@@ -22,7 +22,7 @@ pub struct GumpPair {
 pub struct Gump {
     width: u16,
     height: u16,
-    data: Vec<GumpPair>
+    data: Vec<Vec<GumpPair>>
 }
 
 impl Gump {
@@ -30,30 +30,12 @@ impl Gump {
     #[cfg(feature = "use-sdl2")]
     pub fn to_surface(&self) -> Surface {
         let mut surface = Surface::new(self.width as u32, self.height as u32, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
-        /*surface.with_lock_mut(|bitmap| {
+        surface.with_lock_mut(|bitmap| {
             let mut read_idx = 0;
 
-            for y in 0..44 {
-
-                let slice_width = if y >= 22 {
-                    (44 - y) * 2
-                } else {
-                    (y + 1) * 2
-                };
-
-                let offset_left = 22 - (slice_width / 2);
-                for pixel_idx in 0..slice_width {
-                    let x = offset_left + pixel_idx;
-                    let (r, g, b, a) = self.image_data[read_idx].to_rgba();
-                    let target = ((y * 44) + x) * 4;
-                    bitmap[target] = a;
-                    bitmap[target + 1] = b;
-                    bitmap[target + 2] = g;
-                    bitmap[target + 3] = r;
-                    read_idx += 1;
-                }
+            for y in 0..self.height {
             };
-        });*/
+        });
         surface
     }
 }
@@ -80,14 +62,33 @@ impl<T: Read + Seek> GumpReader<T> {
         let len = raw.data.len();
         assert!(len % 4 == 0);
         let mut reader = Cursor::new(raw.data);
-        for _i in 0..(len / 4) {
-            let color = try!(reader.read_u16::<LittleEndian>());
-            let count = try!(reader.read_u16::<LittleEndian>());
-            output.push(GumpPair {
-                color: color,
-                count: count
-            });
-        };
+        let mut row_offsets = vec![];
+        // Load all of our offsets
+        for _i in 0..raw.opt1 {
+            row_offsets.push(try!(reader.read_u32::<LittleEndian>()));
+        }
+        // Unsure if the offset is from start of file, or start of data
+
+        // FIXME: The RLE stuff in here and in art should probably be abstracted
+        for (row_idx, offset) in row_offsets.iter().enumerate() {
+            let row_length = if row_idx == row_offsets.len() - 1 {
+                (len / 4) as u32 - offset
+            } else {
+                let next_row = row_offsets[row_idx + 1];
+                next_row - offset
+            };
+            try!(reader.seek(SeekFrom::Start((*offset as u64) * 4)));
+            let mut row = vec![];
+            for _i in 0..row_length {
+                let color = try!(reader.read_u16::<LittleEndian>());
+                let count = try!(reader.read_u16::<LittleEndian>());
+                row.push(GumpPair {
+                    color: color,
+                    count: count
+                });
+            };
+            output.push(row);
+        }
         Ok(Gump {
             height: raw.opt1,
             width: raw.opt2,
