@@ -5,6 +5,13 @@ use std::fs::File;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::path::Path;
 
+#[cfg(feature = "use-sdl2")]
+use sdl2::surface::Surface;
+#[cfg(feature = "use-sdl2")]
+use sdl2::pixels::PixelFormatEnum;
+#[cfg(feature = "use-sdl2")]
+use utils::{SURFACE_ERROR};
+
 #[derive(Clone, Copy)]
 pub struct GumpPair {
     color: Color16,
@@ -16,6 +23,39 @@ pub struct Gump {
     width: u16,
     height: u16,
     data: Vec<GumpPair>
+}
+
+impl Gump {
+
+    #[cfg(feature = "use-sdl2")]
+    pub fn to_surface(&self) -> Surface {
+        let mut surface = Surface::new(self.width as u32, self.height as u32, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
+        /*surface.with_lock_mut(|bitmap| {
+            let mut read_idx = 0;
+
+            for y in 0..44 {
+
+                let slice_width = if y >= 22 {
+                    (44 - y) * 2
+                } else {
+                    (y + 1) * 2
+                };
+
+                let offset_left = 22 - (slice_width / 2);
+                for pixel_idx in 0..slice_width {
+                    let x = offset_left + pixel_idx;
+                    let (r, g, b, a) = self.image_data[read_idx].to_rgba();
+                    let target = ((y * 44) + x) * 4;
+                    bitmap[target] = a;
+                    bitmap[target + 1] = b;
+                    bitmap[target + 2] = g;
+                    bitmap[target + 3] = r;
+                    read_idx += 1;
+                }
+            };
+        });*/
+        surface
+    }
 }
 
 pub struct GumpReader<T: Read + Seek> {
