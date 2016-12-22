@@ -1,5 +1,5 @@
 use mul_reader::MulReader;
-use color::Color16;
+use color::{Color16, Color};
 use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write, Read};
 use std::fs::File;
 use byteorder::{LittleEndian, ReadBytesExt};
@@ -30,10 +30,27 @@ impl Gump {
     #[cfg(feature = "use-sdl2")]
     pub fn to_surface(&self) -> Surface {
         let mut surface = Surface::new(self.width as u32, self.height as u32, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
-        surface.with_lock_mut(|bitmap| {
-            let mut read_idx = 0;
+        let mut surface_target: usize = 0;
 
-            for y in 0..self.height {
+        surface.with_lock_mut(|bitmap| {
+            for row in self.data.iter() {
+                let mut current_width = 0;
+                for run_pair in row {
+                    let (r, g, b, a) = run_pair.color.to_rgba();
+
+                    for _i in 0..run_pair.count {
+                        bitmap[surface_target] = a;
+                        bitmap[surface_target + 1] = b;
+                        bitmap[surface_target + 2] = g;
+                        bitmap[surface_target + 3] = r;
+                        surface_target += 4;
+                        current_width += 1;
+                    }
+                    assert!(current_width <= self.width)
+                }
+                if current_width < self.width {
+                    surface_target += (self.width - current_width) as usize * 4;
+                }
             };
         });
         surface
