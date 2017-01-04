@@ -37,12 +37,13 @@ impl Gump {
                 let mut current_width = 0;
                 for run_pair in row {
                     let (r, g, b, a) = run_pair.color.to_rgba();
-
                     for _i in 0..run_pair.count {
-                        bitmap[surface_target] = a;
-                        bitmap[surface_target + 1] = b;
-                        bitmap[surface_target + 2] = g;
-                        bitmap[surface_target + 3] = r;
+                        if (r != 0 || g != 0 || b != 0) {
+                            bitmap[surface_target] = a;
+                            bitmap[surface_target + 1] = b;
+                            bitmap[surface_target + 2] = g;
+                            bitmap[surface_target + 3] = r;
+                        }
                         surface_target += 4;
                         current_width += 1;
                     }
