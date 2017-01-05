@@ -161,3 +161,21 @@ pub fn simple_from_vecs(vectors: Vec<Vec<u8>>) -> MulReader<Cursor<Vec<u8>>> {
     }
     MulReader::from_readables(idx_reader, mul_reader)
 }
+
+#[cfg(test)]
+pub fn simple_from_mul_records(records: Vec<MulRecord>) -> MulReader<Cursor<Vec<u8>>> {
+    let mut idx_reader = Cursor::new(vec![]);
+    let mut mul_reader = Cursor::new(vec![]);
+    //For every MUL record, we should have an index record pointing at it
+    for record in records {
+        let mul_size = mul_reader.seek(SeekFrom::End(0)).unwrap();
+        let mut idx_cursor = Cursor::new(vec![]);
+        idx_cursor.write_u32::<LittleEndian>(mul_size as u32).unwrap();  //Position
+        idx_cursor.write_u32::<LittleEndian>(record.data.len() as u32).unwrap();  //Length
+        idx_cursor.write_u16::<LittleEndian>(record.opt1).unwrap();  //Opt1
+        idx_cursor.write_u16::<LittleEndian>(record.opt2).unwrap();  //Opt2
+        idx_reader.write(idx_cursor.get_ref()).unwrap();
+        mul_reader.write(&record.data).unwrap();
+    }
+    MulReader::from_readables(idx_reader, mul_reader)
+}

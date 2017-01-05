@@ -3,7 +3,7 @@ use std::io::{Cursor};
 use byteorder::{LittleEndian, WriteBytesExt};
 
 use mul_reader::{simple_from_vecs};
-use art::{ArtReader, TileOrStatic, Art, Tile};
+use art::{ArtReader, TileOrStatic, Art, Tile, STATIC_OFFSET};
 
 #[test]
 fn test_load_tile() {
@@ -92,19 +92,31 @@ fn test_tile_to_surface() {
     }
 }
 
-/*#[test]
+#[test]
 fn test_load_static() {
-    let mut reader = ArtReader::new(&Path::new("./testdata/test_art.idx"), &Path::new("./testdata/test_art.mul")).ok().expect("Couldn't load test_art.mul");
-    match reader.read(0) {
-        Ok(TileOrStatic::Static(tile)) => {
-            //ok
+    let mut data = Cursor::new(vec![]);
+    data.write_u32::<LittleEndian>(0).unwrap();  // Header
+    for _i in 0..1022 {
+        data.write_u16::<LittleEndian>(0xFFFF).unwrap();
+    }
+
+    let mut padded = vec![];
+    for _i in 0..STATIC_OFFSET {
+        padded.push(vec![]);
+    }
+    padded.push(data.into_inner());
+
+    let mul_reader = simple_from_vecs(padded);
+    let mut reader = ArtReader::from_mul(mul_reader);
+    match reader.read(STATIC_OFFSET) {
+        Ok(TileOrStatic::Static(stat)) => {
         },
         Ok(_) => {
-            panic!("Got Static instead of Tile");
+            panic!("Got Tile instead of Static");
         },
         Err(err) => panic!("{}", err)
     };
-}*/
+}
 
 /*#[test]
 fn dump_art() {
