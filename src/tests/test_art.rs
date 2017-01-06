@@ -95,10 +95,15 @@ fn test_tile_to_surface() {
 #[test]
 fn test_load_static() {
     let mut data = Cursor::new(vec![]);
-    data.write_u32::<LittleEndian>(0).unwrap();  // Header
-    for _i in 0..1022 {
-        data.write_u16::<LittleEndian>(0xFFFF).unwrap();
-    }
+    data.write_u16::<LittleEndian>(0).unwrap();  // Size
+    data.write_u16::<LittleEndian>(0).unwrap();  // Trigger
+    data.write_u16::<LittleEndian>(0).unwrap();  // Width
+    data.write_u16::<LittleEndian>(0).unwrap();  // Height
+
+    data.write_u16::<LittleEndian>(0).unwrap();  // Offset table, one per row
+
+    data.write_u16::<LittleEndian>(0).unwrap();  // Run padding
+    data.write_u16::<LittleEndian>(0).unwrap();  // Run colour
 
     let mut padded = vec![];
     for _i in 0..STATIC_OFFSET {
