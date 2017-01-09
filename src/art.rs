@@ -39,7 +39,7 @@ impl RunPair {
         let mut writer = vec![];
 
         writer.write_u16::<LittleEndian>(self.offset).ok().expect(MEMWRITER_ERROR);
-        writer.write_u16::<LittleEndian>(self.run.len() as u16 * 2).ok().expect(MEMWRITER_ERROR);
+        writer.write_u16::<LittleEndian>(self.run.len() as u16).ok().expect(MEMWRITER_ERROR);
         for &color in self.run.iter() {
             writer.write_u16::<LittleEndian>(color).ok().expect(MEMWRITER_ERROR);
         }
@@ -164,11 +164,11 @@ impl Art for Static {
         }
 
         let mut lookup_table = vec![];
-        let mut last_position = 8;
+        let mut last_position = 0;
         //Generate a lookup table
         for row in rows.iter() {
             lookup_table.write_u16::<LittleEndian>(last_position).ok().expect(MEMWRITER_ERROR);
-            last_position += row.len() as u16;
+            last_position += (row.len() / 2) as u16;
         }
         writer.write(lookup_table.as_slice()).ok().expect(MEMWRITER_ERROR);
         for row in rows.iter() {

@@ -1,9 +1,9 @@
 use std::io::{Cursor};
 
-use byteorder::{LittleEndian, WriteBytesExt};
+use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 
 use mul_reader::{simple_from_vecs};
-use art::{ArtReader, TileOrStatic, Art, Tile, STATIC_OFFSET};
+use art::{ArtReader, TileOrStatic, Art, Tile, Static, RunPair, STATIC_OFFSET};
 
 #[test]
 fn test_load_tile() {
@@ -95,15 +95,32 @@ fn test_tile_to_surface() {
 #[test]
 fn test_load_static() {
     let mut data = Cursor::new(vec![]);
-    data.write_u16::<LittleEndian>(0).unwrap();  // Size
-    data.write_u16::<LittleEndian>(0).unwrap();  // Trigger
-    data.write_u16::<LittleEndian>(0).unwrap();  // Width
-    data.write_u16::<LittleEndian>(0).unwrap();  // Height
 
-    data.write_u16::<LittleEndian>(0).unwrap();  // Offset table, one per row
+    data.write_u16::<LittleEndian>(0).unwrap();  //Size, unused
+    data.write_u16::<LittleEndian>(1).unwrap();  //Trigger, unknown
+    data.write_u16::<LittleEndian>(3).unwrap();  //Width in pixels
+    data.write_u16::<LittleEndian>(3).unwrap();  //Height in pixels
 
-    data.write_u16::<LittleEndian>(0).unwrap();  // Run padding
-    data.write_u16::<LittleEndian>(0).unwrap();  // Run colour
+    data.write_u16::<LittleEndian>(0).unwrap();  //Row 1 offset
+    data.write_u16::<LittleEndian>(5).unwrap();  //Row 2 offset
+    data.write_u16::<LittleEndian>(12).unwrap();  //Row 3 offset
+
+    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 spacer
+    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 number of pixels
+    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //Row 1, run 1 data
+    data.write_u32::<LittleEndian>(0).unwrap();  //Row 1 EOL
+
+    data.write_u16::<LittleEndian>(0).unwrap();  //Row 2, run 1 spacer
+    data.write_u16::<LittleEndian>(3).unwrap();  //Row 2, run 1 number of pixels
+    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //Row 2, run 1 data
+    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //Row 2, run 1 data
+    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //Row 2, run 1 data
+    data.write_u32::<LittleEndian>(0).unwrap();  //Row 2 EOL
+
+    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 spacer
+    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 number of pixels
+    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //Row 1, run 1 data
+    data.write_u32::<LittleEndian>(0).unwrap();  //Row 2 EOL
 
     let mut padded = vec![];
     for _i in 0..STATIC_OFFSET {
@@ -113,6 +130,7 @@ fn test_load_static() {
 
     let mul_reader = simple_from_vecs(padded);
     let mut reader = ArtReader::from_mul(mul_reader);
+
     match reader.read(STATIC_OFFSET) {
         Ok(TileOrStatic::Static(stat)) => {
         },
