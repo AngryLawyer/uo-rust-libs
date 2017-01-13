@@ -133,6 +133,18 @@ fn test_load_static() {
 
     match reader.read(STATIC_OFFSET) {
         Ok(TileOrStatic::Static(stat)) => {
+            assert_eq!(stat.size, 0);
+            assert_eq!(stat.trigger, 1);
+            assert_eq!(stat.width, 3);
+            assert_eq!(stat.height, 3);
+            let (width, height, data) = stat.to_32bit();
+            assert_eq!(stat.width, width as u16);
+            assert_eq!(stat.height, height as u16);
+            assert_eq!(data, vec![
+                0, 0xFFFFFFFF, 0,
+                0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
+                0, 0xFFFFFFFF, 0
+            ]);
         },
         Ok(_) => {
             panic!("Got Tile instead of Static");
