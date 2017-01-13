@@ -1,5 +1,6 @@
-//! Methods for reading art and static data out of art.mul
+//! Methods for reading tile and static data out of art.mul
 //!
+//! Tiles and Statics are both traditionally stored in art.mul/artidx.mul
 use std::fs::{File};
 use mul_reader::MulReader;
 use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write, Read};
@@ -38,10 +39,10 @@ impl RunPair {
     fn serialize(&self) -> Vec<u8> {
         let mut writer = vec![];
 
-        writer.write_u16::<LittleEndian>(self.offset).ok().expect(MEMWRITER_ERROR);
-        writer.write_u16::<LittleEndian>(self.run.len() as u16).ok().expect(MEMWRITER_ERROR);
+        writer.write_u16::<LittleEndian>(self.offset).expect(MEMWRITER_ERROR);
+        writer.write_u16::<LittleEndian>(self.run.len() as u16).expect(MEMWRITER_ERROR);
         for &color in self.run.iter() {
-            writer.write_u16::<LittleEndian>(color).ok().expect(MEMWRITER_ERROR);
+            writer.write_u16::<LittleEndian>(color).expect(MEMWRITER_ERROR);
         }
         writer
     }
@@ -49,8 +50,16 @@ impl RunPair {
 
 pub type StaticRow = Vec<RunPair>;
 
+/// A Map Tile, 44px by 44px
+///
+/// Map tiles are stored as
+/// |Header:u32|Pixels:u16|
+/// Where pixels represents a list of rows, length 2, 4, 6, 8 .. 42, 44, 44, 42 .. 8, 6, 4, 2 and are drawn
+/// centred
 pub struct Tile {
+    /// Header information for a tile.  Unused
     pub header: u32,
+    /// Individual pixels. These work as rows, of length 2, 4, 6, 8 .. 42, 44, 44, 42 .. 8, 6, 4, 2
     pub image_data: [Color16; 1022]
 }
 
@@ -266,7 +275,6 @@ impl <T: Read + Seek> ArtReader<T> {
 
                 for &offset in offset_table.iter() {
                     try!(reader.seek(SeekFrom::Start((data_start_pos + offset as u64 * 2))));
-                    let mut current_row_width = 0;
                     let mut row = vec![];
 
                     loop {
@@ -284,8 +292,6 @@ impl <T: Read + Seek> ArtReader<T> {
                                 offset: x_offset,
                                 run: run
                             });
-                            current_row_width += x_offset + run_length;
-                            //assert!(current_row_width < width);
                         }
                     }
                     rows.push(row);

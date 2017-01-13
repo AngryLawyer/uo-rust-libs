@@ -1,7 +1,5 @@
 //! Skill objects represent named skills that appear in UO's Skills menu.
 //! They also contain a flag denoting whether they are clicked to activate
-//!
-//! Skills are represented in the muls as `|clickable:u8|name:[u8]|`
 
 use mul_reader::MulReader;
 use std::io::{Result, Seek, Read};
@@ -33,6 +31,12 @@ impl Skill {
     }
 }
 
+/// A reader of a Skills file-like object
+///
+/// Skills are traditionally stored in skills.mul/skills.idx
+///
+/// Skills are encoded as a list of
+/// |clickable:u8|name:c-string|
 pub struct Skills {
     pub skills: Vec<Skill>
 }
