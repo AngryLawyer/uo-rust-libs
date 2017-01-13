@@ -92,8 +92,7 @@ fn test_tile_to_surface() {
     }
 }
 
-#[test]
-fn test_load_static() {
+fn example_art_mul() -> ArtReader<Cursor<Vec<u8>>> {
     let mut data = Cursor::new(vec![]);
 
     data.write_u16::<LittleEndian>(0).unwrap();  //Size, unused
@@ -129,8 +128,12 @@ fn test_load_static() {
     padded.push(data.into_inner());
 
     let mul_reader = simple_from_vecs(padded);
-    let mut reader = ArtReader::from_mul(mul_reader);
+    ArtReader::from_mul(mul_reader)
+}
 
+#[test]
+fn test_load_static() {
+    let mut reader = example_art_mul();
     match reader.read(STATIC_OFFSET) {
         Ok(TileOrStatic::Static(stat)) => {
             assert_eq!(stat.size, 0);
@@ -145,6 +148,32 @@ fn test_load_static() {
                 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF,
                 0, 0xFFFFFFFF, 0
             ]);
+        },
+        Ok(_) => {
+            panic!("Got Tile instead of Static");
+        },
+        Err(err) => panic!("{}", err)
+    };
+}
+
+#[test]
+#[cfg(feature = "use-sdl2")]
+fn test_static_to_surface() {
+    let mut reader = example_art_mul();
+    match reader.read(STATIC_OFFSET) {
+        Ok(TileOrStatic::Static(stat)) => {
+            let surface = stat.to_surface();
+            assert_eq!(surface.width(), 3);
+            assert_eq!(surface.height(), 3);
+            let data = surface.without_lock().expect("Failed to get surface data");
+            let expectation = [
+                0, 0, 0, 0,           255, 255, 255, 255,   0, 0, 0, 0,
+                255, 255, 255, 255,   255, 255, 255, 255,   255, 255, 255, 255,
+                0, 0, 0, 0,           255, 255, 255, 255,   0, 0, 0, 0,
+            ];
+            for (left, right) in data.iter().zip(expectation.iter()) {
+                assert_eq!(left, right);
+            }
         },
         Ok(_) => {
             panic!("Got Tile instead of Static");
