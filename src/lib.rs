@@ -13,6 +13,7 @@ pub mod hues;
 pub mod map;
 pub mod tiledata;
 pub mod gump;
+pub mod anim;
 
 #[cfg(test)]
 mod tests {
