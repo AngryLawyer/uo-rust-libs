@@ -21,13 +21,21 @@ pub struct AnimFrame {
 }
 
 pub struct AnimGroup {
-    palette: [Color16; 256],
-    frame_count: u32,
-    frames: Vec<AnimFrame>
+    pub palette: [Color16; 256],
+    pub frame_count: u32,
+    pub frames: Vec<AnimFrame>
 }
 
 pub struct AnimReader<T: Read + Seek> {
     mul_reader: MulReader<T>
+}
+
+fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
+    let image_centre_x = try!(reader.read_u16::<LittleEndian>());
+    let image_centre_y = try!(reader.read_u16::<LittleEndian>());
+    let width = try!(reader.read_u16::<LittleEndian>());
+    let height = try!(reader.read_u16::<LittleEndian>());
+    // Read data
 }
 
 impl AnimReader<File> {
