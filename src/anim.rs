@@ -13,11 +13,11 @@ pub struct Row {
 }
 
 pub struct AnimFrame {
-    image_centre_x: u16,
-    image_centre_y: u16,
-    width: u16,
-    height: u16,
-    data: Vec<Row>
+    pub image_centre_x: u16,
+    pub image_centre_y: u16,
+    pub width: u16,
+    pub height: u16,
+    pub data: Vec<Row>
 }
 
 pub struct AnimGroup {
@@ -36,6 +36,13 @@ fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
     let width = try!(reader.read_u16::<LittleEndian>());
     let height = try!(reader.read_u16::<LittleEndian>());
     // Read data
+    Ok(AnimFrame {
+        image_centre_x: image_centre_x,
+        image_centre_y: image_centre_y,
+        width: width,
+        height: height,
+        data: vec![]
+    })
 }
 
 impl AnimReader<File> {
@@ -64,11 +71,23 @@ impl <T: Read + Seek> AnimReader<T> {
         for i in 0..256 {
             palette[i] = try!(reader.read_u16::<LittleEndian>());
         }
+
         let frame_count = try!(reader.read_u32::<LittleEndian>());
+        let mut frame_offsets = vec![];
+        for _ in 0..frame_count {
+            frame_offsets.push(try!(reader.read_u32::<LittleEndian>()));
+        }
+
+        let mut frames = vec![];
+        for offset in frame_offsets {
+            try!(reader.seek(SeekFrom::Start((256 * 2 + offset) as u64)));
+            frames.push(try!(read_frame(&mut reader)));
+        }
+
         Ok(AnimGroup {
             palette: palette,
             frame_count: frame_count,
-            frames: vec![]
+            frames: frames
         })
     }
 }
