@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate image;
 #[cfg(feature = "use-sdl2")]
 extern crate sdl2;
 

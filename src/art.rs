@@ -14,6 +14,8 @@ use sdl2::surface::Surface;
 #[cfg(feature = "use-sdl2")]
 use sdl2::pixels::PixelFormatEnum;
 
+use image::{Rgba, RgbaImage};
+
 pub trait Art {
     /**
      * Convert to a 32bit array
@@ -25,6 +27,8 @@ pub trait Art {
 
     #[cfg(feature = "use-sdl2")]
     fn to_surface(&self) -> Surface;
+
+    fn to_image(&self) -> RgbaImage;
 }
 
 pub const TILE_SIZE: u32 = 2048;
@@ -95,6 +99,29 @@ impl Art for Tile {
             writer.write_u16::<LittleEndian>(pixel).ok().expect(MEMWRITER_ERROR);
         }
         writer
+    }
+
+    fn to_image(&self) -> RgbaImage {
+        let mut buffer = RgbaImage::new(44, 44);
+        let mut read_idx = 0;
+
+        for y in 0..44 {
+
+            let slice_size = if y >= 22 {
+                (44 - y) * 2
+            } else {
+                (y + 1) * 2
+            };
+
+            let indent = 22 - (slice_size / 2);
+
+            for x in 0..slice_size {
+                let (r, g, b, a) = self.image_data[read_idx].to_rgba();
+                buffer.put_pixel(indent + x, y, Rgba([r, g, b, a]));
+                read_idx += 1;
+            }
+        };
+        buffer
     }
 
     #[cfg(feature = "use-sdl2")]
@@ -185,6 +212,10 @@ impl Art for Static {
         }
 
         writer
+    }
+
+    fn to_image(&self) -> RgbaImage {
+        panic!("Not implemented");
     }
 
     #[cfg(feature = "use-sdl2")]
