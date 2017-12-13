@@ -1,4 +1,5 @@
 use std::io::{Cursor};
+use image::Pixel;
 
 use byteorder::{LittleEndian, WriteBytesExt, ReadBytesExt};
 
@@ -52,6 +53,31 @@ fn test_tile_to_32bit() {
     // Check the middle row
     for i in 0..44 {
         assert_eq!(data[i + (22 * 44)], 0xFFFFFFFF);
+    }
+}
+
+#[test]
+fn test_tile_to_image() {
+    let tile = Tile {
+        header: 0,
+        image_data: [0xFFFF; 1022]
+    };
+    let image = tile.to_image();
+    assert_eq!(image.width(), 44);
+    assert_eq!(image.height(), 44);
+
+    // Check the first row
+    for i in 0..44 {
+        if i == 21 || i == 22 {
+            assert_eq!(image.get_pixel(i, 0).channels4(), (0xFF, 0xFF, 0xFF, 0xFF));
+        } else {
+            assert_eq!(image.get_pixel(i, 0).channels4(), (0, 0, 0, 0));
+        }
+    }
+
+    // Check the middle row
+    for i in 0..44 {
+        assert_eq!(image.get_pixel(i, 22).channels4(), (0xFF, 0xFF, 0xFF, 0xFF));
     }
 }
 
