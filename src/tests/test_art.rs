@@ -208,6 +208,35 @@ fn test_static_to_surface() {
     };
 }
 
+#[test]
+fn test_static_to_image() {
+    let mut reader = example_art_mul();
+    match reader.read(STATIC_OFFSET) {
+        Ok(TileOrStatic::Static(stat)) => {
+            let image = stat.to_image();
+            assert_eq!(image.width(), 3);
+            assert_eq!(image.height(), 3);
+            let transparent = (0, 0, 0, 0);
+            let white = (255, 255, 255, 255);
+            assert_eq!(image.get_pixel(0, 0).channels4(), transparent);
+            assert_eq!(image.get_pixel(1, 0).channels4(), white);
+            assert_eq!(image.get_pixel(2, 0).channels4(), transparent);
+
+            assert_eq!(image.get_pixel(0, 1).channels4(), white);
+            assert_eq!(image.get_pixel(1, 1).channels4(), white);
+            assert_eq!(image.get_pixel(2, 1).channels4(), white);
+
+            assert_eq!(image.get_pixel(0, 2).channels4(), transparent);
+            assert_eq!(image.get_pixel(1, 2).channels4(), white);
+            assert_eq!(image.get_pixel(2, 2).channels4(), transparent);
+        },
+        Ok(_) => {
+            panic!("Got Tile instead of Static");
+        },
+        Err(err) => panic!("{}", err)
+    };
+}
+
 /*#[test]
 fn dump_art() {
     use mul_reader::MulWriter;
