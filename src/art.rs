@@ -215,7 +215,19 @@ impl Art for Static {
     }
 
     fn to_image(&self) -> RgbaImage {
-        panic!("Not implemented");
+        let mut buffer = RgbaImage::new(self.width as u32, self.height as u32);
+        for (y, row) in self.rows.iter().enumerate() {
+            let mut x: u32 = 0;
+            for run_pair in row.iter() {
+                x += run_pair.offset as u32;
+                for pixel in run_pair.run.iter() {
+                    let (r, g, b, a) = pixel.to_rgba();
+                    buffer.put_pixel(x, y as u32, Rgba([r, g, b, a]));
+                    x += 1;
+                }
+            }
+        };
+        buffer
     }
 
     #[cfg(feature = "use-sdl2")]
