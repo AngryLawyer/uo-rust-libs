@@ -1,7 +1,5 @@
 extern crate byteorder;
 extern crate image;
-#[cfg(feature = "use-sdl2")]
-extern crate sdl2;
 
 pub mod mul_reader;
 pub mod utils;
@@ -23,5 +21,6 @@ mod tests {
     mod test_skills;
     mod test_hues;
     mod test_art;
+    mod test_gump;
 //    mod test_tiledata;
 }

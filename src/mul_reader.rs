@@ -144,7 +144,7 @@ impl<T: Write + Seek> MulWriter<T> {
 }
 
 #[cfg(test)]
-pub fn simple_from_vecs(vectors: Vec<Vec<u8>>) -> MulReader<Cursor<Vec<u8>>> {
+pub fn simple_from_vecs(vectors: Vec<Vec<u8>>, opt1: u16, opt2: u16) -> MulReader<Cursor<Vec<u8>>> {
     let mut idx_reader = Cursor::new(vec![]);
     let mut mul_reader = Cursor::new(vec![]);
     //For every MUL record, we should have an index record pointing at it
@@ -154,8 +154,8 @@ pub fn simple_from_vecs(vectors: Vec<Vec<u8>>) -> MulReader<Cursor<Vec<u8>>> {
         let mut idx_cursor = Cursor::new(vec![]);
         idx_cursor.write_u32::<LittleEndian>(mul_size as u32).unwrap();  //Position
         idx_cursor.write_u32::<LittleEndian>(len as u32).unwrap();  //Length
-        idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt1
-        idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt2
+        idx_cursor.write_u16::<LittleEndian>(opt1).unwrap();  //Opt1
+        idx_cursor.write_u16::<LittleEndian>(opt2).unwrap();  //Opt2
         idx_reader.write(idx_cursor.get_ref()).unwrap();
         mul_reader.write(&vec).unwrap();
     }

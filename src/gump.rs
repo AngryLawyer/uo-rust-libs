@@ -4,13 +4,7 @@ use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write, Read};
 use std::fs::File;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::path::Path;
-
-#[cfg(feature = "use-sdl2")]
-use sdl2::surface::Surface;
-#[cfg(feature = "use-sdl2")]
-use sdl2::pixels::PixelFormatEnum;
-#[cfg(feature = "use-sdl2")]
-use utils::{SURFACE_ERROR};
+use image::{Rgba, RgbaImage};
 
 #[derive(Clone, Copy)]
 pub struct GumpPair {
@@ -27,34 +21,23 @@ pub struct Gump {
 
 impl Gump {
 
-    #[cfg(feature = "use-sdl2")]
-    pub fn to_surface(&self) -> Surface {
-        let mut surface = Surface::new(self.width as u32, self.height as u32, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
-        let mut surface_target: usize = 0;
-
-        surface.with_lock_mut(|bitmap| {
-            for row in self.data.iter() {
-                let mut current_width = 0;
-                for run_pair in row {
-                    let (r, g, b, a) = run_pair.color.to_rgba();
+    pub fn to_image(&self) -> RgbaImage {
+        let mut buffer = RgbaImage::new(self.width as u32, self.height as u32);
+        for (y, row) in self.data.iter().enumerate() {
+            let mut x = 0;
+            for run_pair in row {
+                let (r, g, b, a) = run_pair.color.to_rgba();
+                if (r != 0 || g != 0 || b != 0) {
                     for _i in 0..run_pair.count {
-                        if (r != 0 || g != 0 || b != 0) {
-                            bitmap[surface_target] = a;
-                            bitmap[surface_target + 1] = b;
-                            bitmap[surface_target + 2] = g;
-                            bitmap[surface_target + 3] = r;
-                        }
-                        surface_target += 4;
-                        current_width += 1;
+                        buffer.put_pixel(x, y as u32, Rgba([r, g, b, a]));
                     }
-                    assert!(current_width <= self.width)
+                    x += 1;
+                } else {
+                    x += run_pair.count as u32;
                 }
-                if current_width < self.width {
-                    surface_target += (self.width - current_width) as usize * 4;
-                }
-            };
-        });
-        surface
+            }
+        };
+        buffer
     }
 }
 

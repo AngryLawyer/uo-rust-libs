@@ -9,11 +9,6 @@ use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use utils::{MEMWRITER_ERROR, SURFACE_ERROR};
 use std::path::Path;
 
-#[cfg(feature = "use-sdl2")]
-use sdl2::surface::Surface;
-#[cfg(feature = "use-sdl2")]
-use sdl2::pixels::PixelFormatEnum;
-
 use image::{Rgba, RgbaImage};
 
 pub trait Art {
@@ -22,11 +17,7 @@ pub trait Art {
      *
      * Returns (width, height, colors)
      */
-    fn to_32bit(&self) -> (u32, u32, Vec<Color32>);
     fn serialize(&self) -> Vec<u8>;
-
-    #[cfg(feature = "use-sdl2")]
-    fn to_surface(&self) -> Surface;
 
     fn to_image(&self) -> RgbaImage;
 }
@@ -68,30 +59,6 @@ pub struct Tile {
 }
 
 impl Art for Tile {
-    fn to_32bit(&self) -> (u32, u32, Vec<Color32>) {
-        let mut image: Vec<Color32> = vec![];
-
-        let mut read_idx = 0;
-
-        for i in 0..44 {
-
-            let slice_size = if i >= 22 {
-                (44 - i) * 2
-            } else {
-                (i + 1) * 2
-            };
-
-            image.extend_from_slice(vec![0; (22 - (slice_size / 2))].as_slice());
-            for _pixel_idx in 0..slice_size {
-                let (r, g, b, a) = self.image_data[read_idx].to_rgba();
-                image.push(Color::from_rgba(r, g, b, a));
-                read_idx += 1;
-            }
-            image.extend_from_slice(vec![0; (22 - (slice_size / 2))].as_slice());
-        };
-        (44, 44, image)
-    }
-
     fn serialize(&self) -> Vec<u8> {
         let mut writer = vec![];
         writer.write_u32::<LittleEndian>(self.header).ok().expect(MEMWRITER_ERROR);
@@ -123,61 +90,9 @@ impl Art for Tile {
         };
         buffer
     }
-
-    #[cfg(feature = "use-sdl2")]
-    fn to_surface(&self) -> Surface {
-        let mut surface = Surface::new(44, 44, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
-        surface.with_lock_mut(|bitmap| {
-            let mut read_idx = 0;
-
-            for y in 0..44 {
-
-                let slice_width = if y >= 22 {
-                    (44 - y) * 2
-                } else {
-                    (y + 1) * 2
-                };
-
-                let offset_left = 22 - (slice_width / 2);
-                for pixel_idx in 0..slice_width {
-                    let x = offset_left + pixel_idx;
-                    let (r, g, b, a) = self.image_data[read_idx].to_rgba();
-                    let target = ((y * 44) + x) * 4;
-                    bitmap[target] = a;
-                    bitmap[target + 1] = b;
-                    bitmap[target + 2] = g;
-                    bitmap[target + 3] = r;
-                    read_idx += 1;
-                }
-            };
-        });
-        surface
-    }
 }
 
 impl Art for Static {
-    fn to_32bit(&self) -> (u32, u32, Vec<Color32>) {
-        let mut image: Vec<Color32> = vec![];
-
-        for row in self.rows.iter() {
-            let mut current_width = 0;
-            for run_pair in row.iter() {
-                image.extend_from_slice(vec![0; run_pair.offset as usize].as_slice());
-                for pixel in run_pair.run.iter() {
-                    let (r, g, b, a) = pixel.to_rgba();
-                    image.push(Color::from_rgba(r, g, b, a));
-                }
-                current_width += run_pair.offset  + run_pair.run.len() as u16;
-                assert!(current_width <= self.width)
-            }
-            if current_width < self.width {
-                image.extend_from_slice(vec![0; (self.width - current_width) as usize].as_slice());
-            }
-        };
-
-        (self.width as u32, self.height as u32, image)
-    }
-
     fn serialize(&self) -> Vec<u8> {
         let mut writer = vec![];
         writer.write_u16::<LittleEndian>(self.size).ok().expect(MEMWRITER_ERROR);
@@ -228,35 +143,6 @@ impl Art for Static {
             }
         };
         buffer
-    }
-
-    #[cfg(feature = "use-sdl2")]
-    fn to_surface(&self) -> Surface {
-        let mut surface = Surface::new(self.width as u32, self.height as u32, PixelFormatEnum::RGBA8888).expect(SURFACE_ERROR);
-        let mut surface_target: usize = 0;
-
-        surface.with_lock_mut(|bitmap| {
-            for row in self.rows.iter() {
-                let mut current_width = 0;
-                for run_pair in row.iter() {
-                    surface_target += run_pair.offset as usize * 4;
-                    for pixel in run_pair.run.iter() {
-                        let (r, g, b, a) = pixel.to_rgba();
-                        bitmap[surface_target] = a;
-                        bitmap[surface_target + 1] = b;
-                        bitmap[surface_target + 2] = g;
-                        bitmap[surface_target + 3] = r;
-                        surface_target += 4;
-                    }
-                    current_width += run_pair.offset  + run_pair.run.len() as u16;
-                    assert!(current_width <= self.width)
-                }
-                if current_width < self.width {
-                    surface_target += (self.width - current_width) as usize * 4;
-                }
-            };
-        });
-        surface
     }
 }
 
