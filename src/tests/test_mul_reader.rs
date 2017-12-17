@@ -60,7 +60,7 @@ fn test_read_entries_provided_by_helper() {
     let mut mul_reader = simple_from_vecs(vec![
         vec![255],
         data_cursor.into_inner()
-    ]);
+    ], 0, 0);
     let record1 = mul_reader.read(0);
     let record2 = mul_reader.read(1);
     match record1 {

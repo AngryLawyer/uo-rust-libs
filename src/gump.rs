@@ -21,6 +21,7 @@ pub struct Gump {
 
 impl Gump {
 
+    // TODO: This should be a Result as it can overflow
     pub fn to_image(&self) -> RgbaImage {
         let mut buffer = RgbaImage::new(self.width as u32, self.height as u32);
         for (y, row) in self.data.iter().enumerate() {
@@ -56,6 +57,12 @@ impl GumpReader<File> {
 }
 
 impl<T: Read + Seek> GumpReader<T> {
+
+    pub fn from_mul(reader: MulReader<T>) -> GumpReader<T> {
+        GumpReader {
+            mul_reader: reader
+        }
+    }
 
     pub fn read_gump(&mut self, index: u32) -> Result<Gump> {
         let raw = try!(self.mul_reader.read(index));
