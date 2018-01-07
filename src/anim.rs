@@ -6,6 +6,8 @@ use std::fs::{File};
 use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Read};
 use std::path::Path;
 
+const PALETTE_SIZE: usize = 256;
+
 pub struct Row {
     header: u16,
     offset: u16,
@@ -13,8 +15,8 @@ pub struct Row {
 }
 
 pub struct AnimFrame {
-    pub image_centre_x: u16,
-    pub image_centre_y: u16,
+    pub image_centre_x: i16,
+    pub image_centre_y: i16,
     pub width: u16,
     pub height: u16,
     pub data: Vec<Row>
@@ -31,8 +33,8 @@ pub struct AnimReader<T: Read + Seek> {
 }
 
 fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
-    let image_centre_x = try!(reader.read_u16::<LittleEndian>());
-    let image_centre_y = try!(reader.read_u16::<LittleEndian>());
+    let image_centre_x = try!(reader.read_i16::<LittleEndian>());
+    let image_centre_y = try!(reader.read_i16::<LittleEndian>());
     let width = try!(reader.read_u16::<LittleEndian>());
     let height = try!(reader.read_u16::<LittleEndian>());
     // Read data
@@ -64,11 +66,12 @@ impl <T: Read + Seek> AnimReader<T> {
     }
 
     pub fn read(&mut self, id: u32) -> Result<AnimGroup> {
+
         let raw = try!(self.mul_reader.read(id));
         let mut reader = Cursor::new(raw.data);
         // Read the palette
-        let mut palette = [0; 256];
-        for i in 0..256 {
+        let mut palette = [0; PALETTE_SIZE];
+        for i in 0..PALETTE_SIZE {
             palette[i] = try!(reader.read_u16::<LittleEndian>());
         }
 
@@ -80,7 +83,7 @@ impl <T: Read + Seek> AnimReader<T> {
 
         let mut frames = vec![];
         for offset in frame_offsets {
-            try!(reader.seek(SeekFrom::Start((256 * 2 + offset) as u64)));
+            try!(reader.seek(SeekFrom::Start((PALETTE_SIZE as u32 * 2 + offset) as u64)));
             frames.push(try!(read_frame(&mut reader)));
         }
 
