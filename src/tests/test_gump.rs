@@ -11,28 +11,28 @@ fn example_gump_mul() -> GumpReader<Cursor<Vec<u8>>> {
     data.write_u32::<LittleEndian>(6).unwrap();  //Row 2 offset
     data.write_u32::<LittleEndian>(7).unwrap();  //Row 3 offset
 
-    data.write_u16::<LittleEndian>(0).unwrap();  //Row 1, run 1 spacer
-    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 spacer
+    data.write_u16::<LittleEndian>(0).unwrap();  //Black
+    data.write_u16::<LittleEndian>(1).unwrap();  //One pixel
 
-    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //Row 1, run 1 data
-    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 number of pixels
+    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //White
+    data.write_u16::<LittleEndian>(1).unwrap();  //1 pixel
 
-    data.write_u16::<LittleEndian>(0).unwrap();  //Row 1, run 1 spacer
-    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 spacer
+    data.write_u16::<LittleEndian>(0).unwrap();  //Black
+    data.write_u16::<LittleEndian>(1).unwrap();  //1 pixel
 
-    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //Row 2, run 1 data
-    data.write_u16::<LittleEndian>(3).unwrap();  //Row 2 EOL
+    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //White
+    data.write_u16::<LittleEndian>(3).unwrap();  //3 pixels
 
-    data.write_u16::<LittleEndian>(0).unwrap();  //Row 1, run 1 spacer
-    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 spacer
+    data.write_u16::<LittleEndian>(0).unwrap();  //Black
+    data.write_u16::<LittleEndian>(1).unwrap();  //One pixel
 
-    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //Row 1, run 1 data
-    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 number of pixels
+    data.write_u16::<LittleEndian>(0xFFFF).unwrap();  //White
+    data.write_u16::<LittleEndian>(1).unwrap();  //1 pixel
 
-    data.write_u16::<LittleEndian>(0).unwrap();  //Row 1, run 1 spacer
-    data.write_u16::<LittleEndian>(1).unwrap();  //Row 1, run 1 spacer
+    data.write_u16::<LittleEndian>(0).unwrap();  //Black
+    data.write_u16::<LittleEndian>(1).unwrap();  //1 pixel
 
-    let mul_reader = simple_from_vecs(vec![data.into_inner()], 3, 0);
+    let mul_reader = simple_from_vecs(vec![data.into_inner()], 3, 3);
     GumpReader::from_mul(mul_reader)
 }
 
