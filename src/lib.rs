@@ -1,4 +1,5 @@
 extern crate byteorder;
+extern crate num_rational;
 extern crate image;
 
 pub mod mul_reader;

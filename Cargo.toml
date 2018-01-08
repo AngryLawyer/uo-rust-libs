@@ -12,3 +12,4 @@ path = "src/lib.rs"
 [dependencies]
 byteorder = "1.2"
 image = "0.18"
+num-rational = { version = "0.1.32", default-features = false }
