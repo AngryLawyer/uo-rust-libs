@@ -11,8 +11,7 @@ use num_rational::Ratio;
 const PALETTE_SIZE: usize = 256;
 const IMAGE_COMPLETE: u32 = 0x7FFF7FFF;
 
-const X_MASK: u32 = 0x007FF000;
-const Y_MASK: u32 = 0x007FF000; //FIXME: wrong
+const OFFSET_MASK: i32 = (0x200 << 22) | (0x200 << 12);
 
 pub struct Row {
     pub header: u32,
@@ -20,12 +19,12 @@ pub struct Row {
 }
 
 impl Row {
-    pub fn x_offset(&self) -> i16 {
-        ((self.header & X_MASK) >> 6) as i16  //FIXME
+    pub fn x_offset(&self, image_centre_x: i16) -> i32 {
+        ((((self.header as i32 ^ OFFSET_MASK) >> 22) & 0x3FF) as i32 + image_centre_x as i32 - 0x200) as i32
     }
 
-    pub fn y_offset(&self) -> i16 {
-        ((self.header & Y_MASK) >> 6) as i16 //FIXME: wrong
+    pub fn y_offset(&self, image_centre_y: i16, height: u32) -> i32 {
+        ((((self.header as i32 ^ OFFSET_MASK) >> 12) & 0x3FF) as i32 + image_centre_y as i32 + height as i32 - 0x200) as i32
     }
 }
 
@@ -48,8 +47,13 @@ impl AnimGroup {
         Frames::new(self.frames.iter().map(|anim_frame| {
             // TODO: Figure out what to do with image_centre_x and y, and sort out offsets
             let mut buffer = RgbaImage::new(anim_frame.width as u32, anim_frame.height as u32);
-            for pixel in buffer.pixels_mut() {
-                *pixel = Rgba([255, 255, 255, 255]);
+            for row in &anim_frame.data {
+                let x = row.x_offset(anim_frame.image_centre_x);
+                let y = row.y_offset(anim_frame.image_centre_y, anim_frame.height as u32);
+                for i in 0..row.image_data.len() {
+                    let (r, g, b, a) = self.palette[row.image_data[i] as usize].to_rgba();
+                    buffer.put_pixel(x as u32 + i as u32, y as u32, Rgba([r, g, b, a]));
+                }
             }
             Frame::from_parts(buffer, 0, 0, Ratio::from_integer(0))
         }).collect())
