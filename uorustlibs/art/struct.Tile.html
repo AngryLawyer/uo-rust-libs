@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Tile` struct in crate `uorustlibs`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Tile">
+
+    <title>uorustlibs::art::Tile - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../normalize.css">
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+    
+
+    
+    
+</head>
+<body class="rustdoc struct">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'>Struct Tile</p><div class="block items"><a class="sidebar-title" href="#fields">Fields</a><div class="sidebar-links"><a href="#structfield.header">header</a><a href="#structfield.image_data">image_data</a></div><a class="sidebar-title" href="#implementations">Trait Implementations</a><div class="sidebar-links"><a href="#impl-Art">Art</a></div></div><p class='location'><a href='../index.html'>uorustlibs</a>::<wbr><a href='index.html'>art</a></p><script>window.sidebarCurrent = {name: 'Tile', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>uorustlibs</a>::<wbr><a href='index.html'>art</a>::<wbr><a class="struct" href=''>Tile</a></span><span class='out-of-band'><span id='render-detail'>
+                   <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                       [<span class='inner'>&#x2212;</span>]
+                   </a>
+               </span><a class='srclink' href='../../src/uorustlibs/art.rs.html#54-59' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct Tile {
+    pub header: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a>,
+    pub image_data: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.array.html">[</a><a class="type" href="../../uorustlibs/color/type.Color16.html" title="type uorustlibs::color::Color16">Color16</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.array.html">; 1022]</a>,
+}</pre><div class='docblock'><p>A Map Tile, 44px by 44px</p>
+
+<p>Map tiles are stored as
+|Header:u32|Pixels:u16|
+Where pixels represents a list of rows, length 2, 4, 6, 8 .. 42, 44, 44, 42 .. 8, 6, 4, 2 and are drawn
+centred</p>
+</div><h2 id='fields' class='fields small-section-header'>
+                       Fields<a href='#fields' class='anchor'></a></h2><span id="structfield.header" class="structfield small-section-header">
+                           <a href="#structfield.header" class="anchor field"></a>
+                           <span id="header.v" class='invisible'>
+                           <code>header: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u32.html">u32</a></code>
+                           </span></span><div class='docblock'><p>Header information for a tile.  Unused</p>
+</div><span id="structfield.image_data" class="structfield small-section-header">
+                           <a href="#structfield.image_data" class="anchor field"></a>
+                           <span id="image_data.v" class='invisible'>
+                           <code>image_data: <a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.array.html">[</a><a class="type" href="../../uorustlibs/color/type.Color16.html" title="type uorustlibs::color::Color16">Color16</a><a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.array.html">; 1022]</a></code>
+                           </span></span><div class='docblock'><p>Individual pixels. These work as rows, of length 2, 4, 6, 8 .. 42, 44, 44, 42 .. 8, 6, 4, 2</p>
+</div>
+            <h2 id='implementations' class='small-section-header'>
+              Trait Implementations<a href='#implementations' class='anchor'></a>
+            </h2>
+        <h3 id='impl-Art' class='impl'><span class='in-band'><code>impl <a class="trait" href="../../uorustlibs/art/trait.Art.html" title="trait uorustlibs::art::Art">Art</a> for <a class="struct" href="../../uorustlibs/art/struct.Tile.html" title="struct uorustlibs::art::Tile">Tile</a></code><a href='#impl-Art' class='anchor'></a></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/uorustlibs/art.rs.html#61-93' title='goto source code'>[src]</a></span></h3>
+<div class='impl-items'><h4 id='method.serialize' class="method"><span id='serialize.v' class='invisible'><code>fn <a href='../../uorustlibs/art/trait.Art.html#tymethod.serialize' class='fnname'>serialize</a>(&amp;self) -&gt; <a class="struct" href="https://doc.rust-lang.org/nightly/alloc/vec/struct.Vec.html" title="struct alloc::vec::Vec">Vec</a>&lt;<a class="primitive" href="https://doc.rust-lang.org/nightly/std/primitive.u8.html">u8</a>&gt;</code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/uorustlibs/art.rs.html#62-69' title='goto source code'>[src]</a></span></h4>
+<div class='docblock'><p>Convert to a 32bit array <a href="../../uorustlibs/art/trait.Art.html#tymethod.serialize">Read more</a></p>
+</div><h4 id='method.to_image' class="method"><span id='to_image.v' class='invisible'><code>fn <a href='../../uorustlibs/art/trait.Art.html#tymethod.to_image' class='fnname'>to_image</a>(&amp;self) -&gt; <a class="type" href="../../image/buffer/type.RgbaImage.html" title="type image::buffer::RgbaImage">RgbaImage</a></code></span><span class='out-of-band'><div class='ghost'></div><a class='srclink' href='../../src/uorustlibs/art.rs.html#71-92' title='goto source code'>[src]</a></span></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>↑</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>↓</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>↹</dt>
+                    <dd>Switch tab</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                    <dt style="width:31px;">+ / -</dt>
+                    <dd>Collapse/expand all sections</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "uorustlibs";
+    </script>
+    <script src="../../main.js"></script>
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

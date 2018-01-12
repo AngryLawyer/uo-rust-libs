@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["STATIC_OFFSET",""],["TILE_SIZE",""]],"enum":[["TileOrStatic",""]],"struct":[["ArtReader",""],["RunPair",""],["Static",""],["Tile","A Map Tile, 44px by 44px"]],"trait":[["Art",""]],"type":[["StaticRow",""]]});

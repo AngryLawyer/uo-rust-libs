@@ -1,0 +1,1 @@
+initSidebarItems({"trait":[["Color",""]],"type":[["Color16",""],["Color32",""]]});

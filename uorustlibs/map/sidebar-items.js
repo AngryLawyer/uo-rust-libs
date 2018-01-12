@@ -1,0 +1,1 @@
+initSidebarItems({"constant":[["BLOCK_SIZE",""],["MAP0_SIZE",""],["OFFSET",""]],"mod":[["map_size",""]],"struct":[["Block",""],["Cell",""],["MapReader",""],["RadarColReader",""],["StaticLocation",""],["StaticReader",""]]});

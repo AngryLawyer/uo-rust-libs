@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Skill",""],["Skills","A reader of a Skills file-like object"]]});

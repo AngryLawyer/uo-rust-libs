@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["MulWriterMode",""]],"struct":[["MulReader","Read Mul records out of am idx and a mul"],["MulRecord","An individual record, read from a Mul file"],["MulWriter","Write new records onto existing Mul and Idx files"]]});
