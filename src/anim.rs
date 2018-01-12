@@ -1,9 +1,9 @@
 //! Methods for reading animated characters out of anim.mul/anim.idx
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use color::{Color, Color16, Color32};
+use byteorder::{LittleEndian, ReadBytesExt};
+use color::{Color, Color16};
 use mul_reader::MulReader;
 use std::fs::{File};
-use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Read};
+use std::io::{Result, Cursor, SeekFrom, Seek, Read};
 use std::path::Path;
 use image::{Frames, Frame, Rgba, RgbaImage};
 use num_rational::Ratio;

@@ -1,6 +1,6 @@
 use mul_reader::MulReader;
 use color::{Color16, Color};
-use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write, Read};
+use std::io::{Result, Cursor, SeekFrom, Seek, Read};
 use std::fs::File;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::path::Path;
@@ -29,7 +29,7 @@ impl Gump {
             for run_pair in row {
                 let (r, g, b, a) = run_pair.color.to_rgba();
                 // Pure black is Transparent in Gumps
-                if (r != 0 || g != 0 || b != 0) {
+                if r != 0 || g != 0 || b != 0 {
                     for i in 0..run_pair.count {
                         buffer.put_pixel(x + i as u32, y as u32, Rgba([r, g, b, a]));
                     }

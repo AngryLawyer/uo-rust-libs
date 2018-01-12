@@ -4,9 +4,9 @@
 use std::fs::{File};
 use mul_reader::MulReader;
 use std::io::{Result, Error, ErrorKind, Cursor, SeekFrom, Seek, Write, Read};
-use color::{Color, Color16, Color32};
+use color::{Color, Color16};
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use utils::{MEMWRITER_ERROR, SURFACE_ERROR};
+use utils::MEMWRITER_ERROR;
 use std::path::Path;
 
 use image::{Rgba, RgbaImage};

@@ -10,7 +10,6 @@ use std::io::{Cursor, Result, SeekFrom, Seek, Read, Write};
 use std::fs::{File};
 use std::path::Path;
 use std::str::{from_utf8};
-use std::ascii::AsciiExt;
 use utils::MEMWRITER_ERROR;
 use color::Color16;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
