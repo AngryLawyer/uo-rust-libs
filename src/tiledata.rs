@@ -45,12 +45,14 @@ static MAP_TILE_SIZE:u32 = 26;
 static STATIC_TILE_SIZE:u32 = 37;
 static STATIC_OFFSET:u32 = 428032;
 
+#[derive(Clone)]
 pub struct MapTileData {
     pub flags: u32,
     pub texture_id: u16,
     pub name: String
 }
 
+#[derive(Clone)]
 pub struct StaticTileData {
     pub flags: u32,
     pub weight: u8,
@@ -68,7 +70,7 @@ pub struct TileDataReader {
 
 impl TileDataReader {
     pub fn new(mul_path: &Path) -> Result<TileDataReader> {
-        let data_reader = try!(File::open(mul_path));
+        let data_reader = File::open(mul_path)?;
 
         Ok(TileDataReader {
             data_reader: data_reader
@@ -77,15 +79,15 @@ impl TileDataReader {
 
     pub fn read_map_tile_data(&mut self, idx: u32) -> Result<MapTileData> {
         let offset = self.calculate_map_tile_offset(idx);
-        try!(self.data_reader.seek(SeekFrom::Start(offset)));
-        let flags = try!(self.data_reader.read_u32::<LittleEndian>());
-        let texture_id = try!(self.data_reader.read_u16::<LittleEndian>());
+        self.data_reader.seek(SeekFrom::Start(offset))?;
+        let flags = self.data_reader.read_u32::<LittleEndian>()?;
+        let texture_id = self.data_reader.read_u16::<LittleEndian>()?;
         let reader = &self.data_reader;
 
-        let raw_name = try!(reader.bytes().take_while(|ref c| match *c {
+        let raw_name = reader.bytes().take_while(|ref c| match *c {
             &Ok(n)  => n != 0,
             &Err(_) => true,
-        }).collect::<Result<Vec<u8>>>());
+        }).collect::<Result<Vec<u8>>>()?;
 
         Ok(MapTileData {
             flags: flags,
@@ -102,25 +104,25 @@ impl TileDataReader {
 
     pub fn read_static_tile_data(&mut self, idx: u32) -> Result<StaticTileData> {
         let offset = self.calculate_static_tile_offset(idx);
-        try!(self.data_reader.seek(SeekFrom::Start(offset)));
+        self.data_reader.seek(SeekFrom::Start(offset))?;
 
-        let flags = try!(self.data_reader.read_u32::<LittleEndian>());
-        let weight = try!(self.data_reader.read_u8());
-        let quality = try!(self.data_reader.read_u8());
-        let _unknown = try!(self.data_reader.read_u16::<LittleEndian>());
-        let _unknown1 = try!(self.data_reader.read_u8());
-        let quantity = try!(self.data_reader.read_u8());
-        let anim_id = try!(self.data_reader.read_u16::<LittleEndian>());
-        let _unknown2 = try!(self.data_reader.read_u8());
-        let hue = try!(self.data_reader.read_u8());
-        let _unknown3 = try!(self.data_reader.read_u16::<LittleEndian>());
-        let height = try!(self.data_reader.read_u8());
+        let flags = self.data_reader.read_u32::<LittleEndian>()?;
+        let weight = self.data_reader.read_u8()?;
+        let quality = self.data_reader.read_u8()?;
+        let _unknown = self.data_reader.read_u16::<LittleEndian>()?;
+        let _unknown1 = self.data_reader.read_u8()?;
+        let quantity = self.data_reader.read_u8()?;
+        let anim_id = self.data_reader.read_u16::<LittleEndian>()?;
+        let _unknown2 = self.data_reader.read_u8()?;
+        let hue = self.data_reader.read_u8()?;
+        let _unknown3 = self.data_reader.read_u16::<LittleEndian>()?;
+        let height = self.data_reader.read_u8()?;
 
         let reader = &self.data_reader;
-        let raw_name = try!(reader.bytes().take_while(|ref c| match *c {
+        let raw_name = reader.bytes().take_while(|ref c| match *c {
             &Ok(n)  => n != 0,
             &Err(_) => true,
-        }).collect::<Result<Vec<u8>>>());
+        }).collect::<Result<Vec<u8>>>()?;
 
         Ok(StaticTileData {
             flags: flags,
