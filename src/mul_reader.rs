@@ -44,8 +44,8 @@ pub struct MulReader<T: Read + Seek> {
 impl MulReader<File> {
 
     pub fn new(idx_path: &Path, mul_path: &Path) -> Result<MulReader<File>> {
-        let idx_reader = try!(File::open(idx_path));
-        let data_reader = try!(File::open(mul_path));
+        let idx_reader = File::open(idx_path)?;
+        let data_reader = File::open(mul_path)?;
 
         Ok(MulReader {
             idx_reader: idx_reader,
@@ -65,19 +65,19 @@ impl<T: Read + Seek> MulReader<T> {
 
     pub fn read(&mut self, index: u32) -> Result<MulRecord> {
         //Wind the idx reader to the index position
-        try!(self.idx_reader.seek(SeekFrom::Start((index * INDEX_SIZE) as u64)));
-        let start = try!(self.idx_reader.read_u32::<LittleEndian>());
+        self.idx_reader.seek(SeekFrom::Start((index * INDEX_SIZE) as u64))?;
+        let start = self.idx_reader.read_u32::<LittleEndian>()?;
         if start == UNDEF_RECORD || start == u32::max_value() {
             //Check for empty cell
             Err(Error::new(ErrorKind::Other, format!("Trying to read out of bounds record {}, with a start of {}", index, start)))
         } else {
-            let length = try!(self.idx_reader.read_u32::<LittleEndian>());
+            let length = self.idx_reader.read_u32::<LittleEndian>()?;
             let mut data = vec![0; length as usize];
-            let opt1 = try!(self.idx_reader.read_u16::<LittleEndian>());
-            let opt2 = try!(self.idx_reader.read_u16::<LittleEndian>());
-            try!(self.data_reader.seek(SeekFrom::Start(start as u64)));
+            let opt1 = self.idx_reader.read_u16::<LittleEndian>()?;
+            let opt2 = self.idx_reader.read_u16::<LittleEndian>()?;
+            self.data_reader.seek(SeekFrom::Start(start as u64))?;
 
-            try!(self.data_reader.read_exact(data.as_mut_slice()));
+            self.data_reader.read_exact(data.as_mut_slice())?;
 
             Ok(MulRecord {
                 data: data,
@@ -109,8 +109,8 @@ impl MulWriter<File> {
         let mut options = OpenOptions::new();
         let options = options.write(true).create(true).truncate(match mode { MulWriterMode::Append => false, MulWriterMode::Truncate => true});
 
-        let idx_writer = try!(options.open(idx_path));
-        let data_writer = try!(options.open(mul_path));
+        let idx_writer = options.open(idx_path)?;
+        let data_writer = options.open(mul_path)?;
 
         Ok(MulWriter {
             idx_writer: idx_writer,
@@ -124,8 +124,8 @@ impl<T: Write + Seek> MulWriter<T> {
     pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) -> Result<()> {
 
         //Wind the files to the end
-        try!(self.idx_writer.seek(SeekFrom::End(0)));
-        let mul_size = try!(self.data_writer.seek(SeekFrom::End(0)));
+        self.idx_writer.seek(SeekFrom::End(0))?;
+        let mul_size = self.data_writer.seek(SeekFrom::End(0))?;
 
         //Fill up our fields
         let start = mul_size as u32;
@@ -133,11 +133,11 @@ impl<T: Write + Seek> MulWriter<T> {
         let opt1 = match opt1 { Some(value) => value, None => 0} as u16;
         let opt2 = match opt2 { Some(value) => value, None => 0} as u16;
 
-        try!(self.data_writer.write(data.as_slice()));
-        try!(self.idx_writer.write_u32::<LittleEndian>(start));
-        try!(self.idx_writer.write_u32::<LittleEndian>(length));
-        try!(self.idx_writer.write_u16::<LittleEndian>(opt1));
-        try!(self.idx_writer.write_u16::<LittleEndian>(opt2));
+        self.data_writer.write(data.as_slice())?;
+        self.idx_writer.write_u32::<LittleEndian>(start)?;
+        self.idx_writer.write_u32::<LittleEndian>(length)?;
+        self.idx_writer.write_u16::<LittleEndian>(opt1)?;
+        self.idx_writer.write_u16::<LittleEndian>(opt2)?;
 
         Ok(())
     }

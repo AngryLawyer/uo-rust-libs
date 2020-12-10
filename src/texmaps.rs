@@ -42,7 +42,7 @@ pub struct TexMapsReader<T: Read + Seek> {
 impl TexMapsReader<File> {
 
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<TexMapsReader<File>> {
-        let mul_reader = try!(MulReader::new(index_path, mul_path));
+        let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(TexMapsReader {
             mul_reader: mul_reader
         })
@@ -58,12 +58,12 @@ impl <T: Read + Seek> TexMapsReader<T> {
     }
 
     pub fn read(&mut self, id: u32) -> Result<TexMap> {
-        let raw = try!(self.mul_reader.read(id));
+        let raw = self.mul_reader.read(id)?;
         let len = raw.data.len();
         let mut reader = Cursor::new(raw.data);
         let mut data = vec![];
         for _idx in 0..len / 2 {
-            data.push(try!(reader.read_u16::<LittleEndian>()));
+            data.push(reader.read_u16::<LittleEndian>()?);
         }
         Ok(TexMap {
             data

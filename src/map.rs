@@ -67,7 +67,7 @@ pub struct MapReader {
 impl MapReader {
 
     pub fn new(map_path: &Path, width: u32, height: u32) -> Result<MapReader> {
-        let data_reader = try!(File::open(map_path));
+        let data_reader = File::open(map_path)?;
 
         Ok(MapReader {
             data_reader: data_reader,
@@ -81,17 +81,17 @@ impl MapReader {
      */
     pub fn read_block(&mut self, id: u32) -> Result<Block> {
         //Cycle to id * 192
-        try!(self.data_reader.seek(SeekFrom::Start((id * BLOCK_SIZE as u32) as u64)));
+        self.data_reader.seek(SeekFrom::Start((id * BLOCK_SIZE as u32) as u64))?;
         //Read the header
         let mut block = Block {
-            checksum: try!(self.data_reader.read_u32::<LittleEndian>()),
+            checksum: self.data_reader.read_u32::<LittleEndian>()?,
             cells: [Cell {graphic: 0, altitude: 0}; 64]
         };
         //Read 64 cells
         for i in 0..64 {
             block.cells[i] = Cell{
-                graphic: try!(self.data_reader.read_u16::<LittleEndian>()),
-                altitude: try!(self.data_reader.read_i8())
+                graphic: self.data_reader.read_u16::<LittleEndian>()?,
+                altitude: self.data_reader.read_i8()?
             };
         }
         Ok(block)
@@ -119,7 +119,7 @@ pub struct StaticReader<T: Read + Seek> {
 
 impl StaticReader<File> {
     pub fn new(index_path: &Path, mul_path: &Path, width_blocks: u32, height_blocks: u32) -> Result<StaticReader<File>> {
-        let mul_reader = try!(MulReader::new(index_path, mul_path));
+        let mul_reader = MulReader::new(index_path, mul_path)?;
 
         Ok(StaticReader {
             mul_reader: mul_reader,
@@ -132,17 +132,17 @@ impl StaticReader<File> {
 impl<T: Read + Seek> StaticReader<T> {
 
     pub fn read_block(&mut self, id: u32) -> Result<Vec<StaticLocation>> {
-        let raw = try!(self.mul_reader.read(id));
+        let raw = self.mul_reader.read(id)?;
         let len = raw.data.len();
         assert!(len % 7 == 0);
         let mut reader = Cursor::new(raw.data);
         let mut statics = vec![];
         for _i in 0..(len / 7) {
-            let object_id = try!(reader.read_u16::<LittleEndian>());
-            let x = try!(reader.read_u8());
-            let y = try!(reader.read_u8());
-            let altitude = try!(reader.read_i8());
-            let checksum = try!(reader.read_u16::<LittleEndian>());
+            let object_id = reader.read_u16::<LittleEndian>()?;
+            let x = reader.read_u8()?;
+            let y = reader.read_u8()?;
+            let altitude = reader.read_i8()?;
+            let checksum = reader.read_u16::<LittleEndian>()?;
             statics.push(StaticLocation{
                 object_id: object_id,
                 x: x,
@@ -174,7 +174,7 @@ pub struct RadarColReader {
 
 impl RadarColReader {
     pub fn new(radar_col_path: &Path) -> Result<RadarColReader> {
-        let data_reader = try!(File::open(radar_col_path));
+        let data_reader = File::open(radar_col_path)?;
 
         Ok(RadarColReader {
             data_reader: data_reader,
@@ -182,17 +182,17 @@ impl RadarColReader {
     }
 
     pub fn read_color(&mut self, id: u32) -> Result<Color16> {
-        try!(self.data_reader.seek(SeekFrom::Start((id * 2) as u64)));
-        let data = try!(self.data_reader.read_u16::<LittleEndian>());
+        self.data_reader.seek(SeekFrom::Start((id * 2) as u64))?;
+        let data = self.data_reader.read_u16::<LittleEndian>()?;
         Ok(data)
     }
 
     pub fn read_colors(&mut self) -> Result<Vec<Color16>> {
-        try!(self.data_reader.seek(SeekFrom::Start(0)));
-        let meta = try!(self.data_reader.metadata());
+        self.data_reader.seek(SeekFrom::Start(0))?;
+        let meta = self.data_reader.metadata()?;
         let mut output = vec![];
         for _i in 0..(meta.len() / 2) {
-            output.push(try!(self.data_reader.read_u16::<LittleEndian>()));
+            output.push(self.data_reader.read_u16::<LittleEndian>()?);
         }
         Ok(output)
     }

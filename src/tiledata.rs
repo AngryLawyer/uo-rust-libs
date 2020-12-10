@@ -64,30 +64,35 @@ pub struct StaticTileData {
     pub name: String
 }
 
-pub struct TileDataReader {
-    data_reader: File  //FIXME: This should be a Read + Seek instead of File
+pub struct TileDataReader<T: Read + Seek> {
+    data_reader: T
 }
 
-impl TileDataReader {
-    pub fn new(mul_path: &Path) -> Result<TileDataReader> {
+impl TileDataReader<File> {
+    pub fn new(mul_path: &Path) -> Result<TileDataReader<File>> {
         let data_reader = File::open(mul_path)?;
 
         Ok(TileDataReader {
             data_reader: data_reader
         })
     }
+}
+
+impl <T: Read + Seek> TileDataReader<T> {
 
     pub fn read_map_tile_data(&mut self, idx: u32) -> Result<MapTileData> {
         let offset = self.calculate_map_tile_offset(idx);
         self.data_reader.seek(SeekFrom::Start(offset))?;
         let flags = self.data_reader.read_u32::<LittleEndian>()?;
         let texture_id = self.data_reader.read_u16::<LittleEndian>()?;
-        let reader = &self.data_reader;
 
-        let raw_name = reader.bytes().take_while(|ref c| match *c {
-            &Ok(n)  => n != 0,
-            &Err(_) => true,
-        }).collect::<Result<Vec<u8>>>()?;
+        let mut raw_name = vec![];
+        while match raw_name.last() {
+            Some(0) => false,
+            _ => true
+        } {
+            raw_name.push(self.data_reader.read_u8()?);
+        }
 
         Ok(MapTileData {
             flags: flags,
@@ -118,11 +123,13 @@ impl TileDataReader {
         let _unknown3 = self.data_reader.read_u16::<LittleEndian>()?;
         let height = self.data_reader.read_u8()?;
 
-        let reader = &self.data_reader;
-        let raw_name = reader.bytes().take_while(|ref c| match *c {
-            &Ok(n)  => n != 0,
-            &Err(_) => true,
-        }).collect::<Result<Vec<u8>>>()?;
+        let mut raw_name = vec![];
+        while match raw_name.last() {
+            Some(0) => false,
+            _ => true
+        } {
+            raw_name.push(self.data_reader.read_u8()?);
+        }
 
         Ok(StaticTileData {
             flags: flags,

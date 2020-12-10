@@ -109,7 +109,7 @@ pub struct HueReader<T: Read + Seek> {
 
 impl HueReader<File> {
     pub fn new(hues_path: &Path) -> Result<HueReader<File>> {
-        let data_reader = try!(File::open(hues_path));
+        let data_reader = File::open(hues_path)?;
 
         Ok(HueReader {
             data_reader: data_reader
@@ -131,19 +131,19 @@ impl<T: Read + Seek> HueReader<T> {
      * Read the given indexed group
      */
     pub fn read_hue_group(&mut self, id: u32) -> Result<HueGroup> {
-        try!(self.data_reader.seek(SeekFrom::Start((id * GROUP_SIZE) as u64)));
+        self.data_reader.seek(SeekFrom::Start((id * GROUP_SIZE) as u64))?;
 
-        let header = try!(self.data_reader.read_u32::<LittleEndian>());
+        let header = self.data_reader.read_u32::<LittleEndian>()?;
 
         let entries: [Hue; 8] = [
-            try!(self.read_hue()),
-            try!(self.read_hue()),
-            try!(self.read_hue()),
-            try!(self.read_hue()),
-            try!(self.read_hue()),
-            try!(self.read_hue()),
-            try!(self.read_hue()),
-            try!(self.read_hue())
+            self.read_hue()?,
+            self.read_hue()?,
+            self.read_hue()?,
+            self.read_hue()?,
+            self.read_hue()?,
+            self.read_hue()?,
+            self.read_hue()?,
+            self.read_hue()?
         ];
 
         Ok(HueGroup {
@@ -155,17 +155,17 @@ impl<T: Read + Seek> HueReader<T> {
     fn read_hue(&mut self) -> Result<Hue> {
         let mut color_table = [0u16; 32];
         for idx in 0..32 {
-            color_table[idx] = try!(self.data_reader.read_u16::<LittleEndian>());
+            color_table[idx] = self.data_reader.read_u16::<LittleEndian>()?;
         }
 
-        let table_start = try!(self.data_reader.read_u16::<LittleEndian>());
-        let table_end = try!(self.data_reader.read_u16::<LittleEndian>());
+        let table_start = self.data_reader.read_u16::<LittleEndian>()?;
+        let table_end = self.data_reader.read_u16::<LittleEndian>()?;
 
         let mut raw_name = [0; 20];
-        try!(self.data_reader.read_exact(&mut raw_name));
+        self.data_reader.read_exact(&mut raw_name)?;
 
         //Slice it down into a normal string size
-        let trimmed_name: Vec<u8> = raw_name.into_iter().take_while(|&element| *element != 0).cloned().collect();
+        let trimmed_name: Vec<u8> = raw_name.iter().take_while(|&element| *element != 0).cloned().collect();
 
         let name = match from_utf8(trimmed_name.as_slice()) {
             Ok(s) => {

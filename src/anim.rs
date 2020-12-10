@@ -65,21 +65,21 @@ pub struct AnimReader<T: Read + Seek> {
 }
 
 fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
-    let image_centre_x = try!(reader.read_i16::<LittleEndian>());
-    let image_centre_y = try!(reader.read_i16::<LittleEndian>());
-    let width = try!(reader.read_u16::<LittleEndian>());
-    let height = try!(reader.read_u16::<LittleEndian>());
+    let image_centre_x = reader.read_i16::<LittleEndian>()?;
+    let image_centre_y = reader.read_i16::<LittleEndian>()?;
+    let width = reader.read_u16::<LittleEndian>()?;
+    let height = reader.read_u16::<LittleEndian>()?;
 
     let mut data = vec![];
     loop {
-        let header = try!(reader.read_u32::<LittleEndian>());
+        let header = reader.read_u32::<LittleEndian>()?;
         if header == IMAGE_COMPLETE {
             break;
         }
         let run_length = header & 0xFFF;
         let mut image_data = vec![];
         for _i in 0..run_length {
-            image_data.push(try!(reader.read_u8()));
+            image_data.push(reader.read_u8()?);
         }
         data.push(Row {
             header,
@@ -100,7 +100,7 @@ fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
 impl AnimReader<File> {
 
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<AnimReader<File>> {
-        let mul_reader = try!(MulReader::new(index_path, mul_path));
+        let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(AnimReader {
             mul_reader: mul_reader
         })
@@ -117,24 +117,24 @@ impl <T: Read + Seek> AnimReader<T> {
 
     pub fn read(&mut self, id: u32) -> Result<AnimGroup> {
 
-        let raw = try!(self.mul_reader.read(id));
+        let raw = self.mul_reader.read(id)?;
         let mut reader = Cursor::new(raw.data);
         // Read the palette
         let mut palette = [0; PALETTE_SIZE];
         for i in 0..PALETTE_SIZE {
-            palette[i] = try!(reader.read_u16::<LittleEndian>());
+            palette[i] = reader.read_u16::<LittleEndian>()?;
         }
 
-        let frame_count = try!(reader.read_u32::<LittleEndian>());
+        let frame_count = reader.read_u32::<LittleEndian>()?;
         let mut frame_offsets = vec![];
         for _ in 0..frame_count {
-            frame_offsets.push(try!(reader.read_u32::<LittleEndian>()));
+            frame_offsets.push(reader.read_u32::<LittleEndian>()?);
         }
 
         let mut frames = vec![];
         for offset in frame_offsets {
-            try!(reader.seek(SeekFrom::Start((PALETTE_SIZE as u32 * 2 + offset) as u64)));
-            frames.push(try!(read_frame(&mut reader)));
+            reader.seek(SeekFrom::Start((PALETTE_SIZE as u32 * 2 + offset) as u64))?;
+            frames.push(read_frame(&mut reader)?);
         }
 
         Ok(AnimGroup {

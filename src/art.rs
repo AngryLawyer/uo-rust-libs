@@ -166,7 +166,7 @@ pub struct ArtReader<T: Read + Seek> {
 impl ArtReader<File> {
 
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<ArtReader<File>> {
-        let mul_reader = try!(MulReader::new(index_path, mul_path));
+        let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(ArtReader {
             mul_reader: mul_reader
         })
@@ -182,39 +182,39 @@ impl <T: Read + Seek> ArtReader<T> {
     }
 
     pub fn read(&mut self, id: u32) -> Result<TileOrStatic> {
-        let raw = try!(self.mul_reader.read(id));
+        let raw = self.mul_reader.read(id)?;
         let mut reader = Cursor::new(raw.data);
         if id >= STATIC_OFFSET {
             //It's a static, so deal with accordingly
-            let size = try!(reader.read_u16::<LittleEndian>());
-            let trigger = try!(reader.read_u16::<LittleEndian>());
-            let width = try!(reader.read_u16::<LittleEndian>());
-            let height = try!(reader.read_u16::<LittleEndian>());
+            let size = reader.read_u16::<LittleEndian>()?;
+            let trigger = reader.read_u16::<LittleEndian>()?;
+            let width = reader.read_u16::<LittleEndian>()?;
+            let height = reader.read_u16::<LittleEndian>()?;
             if width == 0 || height >= 1024 || height == 0 || height >= 1024 {
                 Err(Error::new(ErrorKind::Other, format!("Got invalid width and height of {}, {}", width, height)))
             } else {
                 //Load our offset table
                 let mut offset_table = vec![];
                 for _index in 0..height {
-                    offset_table.push(try!(reader.read_u16::<LittleEndian>()));
+                    offset_table.push(reader.read_u16::<LittleEndian>()?);
                 }
 
                 let data_start_pos = reader.position();
                 let mut rows = vec![];
 
                 for &offset in offset_table.iter() {
-                    try!(reader.seek(SeekFrom::Start((data_start_pos + offset as u64 * 2))));
+                    reader.seek(SeekFrom::Start(data_start_pos + offset as u64 * 2))?;
                     let mut row = vec![];
 
                     loop {
-                        let x_offset = try!(reader.read_u16::<LittleEndian>());
-                        let run_length = try!(reader.read_u16::<LittleEndian>());
+                        let x_offset = reader.read_u16::<LittleEndian>()?;
+                        let run_length = reader.read_u16::<LittleEndian>()?;
                         if x_offset + run_length == 0 {
                             break
                         } else {
                             let mut run = vec![];
                             for _index in 0..run_length {
-                                run.push(try!(reader.read_u16::<LittleEndian>()));
+                                run.push(reader.read_u16::<LittleEndian>()?);
                             }
 
                             row.push(RunPair {
@@ -239,10 +239,10 @@ impl <T: Read + Seek> ArtReader<T> {
             if raw.length != TILE_SIZE {
                 Err(Error::new(ErrorKind::Other, format!("Got tile size of {}, expected {}", raw.length, TILE_SIZE)))
             } else {
-                let header = try!(reader.read_u32::<LittleEndian>());
+                let header = reader.read_u32::<LittleEndian>()?;
                 let mut body = [0; 1022];
                 for idx in 0..1022 {
-                    body[idx] = try!(reader.read_u16::<LittleEndian>());
+                    body[idx] = reader.read_u16::<LittleEndian>()?;
                 }
                 Ok(TileOrStatic::Tile(Tile {
                     header: header, image_data: body
