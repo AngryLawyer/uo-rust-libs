@@ -7,9 +7,9 @@
 //! `|width: u8|height: u8|unknown: u8|pixels: [Color16..width*height]`
 //!
 use std::fs::{File};
-use std::io::{Cursor, Result, SeekFrom, Seek, Read, Write};
+use std::io::{Result, Seek, Read};
 use color::{Color16, Color};
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, ReadBytesExt};
 use std::path::Path;
 use image::{Rgba, RgbaImage};
 
@@ -77,7 +77,6 @@ impl<T: Read + Seek> FontReader<T> {
             if header == 0 {
                 break;
             }
-            let current = self.data_reader.seek(SeekFrom::Current(-1))?;
             out.push(self.read_font()?);
         }
         Ok(out)
