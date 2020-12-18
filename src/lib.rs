@@ -15,6 +15,7 @@ pub mod tiledata;
 pub mod gump;
 pub mod anim;
 pub mod texmaps;
+pub mod fonts;
 
 #[cfg(test)]
 mod tests {
