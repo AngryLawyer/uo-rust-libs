@@ -1,9 +1,9 @@
-use std::io::{Cursor, Result, SeekFrom, Seek, Error, ErrorKind, Read};
-use std::fs::{File};
-use std::path::Path;
 use byteorder::{LittleEndian, ReadBytesExt};
-use mul_reader::MulReader;
 use color::Color16;
+use mul_reader::MulReader;
+use std::fs::File;
+use std::io::{Cursor, Error, ErrorKind, Read, Result, Seek, SeekFrom};
+use std::path::Path;
 
 pub const BLOCK_SIZE: usize = 196;
 pub const OFFSET: u32 = 4;
@@ -26,19 +26,22 @@ pub struct Cell {
 
 #[derive(Copy)]
 pub struct Block {
-    pub checksum: u32,  //Not actually used
-    pub cells: [Cell; 64]
+    pub checksum: u32, //Not actually used
+    pub cells: [Cell; 64],
 }
 
 impl Clone for Block {
     fn clone(&self) -> Self {
-        let mut cells = [Cell {graphic: 0, altitude: 0}; 64];
+        let mut cells = [Cell {
+            graphic: 0,
+            altitude: 0,
+        }; 64];
         for i in 0..64 {
             cells[i] = self.cells[i].clone();
         }
         Block {
             checksum: self.checksum,
-            cells: cells
+            cells: cells,
         }
     }
 }
@@ -49,7 +52,7 @@ pub struct StaticLocation {
     pub x: u8,
     pub y: u8,
     pub altitude: i8,
-    pub checksum: u16  //Not actually used
+    pub checksum: u16, //Not actually used
 }
 
 impl StaticLocation {
@@ -61,18 +64,17 @@ impl StaticLocation {
 pub struct MapReader {
     data_reader: File,
     width: u32,
-    height: u32
+    height: u32,
 }
 
 impl MapReader {
-
     pub fn new(map_path: &Path, width: u32, height: u32) -> Result<MapReader> {
         let data_reader = File::open(map_path)?;
 
         Ok(MapReader {
             data_reader: data_reader,
             width: width,
-            height: height
+            height: height,
         })
     }
 
@@ -81,17 +83,21 @@ impl MapReader {
      */
     pub fn read_block(&mut self, id: u32) -> Result<Block> {
         //Cycle to id * 192
-        self.data_reader.seek(SeekFrom::Start((id * BLOCK_SIZE as u32) as u64))?;
+        self.data_reader
+            .seek(SeekFrom::Start((id * BLOCK_SIZE as u32) as u64))?;
         //Read the header
         let mut block = Block {
             checksum: self.data_reader.read_u32::<LittleEndian>()?,
-            cells: [Cell {graphic: 0, altitude: 0}; 64]
+            cells: [Cell {
+                graphic: 0,
+                altitude: 0,
+            }; 64],
         };
         //Read 64 cells
         for i in 0..64 {
-            block.cells[i] = Cell{
+            block.cells[i] = Cell {
                 graphic: self.data_reader.read_u16::<LittleEndian>()?,
-                altitude: self.data_reader.read_i8()?
+                altitude: self.data_reader.read_i8()?,
             };
         }
         Ok(block)
@@ -105,7 +111,7 @@ impl MapReader {
         } else {
             Err(Error::new(
                 ErrorKind::Other,
-                format!("{} {} is outside of valid map coordinates", x, y)
+                format!("{} {} is outside of valid map coordinates", x, y),
             ))
         }
     }
@@ -114,23 +120,27 @@ impl MapReader {
 pub struct StaticReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
     width: u32,
-    height: u32
+    height: u32,
 }
 
 impl StaticReader<File> {
-    pub fn new(index_path: &Path, mul_path: &Path, width_blocks: u32, height_blocks: u32) -> Result<StaticReader<File>> {
+    pub fn new(
+        index_path: &Path,
+        mul_path: &Path,
+        width_blocks: u32,
+        height_blocks: u32,
+    ) -> Result<StaticReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
 
         Ok(StaticReader {
             mul_reader: mul_reader,
             width: width_blocks,
-            height: height_blocks
+            height: height_blocks,
         })
     }
 }
 
 impl<T: Read + Seek> StaticReader<T> {
-
     pub fn read_block(&mut self, id: u32) -> Result<Vec<StaticLocation>> {
         let raw = self.mul_reader.read(id)?;
         let len = raw.data.len();
@@ -143,14 +153,14 @@ impl<T: Read + Seek> StaticReader<T> {
             let y = reader.read_u8()?;
             let altitude = reader.read_i8()?;
             let checksum = reader.read_u16::<LittleEndian>()?;
-            statics.push(StaticLocation{
+            statics.push(StaticLocation {
                 object_id: object_id,
                 x: x,
                 y: y,
                 altitude: altitude,
-                checksum: checksum
+                checksum: checksum,
             });
-        };
+        }
         Ok(statics)
     }
 
@@ -162,14 +172,14 @@ impl<T: Read + Seek> StaticReader<T> {
         } else {
             Err(Error::new(
                 ErrorKind::Other,
-                format!("{} {} is outside of valid map coordinates", x, y)
+                format!("{} {} is outside of valid map coordinates", x, y),
             ))
         }
     }
 }
 
 pub struct RadarColReader {
-    data_reader: File
+    data_reader: File,
 }
 
 impl RadarColReader {

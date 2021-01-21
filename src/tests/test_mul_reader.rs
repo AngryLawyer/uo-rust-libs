@@ -1,19 +1,19 @@
-use mul_reader::{MulReader, MulWriter, MulWriterMode, simple_from_vecs};
-use std::path::Path;
+use byteorder::{LittleEndian, WriteBytesExt};
+use mul_reader::{simple_from_vecs, MulReader, MulWriter, MulWriterMode};
 use std::ffi::CString;
 use std::io::Cursor;
-use byteorder::{LittleEndian, WriteBytesExt};
+use std::path::Path;
 
 fn fake_reader() -> MulReader<Cursor<Vec<u8>>> {
     let mut idx_cursor = Cursor::new(vec![]);
-    idx_cursor.write_u32::<LittleEndian>(0).unwrap();  //Position
-    idx_cursor.write_u32::<LittleEndian>(1).unwrap();  //Length
-    idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt1
-    idx_cursor.write_u16::<LittleEndian>(0).unwrap();  //Opt2
-    idx_cursor.write_u32::<LittleEndian>(1).unwrap();  //Position
-    idx_cursor.write_u32::<LittleEndian>(4).unwrap();  //Length
-    idx_cursor.write_u16::<LittleEndian>(2).unwrap();  //Opt1
-    idx_cursor.write_u16::<LittleEndian>(3).unwrap();  //Opt2
+    idx_cursor.write_u32::<LittleEndian>(0).unwrap(); //Position
+    idx_cursor.write_u32::<LittleEndian>(1).unwrap(); //Length
+    idx_cursor.write_u16::<LittleEndian>(0).unwrap(); //Opt1
+    idx_cursor.write_u16::<LittleEndian>(0).unwrap(); //Opt2
+    idx_cursor.write_u32::<LittleEndian>(1).unwrap(); //Position
+    idx_cursor.write_u32::<LittleEndian>(4).unwrap(); //Length
+    idx_cursor.write_u16::<LittleEndian>(2).unwrap(); //Opt1
+    idx_cursor.write_u16::<LittleEndian>(3).unwrap(); //Opt2
 
     let mut data_cursor = Cursor::new(vec![]);
     data_cursor.write_u8(255).unwrap();
@@ -34,10 +34,8 @@ fn test_read_entries() {
             assert_eq!(record.opt2, 0);
             assert_eq!(record.data.len(), 1);
             assert_eq!(record.data[0], 255);
-        },
-        Err(err) => {
-            panic!(format!("{:?}", err))
         }
+        Err(err) => panic!(format!("{:?}", err)),
     };
     match record2 {
         Ok(record) => {
@@ -46,10 +44,8 @@ fn test_read_entries() {
             assert_eq!(record.opt1, 2);
             assert_eq!(record.opt2, 3);
             assert_eq!(record.data.len(), 4);
-        },
-        Err(err) => {
-            panic!(format!("{:?}", err))
         }
+        Err(err) => panic!(format!("{:?}", err)),
     }
 }
 
@@ -57,10 +53,7 @@ fn test_read_entries() {
 fn test_read_entries_provided_by_helper() {
     let mut data_cursor = Cursor::new(vec![]);
     data_cursor.write_u32::<LittleEndian>(0xdeadbeef).unwrap();
-    let mut mul_reader = simple_from_vecs(vec![
-        vec![255],
-        data_cursor.into_inner()
-    ], 0, 0);
+    let mut mul_reader = simple_from_vecs(vec![vec![255], data_cursor.into_inner()], 0, 0);
     let record1 = mul_reader.read(0);
     let record2 = mul_reader.read(1);
     match record1 {
@@ -71,10 +64,8 @@ fn test_read_entries_provided_by_helper() {
             assert_eq!(record.opt2, 0);
             assert_eq!(record.data.len(), 1);
             assert_eq!(record.data[0], 255);
-        },
-        Err(err) => {
-            panic!(format!("{:?}", err))
         }
+        Err(err) => panic!(format!("{:?}", err)),
     };
     match record2 {
         Ok(record) => {
@@ -83,10 +74,8 @@ fn test_read_entries_provided_by_helper() {
             assert_eq!(record.opt1, 0);
             assert_eq!(record.opt2, 0);
             assert_eq!(record.data.len(), 4);
-        },
-        Err(err) => {
-            panic!(format!("{:?}", err))
         }
+        Err(err) => panic!(format!("{:?}", err)),
     }
 }
 
@@ -95,9 +84,7 @@ fn test_read_impossible_entry() {
     let mut mul_reader = fake_reader();
     let record = mul_reader.read(999999);
     match record {
-        Ok(_record) => {
-            panic!("Unexpectedly read a result from a known impossible address")
-        },
+        Ok(_record) => panic!("Unexpectedly read a result from a known impossible address"),
         Err(_) => {
             //Passed
         }
@@ -106,17 +93,21 @@ fn test_read_impossible_entry() {
 
 #[test]
 fn test_write_simple_mul() {
-    match MulWriter::new(&Path::new("./target/test_mul_out.idx"), &Path::new("./target/test_mul_out.mul"), MulWriterMode::Truncate) {
+    match MulWriter::new(
+        &Path::new("./target/test_mul_out.idx"),
+        &Path::new("./target/test_mul_out.mul"),
+        MulWriterMode::Truncate,
+    ) {
         Ok(mut mul_writer) => {
             let mut out_buffer = CString::new("Bakery").unwrap().into_bytes();
             out_buffer.insert(0, 1);
             match mul_writer.append(&out_buffer, None, None) {
                 Ok(_) => {
                     //Success
-                },
-                Err(message) => panic!("{}", message)
+                }
+                Err(message) => panic!("{}", message),
             }
-        },
-        Err(message) => panic!("{}", message)
+        }
+        Err(message) => panic!("{}", message),
     }
 }

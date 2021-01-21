@@ -1,23 +1,22 @@
 //! Methods for reading texture data out of texmaps.mul
 //!
 //! Texmaps are used when non-flat surfaces need to be drawn
-use color::{Color, Color16};
-use std::fs::{File};
-use mul_reader::MulReader;
-use std::io::{Result, Cursor, Seek, Read};
-use std::path::Path;
 use byteorder::{LittleEndian, ReadBytesExt};
+use color::{Color, Color16};
 use image::{Rgba, RgbaImage};
+use mul_reader::MulReader;
+use std::fs::File;
+use std::io::{Cursor, Read, Result, Seek};
+use std::path::Path;
 
 const LARGE_TILE: usize = 0x8000;
 
 pub struct TexMap {
-    pub data: Vec<Color16>
+    pub data: Vec<Color16>,
 }
 
 impl TexMap {
     pub fn to_image(&self) -> RgbaImage {
-
         let tile_width = if self.data.len() * 2 >= LARGE_TILE {
             128
         } else {
@@ -36,25 +35,21 @@ impl TexMap {
 }
 
 pub struct TexMapsReader<T: Read + Seek> {
-    mul_reader: MulReader<T>
+    mul_reader: MulReader<T>,
 }
 
 impl TexMapsReader<File> {
-
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<TexMapsReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(TexMapsReader {
-            mul_reader: mul_reader
+            mul_reader: mul_reader,
         })
     }
 }
 
-impl <T: Read + Seek> TexMapsReader<T> {
-
+impl<T: Read + Seek> TexMapsReader<T> {
     pub fn from_mul(reader: MulReader<T>) -> TexMapsReader<T> {
-        TexMapsReader {
-            mul_reader: reader
-        }
+        TexMapsReader { mul_reader: reader }
     }
 
     pub fn read(&mut self, id: u32) -> Result<TexMap> {
@@ -65,8 +60,6 @@ impl <T: Read + Seek> TexMapsReader<T> {
         for _idx in 0..len / 2 {
             data.push(reader.read_u16::<LittleEndian>()?);
         }
-        Ok(TexMap {
-            data
-        })
+        Ok(TexMap { data })
     }
 }

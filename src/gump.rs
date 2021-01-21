@@ -1,26 +1,25 @@
-use mul_reader::MulReader;
-use color::{Color16, Color};
-use std::io::{Result, Cursor, SeekFrom, Seek, Read};
-use std::fs::File;
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::path::Path;
+use color::{Color, Color16};
 use image::{Rgba, RgbaImage};
+use mul_reader::MulReader;
+use std::fs::File;
+use std::io::{Cursor, Read, Result, Seek, SeekFrom};
+use std::path::Path;
 
 #[derive(Clone, Copy)]
 pub struct GumpPair {
     color: Color16,
-    count: u16
+    count: u16,
 }
 
 #[derive(Clone)]
 pub struct Gump {
     width: u16,
     height: u16,
-    data: Vec<Vec<GumpPair>>
+    data: Vec<Vec<GumpPair>>,
 }
 
 impl Gump {
-
     // TODO: This should be a Result as it can overflow
     pub fn to_image(&self) -> RgbaImage {
         let mut buffer = RgbaImage::new(self.width as u32, self.height as u32);
@@ -36,31 +35,27 @@ impl Gump {
                 }
                 x += run_pair.count as u32;
             }
-        };
+        }
         buffer
     }
 }
 
 pub struct GumpReader<T: Read + Seek> {
-    mul_reader: MulReader<T>
+    mul_reader: MulReader<T>,
 }
 
 impl GumpReader<File> {
-
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<GumpReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(GumpReader {
-            mul_reader: mul_reader
+            mul_reader: mul_reader,
         })
     }
 }
 
 impl<T: Read + Seek> GumpReader<T> {
-
     pub fn from_mul(reader: MulReader<T>) -> GumpReader<T> {
-        GumpReader {
-            mul_reader: reader
-        }
+        GumpReader { mul_reader: reader }
     }
 
     pub fn read_gump(&mut self, index: u32) -> Result<Gump> {
@@ -91,15 +86,15 @@ impl<T: Read + Seek> GumpReader<T> {
                 let count = reader.read_u16::<LittleEndian>()?;
                 row.push(GumpPair {
                     color: color,
-                    count: count
+                    count: count,
                 });
-            };
+            }
             output.push(row);
         }
         Ok(Gump {
             height: raw.opt1,
             width: raw.opt2,
-            data: output
+            data: output,
         })
     }
 }

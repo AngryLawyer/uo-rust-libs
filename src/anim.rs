@@ -1,12 +1,12 @@
 //! Methods for reading animated characters out of anim.mul/anim.idx
 use byteorder::{LittleEndian, ReadBytesExt};
 use color::{Color, Color16};
+use image::{Delay, Frame, Frames, Rgba, RgbaImage};
 use mul_reader::MulReader;
-use std::fs::{File};
-use std::io::{Result, Cursor, SeekFrom, Seek, Read};
+use std::fs::File;
+use std::io::{Cursor, Read, Result, Seek, SeekFrom};
 use std::path::Path;
-use image::{Frames, Frame, Rgba, RgbaImage};
-use num_rational::Ratio;
+use std::time::Duration;
 
 const PALETTE_SIZE: usize = 256;
 const IMAGE_COMPLETE: u32 = 0x7FFF7FFF;
@@ -15,16 +15,20 @@ const OFFSET_MASK: i32 = (0x200 << 22) | (0x200 << 12);
 
 pub struct Row {
     pub header: u32,
-    pub image_data: Vec<u8>
+    pub image_data: Vec<u8>,
 }
 
 impl Row {
     pub fn x_offset(&self, image_centre_x: i16) -> i32 {
-        ((((self.header as i32 ^ OFFSET_MASK) >> 22) & 0x3FF) as i32 + image_centre_x as i32 - 0x200) as i32
+        ((((self.header as i32 ^ OFFSET_MASK) >> 22) & 0x3FF) as i32 + image_centre_x as i32
+            - 0x200) as i32
     }
 
     pub fn y_offset(&self, image_centre_y: i16, height: u32) -> i32 {
-        ((((self.header as i32 ^ OFFSET_MASK) >> 12) & 0x3FF) as i32 + image_centre_y as i32 + height as i32 - 0x200) as i32
+        ((((self.header as i32 ^ OFFSET_MASK) >> 12) & 0x3FF) as i32
+            + image_centre_y as i32
+            + height as i32
+            - 0x200) as i32
     }
 }
 
@@ -33,18 +37,18 @@ pub struct AnimFrame {
     pub image_centre_y: i16,
     pub width: u16,
     pub height: u16,
-    pub data: Vec<Row>
+    pub data: Vec<Row>,
 }
 
 pub struct AnimGroup {
     pub palette: [Color16; 256],
     pub frame_count: u32,
-    pub frames: Vec<AnimFrame>
+    pub frames: Vec<AnimFrame>,
 }
 
 impl AnimGroup {
     pub fn to_frames(&self) -> Frames {
-        Frames::new(self.frames.iter().map(|anim_frame| {
+        Frames::new(Box::new(self.frames.iter().map(move |anim_frame| {
             // TODO: Figure out what to do with image_centre_x and y, and sort out offsets
             let mut buffer = RgbaImage::new(anim_frame.width as u32, anim_frame.height as u32);
             for row in &anim_frame.data {
@@ -55,13 +59,18 @@ impl AnimGroup {
                     buffer.put_pixel(x as u32 + i as u32, y as u32, Rgba([r, g, b, a]));
                 }
             }
-            Frame::from_parts(buffer, 0, 0, Ratio::from_integer(0))
-        }).collect())
+            Ok(Frame::from_parts(
+                buffer,
+                0,
+                0,
+                Delay::from_saturating_duration(Duration::from_millis(0)),
+            ))
+        })))
     }
 }
 
 pub struct AnimReader<T: Read + Seek> {
-    mul_reader: MulReader<T>
+    mul_reader: MulReader<T>,
 }
 
 fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
@@ -81,10 +90,7 @@ fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
         for _i in 0..run_length {
             image_data.push(reader.read_u8()?);
         }
-        data.push(Row {
-            header,
-            image_data
-        });
+        data.push(Row { header, image_data });
     }
 
     // Read data
@@ -93,30 +99,25 @@ fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
         image_centre_y: image_centre_y,
         width: width,
         height: height,
-        data: data
+        data: data,
     })
 }
 
 impl AnimReader<File> {
-
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<AnimReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(AnimReader {
-            mul_reader: mul_reader
+            mul_reader: mul_reader,
         })
     }
 }
 
-impl <T: Read + Seek> AnimReader<T> {
-
+impl<T: Read + Seek> AnimReader<T> {
     pub fn from_mul(reader: MulReader<T>) -> AnimReader<T> {
-        AnimReader {
-            mul_reader: reader
-        }
+        AnimReader { mul_reader: reader }
     }
 
     pub fn read(&mut self, id: u32) -> Result<AnimGroup> {
-
         let raw = self.mul_reader.read(id)?;
         let mut reader = Cursor::new(raw.data);
         // Read the palette
@@ -140,7 +141,7 @@ impl <T: Read + Seek> AnimReader<T> {
         Ok(AnimGroup {
             palette: palette,
             frame_count: frame_count,
-            frames: frames
+            frames: frames,
         })
     }
 }

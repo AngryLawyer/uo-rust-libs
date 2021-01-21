@@ -6,19 +6,19 @@
 //! Individual Characters are defined as
 //! `|width: u8|height: u8|unknown: u8|pixels: [Color16..width*height]`
 //!
-use std::fs::{File};
-use std::io::{Result, Seek, Read};
-use color::{Color16, Color};
 use byteorder::{LittleEndian, ReadBytesExt};
-use std::path::Path;
+use color::{Color, Color16};
 use image::{Rgba, RgbaImage};
+use std::fs::File;
+use std::io::{Read, Result, Seek};
+use std::path::Path;
 
 #[derive(Clone)]
 pub struct Character {
     pub width: u8,
     pub height: u8,
     pub unknown: u8,
-    pub data: Vec<Color16>
+    pub data: Vec<Color16>,
 }
 
 impl Character {
@@ -38,15 +38,14 @@ impl Character {
     }
 }
 
-
 #[derive(Clone)]
 pub struct Font {
     pub header: u8,
-    pub characters: Vec<Character>
+    pub characters: Vec<Character>,
 }
 
 pub struct FontReader<T: Read + Seek> {
-    data_reader: T
+    data_reader: T,
 }
 
 impl FontReader<File> {
@@ -54,7 +53,7 @@ impl FontReader<File> {
         let data_reader = File::open(font_path)?;
 
         Ok(FontReader {
-            data_reader: data_reader
+            data_reader: data_reader,
         })
     }
 }
@@ -65,7 +64,7 @@ impl<T: Read + Seek> FontReader<T> {
      * */
     pub fn from_readable(data_reader: T) -> FontReader<T> {
         FontReader {
-            data_reader: data_reader
+            data_reader: data_reader,
         }
     }
 
@@ -90,7 +89,7 @@ impl<T: Read + Seek> FontReader<T> {
         }
         Ok(Font {
             header,
-            characters: chars
+            characters: chars,
         })
     }
 
@@ -106,7 +105,7 @@ impl<T: Read + Seek> FontReader<T> {
             width,
             height,
             unknown,
-            data: pixels
+            data: pixels,
         })
     }
 }

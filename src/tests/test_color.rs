@@ -16,7 +16,6 @@ fn test_color32_to_rgba() {
         assert_eq!(b, expected_b);
         assert_eq!(a, expected_a);
     }
-
 }
 
 #[test]

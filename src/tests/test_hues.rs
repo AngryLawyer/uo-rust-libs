@@ -2,7 +2,6 @@ use std::io::{Cursor, Write};
 
 use hues::{Hue, HueGroup, HueReader};
 
-
 fn make_color_table(color: u16) -> [u16; 32] {
     [color; 32]
 }
@@ -11,14 +10,38 @@ fn make_color_table(color: u16) -> [u16; 32] {
 fn test_load_hues() {
     let color_table = make_color_table(0);
     let hue = Hue::new(color_table, 1, 2, "Hoojama".to_string());
-    let group = HueGroup::new(5, [hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone()]);
+    let group = HueGroup::new(
+        5,
+        [
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+        ],
+    );
 
     let mut serialized: Cursor<Vec<u8>> = Cursor::new(vec![]);
     serialized.write(&group.serialize()).unwrap();
 
     let color_table = make_color_table(1);
     let hue = Hue::new(color_table, 3, 4, "Llama".to_string());
-    let group = HueGroup::new(6, [hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone()]);
+    let group = HueGroup::new(
+        6,
+        [
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+        ],
+    );
 
     serialized.write(&group.serialize()).unwrap();
 
@@ -53,14 +76,33 @@ fn test_serialize_hue() {
     assert_eq!(hue[66], 2);
     assert_eq!(hue[67], 0);
 
-    assert_eq!(&hue[68..88], vec!['H' as u8, 'o' as u8, 'o' as u8, 'j' as u8, 'a' as u8, 'm' as u8, 'a' as u8, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0].as_slice());
+    assert_eq!(
+        &hue[68..88],
+        vec![
+            'H' as u8, 'o' as u8, 'o' as u8, 'j' as u8, 'a' as u8, 'm' as u8, 'a' as u8, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+        ]
+        .as_slice()
+    );
 }
 
 #[test]
 fn test_serialize_hue_group() {
     let color_table = make_color_table(0);
     let hue = Hue::new(color_table, 1, 2, "Hoojama".to_string());
-    let group = HueGroup::new(5, [hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone(), hue.clone()]);
+    let group = HueGroup::new(
+        5,
+        [
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+            hue.clone(),
+        ],
+    );
 
     let serialized = group.serialize();
     assert_eq!(serialized.len(), ((64 + 2 + 2 + 20) * 8) + 4);
