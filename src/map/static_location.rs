@@ -1,23 +1,9 @@
-use byteorder::{LittleEndian, ReadBytesExt};
+use super::diff::StaticDiffReader;
+use super::shared::{read_block_statics, StaticLocation};
 use mul_reader::MulReader;
 use std::fs::File;
-use std::io::{Cursor, Error, ErrorKind, Read, Result, Seek};
+use std::io::{Error, ErrorKind, Read, Result, Seek};
 use std::path::Path;
-
-#[derive(Clone, Copy)]
-pub struct StaticLocation {
-    pub object_id: u16,
-    pub x: u8,
-    pub y: u8,
-    pub altitude: i8,
-    pub checksum: u16, //Not actually used
-}
-
-impl StaticLocation {
-    pub fn color_idx(&self) -> u16 {
-        self.object_id + 16384
-    }
-}
 
 pub struct StaticReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
@@ -43,34 +29,29 @@ impl StaticReader<File> {
 }
 
 impl<T: Read + Seek> StaticReader<T> {
-    pub fn read_block(&mut self, id: u32) -> Result<Vec<StaticLocation>> {
-        let raw = self.mul_reader.read(id)?;
-        let len = raw.data.len();
-        assert!(len % 7 == 0);
-        let mut reader = Cursor::new(raw.data);
-        let mut statics = vec![];
-        for _i in 0..(len / 7) {
-            let object_id = reader.read_u16::<LittleEndian>()?;
-            let x = reader.read_u8()?;
-            let y = reader.read_u8()?;
-            let altitude = reader.read_i8()?;
-            let checksum = reader.read_u16::<LittleEndian>()?;
-            statics.push(StaticLocation {
-                object_id: object_id,
-                x: x,
-                y: y,
-                altitude: altitude,
-                checksum: checksum,
-            });
+    pub fn read_block(
+        &mut self,
+        id: u32,
+        patch: Option<&mut StaticDiffReader<T>>,
+    ) -> Result<Vec<StaticLocation>> {
+        match patch {
+            Some(reader) => reader
+                .read(id)
+                .unwrap_or_else(|| read_block_statics(&mut self.mul_reader, id)),
+            None => read_block_statics(&mut self.mul_reader, id),
         }
-        Ok(statics)
     }
 
-    pub fn read_block_from_coordinates(&mut self, x: u32, y: u32) -> Result<Vec<StaticLocation>> {
+    pub fn read_block_from_coordinates(
+        &mut self,
+        x: u32,
+        y: u32,
+        patch: Option<&mut StaticDiffReader<T>>,
+    ) -> Result<Vec<StaticLocation>> {
         let width = self.width;
         let height = self.height;
         if x < width && y < height {
-            self.read_block(y + (x * height))
+            self.read_block(y + (x * height), patch)
         } else {
             Err(Error::new(
                 ErrorKind::Other,
