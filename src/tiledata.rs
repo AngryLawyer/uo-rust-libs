@@ -45,14 +45,14 @@ static MAP_TILE_SIZE: u32 = 26;
 static STATIC_TILE_SIZE: u32 = 37;
 static STATIC_OFFSET: u32 = 428032;
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct MapTileData {
     pub flags: u32,
     pub texture_id: u16,
     pub name: String,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct StaticTileData {
     pub flags: u32,
     pub weight: u8,
@@ -96,7 +96,7 @@ impl<T: Read + Seek> TileDataReader<T> {
         Ok(MapTileData {
             flags: flags,
             texture_id: texture_id,
-            name: String::from(from_utf8(&raw_name).unwrap()),
+            name: String::from(from_utf8(&raw_name).unwrap_or("ERROR")),
         })
     }
 
@@ -138,7 +138,7 @@ impl<T: Read + Seek> TileDataReader<T> {
             anim_id: anim_id,
             hue: hue,
             height_capacity: height,
-            name: String::from(from_utf8(&raw_name).unwrap()),
+            name: String::from(from_utf8(&raw_name).unwrap_or("ERROR")),
         })
     }
 
