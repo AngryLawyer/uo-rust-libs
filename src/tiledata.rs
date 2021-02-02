@@ -86,11 +86,11 @@ impl<T: Read + Seek> TileDataReader<T> {
         let texture_id = self.data_reader.read_u16::<LittleEndian>()?;
 
         let mut raw_name = vec![];
-        while match raw_name.last() {
-            Some(0) => false,
-            _ => true,
-        } {
-            raw_name.push(self.data_reader.read_u8()?);
+        loop {
+            match self.data_reader.read_u8()? {
+                0 => break,
+                x => raw_name.push(x)
+            }
         }
 
         Ok(MapTileData {
@@ -123,11 +123,11 @@ impl<T: Read + Seek> TileDataReader<T> {
         let height = self.data_reader.read_u8()?;
 
         let mut raw_name = vec![];
-        while match raw_name.last() {
-            Some(0) => false,
-            _ => true,
-        } {
-            raw_name.push(self.data_reader.read_u8()?);
+        loop {
+            match self.data_reader.read_u8()? {
+                0 => break,
+                x => raw_name.push(x)
+            }
         }
 
         Ok(StaticTileData {
