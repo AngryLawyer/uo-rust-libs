@@ -70,12 +70,7 @@ impl<T: Read + Seek> FontReader<T> {
 
     pub fn read_fonts(&mut self) -> Result<Vec<Font>> {
         let mut out = vec![];
-        loop {
-            let header = self.data_reader.read_u8()?;
-            // A 0 in the header means it's not a valid font
-            if header == 0 {
-                break;
-            }
+        for _ in 0..10 {
             out.push(self.read_font()?);
         }
         Ok(out)
