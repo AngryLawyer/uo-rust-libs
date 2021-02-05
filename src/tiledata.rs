@@ -89,7 +89,7 @@ impl<T: Read + Seek> TileDataReader<T> {
         loop {
             match self.data_reader.read_u8()? {
                 0 => break,
-                x => raw_name.push(x)
+                x => raw_name.push(x),
             }
         }
 
@@ -126,7 +126,7 @@ impl<T: Read + Seek> TileDataReader<T> {
         loop {
             match self.data_reader.read_u8()? {
                 0 => break,
-                x => raw_name.push(x)
+                x => raw_name.push(x),
             }
         }
 
