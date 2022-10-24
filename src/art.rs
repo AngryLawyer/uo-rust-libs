@@ -266,7 +266,7 @@ impl<T: Read + Seek> ArtReader<T> {
             }
         } else {
             //It's a map tile
-            if raw.length != TILE_SIZE {
+            if raw.length > TILE_SIZE {
                 Err(Error::new(
                     ErrorKind::Other,
                     format!("Got tile size of {}, expected {}", raw.length, TILE_SIZE),
@@ -275,7 +275,7 @@ impl<T: Read + Seek> ArtReader<T> {
                 let header = reader.read_u32::<LittleEndian>()?;
                 let mut body = [0; 1022];
                 for idx in 0..1022 {
-                    body[idx] = reader.read_u16::<LittleEndian>()?;
+                    body[idx] = reader.read_u16::<LittleEndian>().unwrap_or(0);
                 }
                 Ok(TileOrStatic::Tile(Tile {
                     header: header,
