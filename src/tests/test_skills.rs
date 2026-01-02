@@ -1,5 +1,5 @@
-use mul_reader::simple_from_vecs;
-use skills::{Skill, Skills};
+use crate::mul_reader::simple_from_vecs;
+use crate::skills::{Skill, Skills};
 
 #[test]
 fn test_load_skills() {

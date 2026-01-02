@@ -1,5 +1,5 @@
+use crate::mul_reader::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
-use mul_reader::MulReader;
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek, SeekFrom};
 
@@ -21,12 +21,12 @@ pub struct Cell {
     pub altitude: i8,
 }
 
-#[derive(Copy)]
+#[derive(Copy, Clone)]
 pub struct Block {
     pub checksum: u32, //Not actually used
     pub cells: [Cell; 64],
 }
-
+/*
 impl Clone for Block {
     fn clone(&self) -> Self {
         let mut cells = [Cell {
@@ -41,7 +41,7 @@ impl Clone for Block {
             cells: cells,
         }
     }
-}
+}*/
 
 #[derive(Clone, Copy)]
 pub struct StaticLocation {
@@ -98,11 +98,11 @@ pub fn read_block_statics<T: Read + Seek>(
         let altitude = reader.read_i8()?;
         let checksum = reader.read_u16::<LittleEndian>()?;
         statics.push(StaticLocation {
-            object_id: object_id,
-            x: x,
-            y: y,
-            altitude: altitude,
-            checksum: checksum,
+            object_id,
+            x,
+            y,
+            altitude,
+            checksum,
         });
     }
     Ok(statics)

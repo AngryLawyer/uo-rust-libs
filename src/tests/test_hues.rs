@@ -1,6 +1,6 @@
 use std::io::{Cursor, Write};
 
-use hues::{Hue, HueGroup, HueReader};
+use crate::hues::{Hue, HueGroup, HueReader};
 
 fn make_color_table(color: u16) -> [u16; 32] {
     [color; 32]

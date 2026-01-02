@@ -1,7 +1,7 @@
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use gump::GumpReader;
+use crate::gump::GumpReader;
+use crate::mul_reader::simple_from_vecs;
+use byteorder::{LittleEndian, WriteBytesExt};
 use image::Pixel;
-use mul_reader::simple_from_vecs;
 use std::io::Cursor;
 
 fn example_gump_mul() -> GumpReader<Cursor<Vec<u8>>> {

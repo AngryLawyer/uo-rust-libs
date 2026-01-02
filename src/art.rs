@@ -1,13 +1,13 @@
 //! Methods for reading tile and static data out of art.mul
 //!
 //! Tiles and Statics are both traditionally stored in art.mul/artidx.mul
+use crate::color::{Color, Color16};
+use crate::mul_reader::MulReader;
+use crate::utils::MEMWRITER_ERROR;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use color::{Color, Color16};
-use mul_reader::MulReader;
 use std::fs::File;
-use std::io::{Cursor, Error, ErrorKind, Read, Result, Seek, SeekFrom, Write};
+use std::io::{Cursor, Error, Read, Result, Seek, SeekFrom, Write};
 use std::path::Path;
-use utils::MEMWRITER_ERROR;
 
 use image::{Rgba, RgbaImage};
 
@@ -69,12 +69,10 @@ impl Art for Tile {
         let mut writer = vec![];
         writer
             .write_u32::<LittleEndian>(self.header)
-            .ok()
             .expect(MEMWRITER_ERROR);
         for &pixel in self.image_data.iter() {
             writer
                 .write_u16::<LittleEndian>(pixel)
-                .ok()
                 .expect(MEMWRITER_ERROR);
         }
         writer
@@ -104,19 +102,15 @@ impl Art for Static {
         let mut writer = vec![];
         writer
             .write_u16::<LittleEndian>(self.size)
-            .ok()
             .expect(MEMWRITER_ERROR);
         writer
             .write_u16::<LittleEndian>(self.trigger)
-            .ok()
             .expect(MEMWRITER_ERROR);
         writer
             .write_u16::<LittleEndian>(self.width)
-            .ok()
             .expect(MEMWRITER_ERROR);
         writer
             .write_u16::<LittleEndian>(self.height)
-            .ok()
             .expect(MEMWRITER_ERROR);
 
         let mut rows = vec![];
@@ -125,17 +119,12 @@ impl Art for Static {
         for row in self.rows.iter() {
             let mut out = vec![];
             for pair in row.iter() {
-                out.write(pair.serialize().as_slice())
-                    .ok()
+                out.write_all(pair.serialize().as_slice())
                     .expect(MEMWRITER_ERROR);
             }
             //We write a "newline" after each out
-            out.write_u16::<LittleEndian>(0)
-                .ok()
-                .expect(MEMWRITER_ERROR);
-            out.write_u16::<LittleEndian>(0)
-                .ok()
-                .expect(MEMWRITER_ERROR);
+            out.write_u16::<LittleEndian>(0).expect(MEMWRITER_ERROR);
+            out.write_u16::<LittleEndian>(0).expect(MEMWRITER_ERROR);
             rows.push(out);
         }
 
@@ -145,16 +134,14 @@ impl Art for Static {
         for row in rows.iter() {
             lookup_table
                 .write_u16::<LittleEndian>(last_position)
-                .ok()
                 .expect(MEMWRITER_ERROR);
             last_position += (row.len() / 2) as u16;
         }
         writer
-            .write(lookup_table.as_slice())
-            .ok()
+            .write_all(lookup_table.as_slice())
             .expect(MEMWRITER_ERROR);
         for row in rows.iter() {
-            writer.write(row.as_slice()).ok().expect(MEMWRITER_ERROR);
+            writer.write_all(row.as_slice()).expect(MEMWRITER_ERROR);
         }
 
         writer
@@ -186,7 +173,7 @@ pub struct Static {
 }
 
 pub enum TileOrStatic {
-    Tile(Tile),
+    Tile(Box<Tile>),
     Static(Static),
 }
 
@@ -197,9 +184,7 @@ pub struct ArtReader<T: Read + Seek> {
 impl ArtReader<File> {
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<ArtReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
-        Ok(ArtReader {
-            mul_reader: mul_reader,
-        })
+        Ok(ArtReader { mul_reader })
     }
 }
 
@@ -217,11 +202,11 @@ impl<T: Read + Seek> ArtReader<T> {
             let trigger = reader.read_u16::<LittleEndian>()?;
             let width = reader.read_u16::<LittleEndian>()?;
             let height = reader.read_u16::<LittleEndian>()?;
-            if width == 0 || height >= 1024 || height == 0 || height >= 1024 {
-                Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Got invalid width and height of {}, {}", width, height),
-                ))
+            if width == 0 || width >= 1024 || height == 0 || height >= 1024 {
+                Err(Error::other(format!(
+                    "Got invalid width and height of {}, {}",
+                    width, height
+                )))
             } else {
                 //Load our offset table
                 let mut offset_table = vec![];
@@ -249,7 +234,7 @@ impl<T: Read + Seek> ArtReader<T> {
 
                             row.push(RunPair {
                                 offset: x_offset,
-                                run: run,
+                                run,
                             });
                         }
                     }
@@ -257,38 +242,38 @@ impl<T: Read + Seek> ArtReader<T> {
                 }
 
                 Ok(TileOrStatic::Static(Static {
-                    size: size,
-                    trigger: trigger,
-                    width: width,
-                    height: height,
-                    rows: rows,
+                    size,
+                    trigger,
+                    width,
+                    height,
+                    rows,
                 }))
             }
         } else {
             //It's a map tile
             if raw.length != TILE_SIZE {
-                Err(Error::new(
-                    ErrorKind::Other,
-                    format!("Got tile size of {}, expected {}", raw.length, TILE_SIZE),
-                ))
+                Err(Error::other(format!(
+                    "Got tile size of {}, expected {}",
+                    raw.length, TILE_SIZE
+                )))
             } else {
                 let header = reader.read_u32::<LittleEndian>()?;
                 let mut body = [0; 1022];
-                for idx in 0..1022 {
-                    body[idx] = reader.read_u16::<LittleEndian>()?;
+                for cell in &mut body {
+                    *cell = reader.read_u16::<LittleEndian>()?;
                 }
-                Ok(TileOrStatic::Tile(Tile {
-                    header: header,
+                Ok(TileOrStatic::Tile(Box::new(Tile {
+                    header,
                     image_data: body,
-                }))
+                })))
             }
         }
     }
 
     pub fn read_tile(&mut self, id: u32) -> Result<Tile> {
         match self.read(id) {
-            Ok(TileOrStatic::Tile(tile)) => Ok(tile),
-            Ok(_) => Err(Error::new(ErrorKind::Other, "Index out of bounds")),
+            Ok(TileOrStatic::Tile(tile)) => Ok(*tile),
+            Ok(_) => Err(Error::other("Index out of bounds")),
             Err(e) => Err(e),
         }
     }
@@ -296,7 +281,7 @@ impl<T: Read + Seek> ArtReader<T> {
     pub fn read_static(&mut self, id: u32) -> Result<Static> {
         match self.read(id + STATIC_OFFSET) {
             Ok(TileOrStatic::Static(stat)) => Ok(stat),
-            Ok(_) => Err(Error::new(ErrorKind::Other, "Index out of bounds")),
+            Ok(_) => Err(Error::other("Index out of bounds")),
             Err(e) => Err(e),
         }
     }

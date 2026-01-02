@@ -2,6 +2,7 @@
 
 name = "uo-rust-libs"
 version = "0.0.1"
+edition = "2024"
 authors = ["Tony Aldridge <tony@angry-lawyer.com>"]
 
 [lib]
@@ -10,5 +11,5 @@ name = "uorustlibs"
 path = "src/lib.rs"
 
 [dependencies]
-byteorder = "1.4"
+byteorder = "1.5"
 image = "0.23"

@@ -4,6 +4,7 @@ use std::io::{Read, Result, Seek, SeekFrom};
 use std::path::Path;
 use std::str::from_utf8;
 
+#[repr(usize)]
 pub enum Flags {
     BackgroundFlag = 0x00000001,
     WeaponFlag = 0x00000002,
@@ -72,9 +73,7 @@ impl TileDataReader<File> {
     pub fn new(mul_path: &Path) -> Result<TileDataReader<File>> {
         let data_reader = File::open(mul_path)?;
 
-        Ok(TileDataReader {
-            data_reader: data_reader,
-        })
+        Ok(TileDataReader { data_reader })
     }
 }
 
@@ -94,8 +93,8 @@ impl<T: Read + Seek> TileDataReader<T> {
         }
 
         Ok(MapTileData {
-            flags: flags,
-            texture_id: texture_id,
+            flags,
+            texture_id,
             name: String::from(from_utf8(&raw_name).unwrap_or("ERROR")),
         })
     }
@@ -131,12 +130,12 @@ impl<T: Read + Seek> TileDataReader<T> {
         }
 
         Ok(StaticTileData {
-            flags: flags,
-            weight: weight,
+            flags,
+            weight,
             quality_layer_light_id: quality,
             quantity_weapon_class_armor_class: quantity,
-            anim_id: anim_id,
-            hue: hue,
+            anim_id,
+            hue,
             height_capacity: height,
             name: String::from(from_utf8(&raw_name).unwrap_or("ERROR")),
         })

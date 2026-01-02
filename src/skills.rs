@@ -1,7 +1,7 @@
 //! Skill objects represent named skills that appear in UO's Skills menu.
 //! They also contain a flag denoting whether they are clicked to activate
 
-use mul_reader::MulReader;
+use crate::mul_reader::MulReader;
 use std::ffi::CString;
 use std::io::{Read, Result, Seek};
 use std::path::Path;
@@ -14,10 +14,7 @@ pub struct Skill {
 
 impl Skill {
     pub fn new(clickable: bool, name: String) -> Skill {
-        Skill {
-            clickable: clickable,
-            name: name,
-        }
+        Skill { clickable, name }
     }
 
     /**
@@ -47,19 +44,12 @@ impl Skills {
         let mut result = vec![];
         let mut id = 0;
 
-        loop {
-            match reader.read(id) {
-                Ok(record) => {
-                    let slice = &record.data[1..record.data.len() - 1];
-                    result.push(Skill::new(
-                        record.data[0] == 1,
-                        String::from(from_utf8(slice).unwrap()),
-                    )); //FIXME: Don't unwrap
-                }
-                _ => {
-                    break;
-                }
-            }
+        while let Ok(record) = reader.read(id) {
+            let slice = &record.data[1..record.data.len() - 1];
+            result.push(Skill::new(
+                record.data[0] == 1,
+                String::from(from_utf8(slice).unwrap()),
+            )); //FIXME: Don't unwrap
             id += 1;
         }
 

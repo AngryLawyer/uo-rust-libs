@@ -1,6 +1,6 @@
-use super::shared::{read_block, read_block_statics, Block, StaticLocation};
+use super::shared::{Block, StaticLocation, read_block, read_block_statics};
+use crate::mul_reader::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
-use mul_reader::MulReader;
 use std::collections::HashMap;
 use std::fs::File;
 use std::io::{Read, Result, Seek};
@@ -36,11 +36,7 @@ impl MapDiffReader {
 
     pub fn read_all(&mut self) -> HashMap<u32, Result<Block>> {
         let mut out = HashMap::new();
-        let keys = self
-            .lookup_table
-            .keys()
-            .map(|key| *key)
-            .collect::<Vec<u32>>();
+        let keys = self.lookup_table.keys().copied().collect::<Vec<u32>>();
         for map_idx in keys {
             out.insert(map_idx, self.read(map_idx).unwrap());
         }
@@ -86,11 +82,7 @@ impl<T: Read + Seek> StaticDiffReader<T> {
 
     pub fn read_all(&mut self) -> HashMap<u32, Result<Vec<StaticLocation>>> {
         let mut out = HashMap::new();
-        let keys = self
-            .lookup_table
-            .keys()
-            .map(|key| *key)
-            .collect::<Vec<u32>>();
+        let keys = self.lookup_table.keys().copied().collect::<Vec<u32>>();
         for map_idx in keys {
             out.insert(map_idx, self.read(map_idx).unwrap());
         }
