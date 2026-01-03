@@ -6,8 +6,11 @@
 //! Individual Characters are defined as
 //! `|width: u8|height: u8|unknown: u8|pixels: [Color16..width*height]`
 //!
-use crate::color::{Color, Color16};
+#[cfg(feature = "image")]
+use crate::color::Color;
+use crate::color::Color16;
 use byteorder::{LittleEndian, ReadBytesExt};
+#[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
 use std::fs::File;
 use std::io::{Read, Result, Seek};
@@ -21,6 +24,7 @@ pub struct Character {
     pub data: Vec<Color16>,
 }
 
+#[cfg(feature = "image")]
 impl Character {
     pub fn to_image(&self) -> RgbaImage {
         let mut buffer = RgbaImage::new(self.width as u32, self.height as u32);

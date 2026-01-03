@@ -4,6 +4,11 @@ name = "uo-rust-libs"
 version = "0.0.1"
 edition = "2024"
 authors = ["Tony Aldridge <tony@angry-lawyer.com>"]
+readme = "README.md"
+repository = "https://github.com/AngryLawyer/uo-rust-libs"
+license = "MIT"
+keywords = ["gamedev"]
+categories = ["encoding"]
 
 [lib]
 
@@ -12,4 +17,7 @@ path = "src/lib.rs"
 
 [dependencies]
 byteorder = "1.5"
-image = "0.23"
+image = { version = "0.25", default-features = false, optional = true }
+
+[features]
+image = ["dep:image"]

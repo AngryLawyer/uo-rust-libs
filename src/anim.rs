@@ -1,12 +1,17 @@
 //! Methods for reading animated characters out of anim.mul/anim.idx
-use crate::color::{Color, Color16};
+#[cfg(feature = "image")]
+use crate::color::Color;
+use crate::color::Color16;
 use crate::mul_reader::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
+#[cfg(feature = "image")]
 use image::error::{DecodingError, ImageError, ImageFormatHint};
+#[cfg(feature = "image")]
 use image::{Delay, Frame, Frames, Rgba, RgbaImage};
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek, SeekFrom};
 use std::path::Path;
+#[cfg(feature = "image")]
 use std::time::Duration;
 
 const PALETTE_SIZE: usize = 256;
@@ -45,6 +50,7 @@ pub struct AnimGroup {
 }
 
 impl AnimGroup {
+    #[cfg(feature = "image")]
     pub fn to_frames(&self) -> Frames<'_> {
         Frames::new(Box::new(self.frames.iter().map(move |anim_frame| {
             if anim_frame.width == 0 || anim_frame.height == 0 {

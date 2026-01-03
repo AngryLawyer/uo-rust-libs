@@ -7,8 +7,6 @@
 //! Index values of `0xFEFEFEFF` are considered undefined, and should be skipped
 
 use std::fs::{File, OpenOptions};
-#[cfg(test)]
-use std::io::Cursor;
 use std::io::{Error, Read, Result, Seek, SeekFrom, Write};
 use std::path::Path;
 
@@ -145,44 +143,52 @@ impl<T: Write + Seek> MulWriter<T> {
 }
 
 #[cfg(test)]
-pub fn simple_from_vecs(vectors: Vec<Vec<u8>>, opt1: u16, opt2: u16) -> MulReader<Cursor<Vec<u8>>> {
-    let mut idx_reader = Cursor::new(vec![]);
-    let mut mul_reader = Cursor::new(vec![]);
-    //For every MUL record, we should have an index record pointing at it
-    for vec in vectors {
-        let len = vec.len();
-        let mul_size = mul_reader.seek(SeekFrom::End(0)).unwrap();
-        let mut idx_cursor = Cursor::new(vec![]);
-        idx_cursor
-            .write_u32::<LittleEndian>(mul_size as u32)
-            .unwrap(); //Position
-        idx_cursor.write_u32::<LittleEndian>(len as u32).unwrap(); //Length
-        idx_cursor.write_u16::<LittleEndian>(opt1).unwrap(); //Opt1
-        idx_cursor.write_u16::<LittleEndian>(opt2).unwrap(); //Opt2
-        idx_reader.write_all(idx_cursor.get_ref()).unwrap();
-        mul_reader.write_all(&vec).unwrap();
-    }
-    MulReader::from_readables(idx_reader, mul_reader)
-}
+pub mod tests {
+    use super::*;
+    use std::io::Cursor;
 
-#[cfg(test)]
-pub fn simple_from_mul_records(records: Vec<MulRecord>) -> MulReader<Cursor<Vec<u8>>> {
-    let mut idx_reader = Cursor::new(vec![]);
-    let mut mul_reader = Cursor::new(vec![]);
-    //For every MUL record, we should have an index record pointing at it
-    for record in records {
-        let mul_size = mul_reader.seek(SeekFrom::End(0)).unwrap();
-        let mut idx_cursor = Cursor::new(vec![]);
-        idx_cursor
-            .write_u32::<LittleEndian>(mul_size as u32)
-            .unwrap(); //Position
-        idx_cursor
-            .write_u32::<LittleEndian>(record.data.len() as u32)
-            .unwrap(); //Length
-        idx_cursor.write_u16::<LittleEndian>(record.opt1).unwrap(); //Opt1
-        idx_cursor.write_u16::<LittleEndian>(record.opt2).unwrap(); //Opt2
-        idx_reader.write_all(idx_cursor.get_ref()).unwrap();
-        mul_reader.write_all(&record.data).unwrap();
+    pub fn simple_from_vecs(
+        vectors: Vec<Vec<u8>>,
+        opt1: u16,
+        opt2: u16,
+    ) -> MulReader<Cursor<Vec<u8>>> {
+        let mut idx_reader = Cursor::new(vec![]);
+        let mut mul_reader = Cursor::new(vec![]);
+        //For every MUL record, we should have an index record pointing at it
+        for vec in vectors {
+            let len = vec.len();
+            let mul_size = mul_reader.seek(SeekFrom::End(0)).unwrap();
+            let mut idx_cursor = Cursor::new(vec![]);
+            idx_cursor
+                .write_u32::<LittleEndian>(mul_size as u32)
+                .unwrap(); //Position
+            idx_cursor.write_u32::<LittleEndian>(len as u32).unwrap(); //Length
+            idx_cursor.write_u16::<LittleEndian>(opt1).unwrap(); //Opt1
+            idx_cursor.write_u16::<LittleEndian>(opt2).unwrap(); //Opt2
+            idx_reader.write_all(idx_cursor.get_ref()).unwrap();
+            mul_reader.write_all(&vec).unwrap();
+        }
+        MulReader::from_readables(idx_reader, mul_reader)
     }
-    MulReader::from_readables(idx_reader, mul_reader)
+
+    pub fn simple_from_mul_records(records: Vec<MulRecord>) -> MulReader<Cursor<Vec<u8>>> {
+        let mut idx_reader = Cursor::new(vec![]);
+        let mut mul_reader = Cursor::new(vec![]);
+        //For every MUL record, we should have an index record pointing at it
+        for record in records {
+            let mul_size = mul_reader.seek(SeekFrom::End(0)).unwrap();
+            let mut idx_cursor = Cursor::new(vec![]);
+            idx_cursor
+                .write_u32::<LittleEndian>(mul_size as u32)
+                .unwrap(); //Position
+            idx_cursor
+                .write_u32::<LittleEndian>(record.data.len() as u32)
+                .unwrap(); //Length
+            idx_cursor.write_u16::<LittleEndian>(record.opt1).unwrap(); //Opt1
+            idx_cursor.write_u16::<LittleEndian>(record.opt2).unwrap(); //Opt2
+            idx_reader.write_all(idx_cursor.get_ref()).unwrap();
+            mul_reader.write_all(&record.data).unwrap();
+        }
+        MulReader::from_readables(idx_reader, mul_reader)
+    }
 }

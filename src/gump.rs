@@ -1,6 +1,9 @@
-use crate::color::{Color, Color16};
+#[cfg(feature = "image")]
+use crate::color::Color;
+use crate::color::Color16;
 use crate::mul_reader::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
+#[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek, SeekFrom};
@@ -8,17 +11,18 @@ use std::path::Path;
 
 #[derive(Clone, Copy)]
 pub struct GumpPair {
-    color: Color16,
-    count: u16,
+    pub color: Color16,
+    pub count: u16,
 }
 
 #[derive(Clone)]
 pub struct Gump {
-    width: u16,
-    height: u16,
-    data: Vec<Vec<GumpPair>>,
+    pub width: u16,
+    pub height: u16,
+    pub data: Vec<Vec<GumpPair>>,
 }
 
+#[cfg(feature = "image")]
 impl Gump {
     // TODO: This should be a Result as it can overflow
     pub fn to_image(&self) -> RgbaImage {

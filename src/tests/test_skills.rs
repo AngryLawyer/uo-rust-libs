@@ -1,4 +1,4 @@
-use crate::mul_reader::simple_from_vecs;
+use crate::mul_reader::tests::simple_from_vecs;
 use crate::skills::{Skill, Skills};
 
 #[test]

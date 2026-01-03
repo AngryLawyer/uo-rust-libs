@@ -1,9 +1,7 @@
-use crate::gump::GumpReader;
-use crate::mul_reader::simple_from_vecs;
-use byteorder::{LittleEndian, WriteBytesExt};
+#[cfg(feature = "image")]
 use image::Pixel;
-use std::io::Cursor;
 
+#[cfg(feature = "image")]
 fn example_gump_mul() -> GumpReader<Cursor<Vec<u8>>> {
     let mut data = Cursor::new(vec![]);
 
@@ -37,26 +35,27 @@ fn example_gump_mul() -> GumpReader<Cursor<Vec<u8>>> {
 }
 
 #[test]
-fn test_gump() {
+#[cfg(feature = "image")]
+fn test_to_image() {
     let mut reader = example_gump_mul();
     match reader.read_gump(0) {
         Ok(gump) => {
             let image = gump.to_image();
             assert_eq!(image.width(), 3);
             assert_eq!(image.height(), 3);
-            let transparent = (0, 0, 0, 0);
-            let white = (255, 255, 255, 255);
-            assert_eq!(image.get_pixel(0, 0).channels4(), transparent);
-            assert_eq!(image.get_pixel(1, 0).channels4(), white);
-            assert_eq!(image.get_pixel(2, 0).channels4(), transparent);
+            let transparent = [0, 0, 0, 0];
+            let white = [255, 255, 255, 255];
+            assert_eq!(image.get_pixel(0, 0).channels(), transparent);
+            assert_eq!(image.get_pixel(1, 0).channels(), white);
+            assert_eq!(image.get_pixel(2, 0).channels(), transparent);
 
-            assert_eq!(image.get_pixel(0, 1).channels4(), white);
-            assert_eq!(image.get_pixel(1, 1).channels4(), white);
-            assert_eq!(image.get_pixel(2, 1).channels4(), white);
+            assert_eq!(image.get_pixel(0, 1).channels(), white);
+            assert_eq!(image.get_pixel(1, 1).channels(), white);
+            assert_eq!(image.get_pixel(2, 1).channels(), white);
 
-            assert_eq!(image.get_pixel(0, 2).channels4(), transparent);
-            assert_eq!(image.get_pixel(1, 2).channels4(), white);
-            assert_eq!(image.get_pixel(2, 2).channels4(), transparent);
+            assert_eq!(image.get_pixel(0, 2).channels(), transparent);
+            assert_eq!(image.get_pixel(1, 2).channels(), white);
+            assert_eq!(image.get_pixel(2, 2).channels(), transparent);
         }
         Err(err) => panic!("{}", err),
     };

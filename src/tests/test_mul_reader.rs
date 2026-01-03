@@ -1,4 +1,4 @@
-use crate::mul_reader::{MulReader, MulWriter, MulWriterMode, simple_from_vecs};
+use crate::mul_reader::{MulReader, MulWriter, MulWriterMode, tests::simple_from_vecs};
 use byteorder::{LittleEndian, WriteBytesExt};
 use std::ffi::CString;
 use std::io::Cursor;

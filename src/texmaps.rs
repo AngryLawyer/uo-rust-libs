@@ -1,20 +1,24 @@
 //! Methods for reading texture data out of texmaps.mul
 //!
 //! Texmaps are used when non-flat surfaces need to be drawn
-use crate::color::{Color, Color16};
+#[cfg(feature = "image")]
+use crate::color::Color;
+use crate::color::Color16;
 use crate::mul_reader::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
+#[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek};
 use std::path::Path;
 
-const LARGE_TILE: usize = 0x8000;
+pub const LARGE_TILE: usize = 0x8000;
 
 pub struct TexMap {
     pub data: Vec<Color16>,
 }
 
+#[cfg(feature = "image")]
 impl TexMap {
     pub fn to_image(&self) -> RgbaImage {
         let tile_width = if self.data.len() * 2 >= LARGE_TILE {

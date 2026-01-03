@@ -1,10 +1,13 @@
+#[cfg(feature = "image")]
 use image::Pixel;
 use std::io::Cursor;
 
 use byteorder::{LittleEndian, WriteBytesExt};
 
-use crate::art::{Art, ArtReader, STATIC_OFFSET, Tile, TileOrStatic};
-use crate::mul_reader::simple_from_vecs;
+#[cfg(feature = "image")]
+use crate::art::{Art, Tile};
+use crate::art::{ArtReader, STATIC_OFFSET, TileOrStatic};
+use crate::mul_reader::tests::simple_from_vecs;
 
 #[test]
 fn test_load_tile() {
@@ -28,6 +31,7 @@ fn test_load_tile() {
     };
 }
 
+#[cfg(feature = "image")]
 #[test]
 fn test_tile_to_image() {
     let tile = Tile {
@@ -41,15 +45,15 @@ fn test_tile_to_image() {
     // Check the first row
     for i in 0..44 {
         if i == 21 || i == 22 {
-            assert_eq!(image.get_pixel(i, 0).channels4(), (0xFF, 0xFF, 0xFF, 0xFF));
+            assert_eq!(image.get_pixel(i, 0).channels(), [0xFF, 0xFF, 0xFF, 0xFF]);
         } else {
-            assert_eq!(image.get_pixel(i, 0).channels4(), (0, 0, 0, 0));
+            assert_eq!(image.get_pixel(i, 0).channels(), [0, 0, 0, 0]);
         }
     }
 
     // Check the middle row
     for i in 0..44 {
-        assert_eq!(image.get_pixel(i, 22).channels4(), (0xFF, 0xFF, 0xFF, 0xFF));
+        assert_eq!(image.get_pixel(i, 22).channels(), [0xFF, 0xFF, 0xFF, 0xFF]);
     }
 }
 
@@ -110,6 +114,7 @@ fn test_load_static() {
 }
 
 #[test]
+#[cfg(feature = "image")]
 fn test_static_to_image() {
     let mut reader = example_art_mul();
     match reader.read(STATIC_OFFSET) {
@@ -117,19 +122,19 @@ fn test_static_to_image() {
             let image = stat.to_image();
             assert_eq!(image.width(), 3);
             assert_eq!(image.height(), 3);
-            let transparent = (0, 0, 0, 0);
-            let white = (255, 255, 255, 255);
-            assert_eq!(image.get_pixel(0, 0).channels4(), transparent);
-            assert_eq!(image.get_pixel(1, 0).channels4(), white);
-            assert_eq!(image.get_pixel(2, 0).channels4(), transparent);
+            let transparent = [0, 0, 0, 0];
+            let white = [255, 255, 255, 255];
+            assert_eq!(image.get_pixel(0, 0).channels(), transparent);
+            assert_eq!(image.get_pixel(1, 0).channels(), white);
+            assert_eq!(image.get_pixel(2, 0).channels(), transparent);
 
-            assert_eq!(image.get_pixel(0, 1).channels4(), white);
-            assert_eq!(image.get_pixel(1, 1).channels4(), white);
-            assert_eq!(image.get_pixel(2, 1).channels4(), white);
+            assert_eq!(image.get_pixel(0, 1).channels(), white);
+            assert_eq!(image.get_pixel(1, 1).channels(), white);
+            assert_eq!(image.get_pixel(2, 1).channels(), white);
 
-            assert_eq!(image.get_pixel(0, 2).channels4(), transparent);
-            assert_eq!(image.get_pixel(1, 2).channels4(), white);
-            assert_eq!(image.get_pixel(2, 2).channels4(), transparent);
+            assert_eq!(image.get_pixel(0, 2).channels(), transparent);
+            assert_eq!(image.get_pixel(1, 2).channels(), white);
+            assert_eq!(image.get_pixel(2, 2).channels(), transparent);
         }
         Ok(_) => {
             panic!("Got Tile instead of Static");
