@@ -25,7 +25,7 @@ fn test_load_hues() {
     );
 
     let mut serialized: Cursor<Vec<u8>> = Cursor::new(vec![]);
-    serialized.write(&group.serialize()).unwrap();
+    serialized.write_all(&group.serialize()).unwrap();
 
     let color_table = make_color_table(1);
     let hue = Hue::new(color_table, 3, 4, "Llama".to_string());
@@ -43,7 +43,7 @@ fn test_load_hues() {
         ],
     );
 
-    serialized.write(&group.serialize()).unwrap();
+    serialized.write_all(&group.serialize()).unwrap();
 
     let mut reader = HueReader::from_readable(serialized);
 
@@ -79,8 +79,7 @@ fn test_serialize_hue() {
     assert_eq!(
         &hue[68..88],
         vec![
-            'H' as u8, 'o' as u8, 'o' as u8, 'j' as u8, 'a' as u8, 'm' as u8, 'a' as u8, 0, 0, 0,
-            0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+            b'H', b'o', b'o', b'j', b'a', b'm', b'a', 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
         ]
         .as_slice()
     );

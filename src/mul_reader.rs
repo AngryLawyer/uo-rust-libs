@@ -159,8 +159,8 @@ pub fn simple_from_vecs(vectors: Vec<Vec<u8>>, opt1: u16, opt2: u16) -> MulReade
         idx_cursor.write_u32::<LittleEndian>(len as u32).unwrap(); //Length
         idx_cursor.write_u16::<LittleEndian>(opt1).unwrap(); //Opt1
         idx_cursor.write_u16::<LittleEndian>(opt2).unwrap(); //Opt2
-        idx_reader.write(idx_cursor.get_ref()).unwrap();
-        mul_reader.write(&vec).unwrap();
+        idx_reader.write_all(idx_cursor.get_ref()).unwrap();
+        mul_reader.write_all(&vec).unwrap();
     }
     MulReader::from_readables(idx_reader, mul_reader)
 }
@@ -181,8 +181,8 @@ pub fn simple_from_mul_records(records: Vec<MulRecord>) -> MulReader<Cursor<Vec<
             .unwrap(); //Length
         idx_cursor.write_u16::<LittleEndian>(record.opt1).unwrap(); //Opt1
         idx_cursor.write_u16::<LittleEndian>(record.opt2).unwrap(); //Opt2
-        idx_reader.write(idx_cursor.get_ref()).unwrap();
-        mul_reader.write(&record.data).unwrap();
+        idx_reader.write_all(idx_cursor.get_ref()).unwrap();
+        mul_reader.write_all(&record.data).unwrap();
     }
     MulReader::from_readables(idx_reader, mul_reader)
 }
