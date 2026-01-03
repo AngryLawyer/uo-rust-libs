@@ -1,8 +1,8 @@
 use super::diff::StaticDiffReader;
-use super::shared::{read_block_statics, StaticLocation};
-use mul_reader::MulReader;
+use super::shared::{StaticLocation, read_block_statics};
+use crate::mul_reader::MulReader;
 use std::fs::File;
-use std::io::{Error, ErrorKind, Read, Result, Seek};
+use std::io::{Error, Read, Result, Seek};
 use std::path::Path;
 
 pub struct StaticReader<T: Read + Seek> {
@@ -21,7 +21,7 @@ impl StaticReader<File> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
 
         Ok(StaticReader {
-            mul_reader: mul_reader,
+            mul_reader,
             width: width_blocks,
             height: height_blocks,
         })
@@ -53,10 +53,10 @@ impl<T: Read + Seek> StaticReader<T> {
         if x < width && y < height {
             self.read_block(y + (x * height), patch)
         } else {
-            Err(Error::new(
-                ErrorKind::Other,
-                format!("{} {} is outside of valid map coordinates", x, y),
-            ))
+            Err(Error::other(format!(
+                "{} {} is outside of valid map coordinates",
+                x, y
+            )))
         }
     }
 }

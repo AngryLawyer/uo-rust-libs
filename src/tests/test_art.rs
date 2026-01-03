@@ -1,10 +1,10 @@
 use image::Pixel;
 use std::io::Cursor;
 
-use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+use byteorder::{LittleEndian, WriteBytesExt};
 
-use art::{Art, ArtReader, RunPair, Static, Tile, TileOrStatic, STATIC_OFFSET};
-use mul_reader::simple_from_vecs;
+use crate::art::{Art, ArtReader, STATIC_OFFSET, Tile, TileOrStatic};
+use crate::mul_reader::simple_from_vecs;
 
 #[test]
 fn test_load_tile() {

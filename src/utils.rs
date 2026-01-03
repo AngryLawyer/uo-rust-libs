@@ -1,2 +1,2 @@
-pub const MEMWRITER_ERROR: &'static str = "MemWriter unexpectedly failed";
-pub const SURFACE_ERROR: &'static str = "Surface could not be created";
+pub const MEMWRITER_ERROR: &str = "MemWriter unexpectedly failed";
+pub const SURFACE_ERROR: &str = "Surface could not be created";

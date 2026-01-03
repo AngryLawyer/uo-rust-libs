@@ -1,4 +1,4 @@
-use color::{Color, Color16, Color32};
+use crate::color::{Color, Color16, Color32};
 
 #[test]
 fn test_color32_to_rgba() {

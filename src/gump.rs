@@ -1,7 +1,7 @@
+use crate::color::{Color, Color16};
+use crate::mul_reader::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
-use color::{Color, Color16};
 use image::{Rgba, RgbaImage};
-use mul_reader::MulReader;
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek, SeekFrom};
 use std::path::Path;
@@ -47,9 +47,7 @@ pub struct GumpReader<T: Read + Seek> {
 impl GumpReader<File> {
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<GumpReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
-        Ok(GumpReader {
-            mul_reader: mul_reader,
-        })
+        Ok(GumpReader { mul_reader })
     }
 }
 
@@ -84,10 +82,7 @@ impl<T: Read + Seek> GumpReader<T> {
             for _i in 0..row_length {
                 let color = reader.read_u16::<LittleEndian>()?;
                 let count = reader.read_u16::<LittleEndian>()?;
-                row.push(GumpPair {
-                    color: color,
-                    count: count,
-                });
+                row.push(GumpPair { color, count });
             }
             output.push(row);
         }

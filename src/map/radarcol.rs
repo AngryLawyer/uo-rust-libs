@@ -1,5 +1,5 @@
+use crate::color::Color16;
 use byteorder::{LittleEndian, ReadBytesExt};
-use color::Color16;
 use std::fs::File;
 use std::io::{Result, Seek, SeekFrom};
 use std::path::Path;
@@ -12,9 +12,7 @@ impl RadarColReader {
     pub fn new(radar_col_path: &Path) -> Result<RadarColReader> {
         let data_reader = File::open(radar_col_path)?;
 
-        Ok(RadarColReader {
-            data_reader: data_reader,
-        })
+        Ok(RadarColReader { data_reader })
     }
 
     pub fn read_color(&mut self, id: u32) -> Result<Color16> {

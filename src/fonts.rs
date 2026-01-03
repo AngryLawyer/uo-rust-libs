@@ -6,8 +6,8 @@
 //! Individual Characters are defined as
 //! `|width: u8|height: u8|unknown: u8|pixels: [Color16..width*height]`
 //!
+use crate::color::{Color, Color16};
 use byteorder::{LittleEndian, ReadBytesExt};
-use color::{Color, Color16};
 use image::{Rgba, RgbaImage};
 use std::fs::File;
 use std::io::{Read, Result, Seek};
@@ -52,9 +52,7 @@ impl FontReader<File> {
     pub fn new(font_path: &Path) -> Result<FontReader<File>> {
         let data_reader = File::open(font_path)?;
 
-        Ok(FontReader {
-            data_reader: data_reader,
-        })
+        Ok(FontReader { data_reader })
     }
 }
 
@@ -63,9 +61,7 @@ impl<T: Read + Seek> FontReader<T> {
      * If we've already got a file-like object, wrap it
      * */
     pub fn from_readable(data_reader: T) -> FontReader<T> {
-        FontReader {
-            data_reader: data_reader,
-        }
+        FontReader { data_reader }
     }
 
     pub fn read_fonts(&mut self) -> Result<Vec<Font>> {

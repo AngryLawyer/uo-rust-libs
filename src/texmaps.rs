@@ -1,10 +1,10 @@
 //! Methods for reading texture data out of texmaps.mul
 //!
 //! Texmaps are used when non-flat surfaces need to be drawn
+use crate::color::{Color, Color16};
+use crate::mul_reader::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
-use color::{Color, Color16};
 use image::{Rgba, RgbaImage};
-use mul_reader::MulReader;
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek};
 use std::path::Path;
@@ -41,9 +41,7 @@ pub struct TexMapsReader<T: Read + Seek> {
 impl TexMapsReader<File> {
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<TexMapsReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
-        Ok(TexMapsReader {
-            mul_reader: mul_reader,
-        })
+        Ok(TexMapsReader { mul_reader })
     }
 }
 

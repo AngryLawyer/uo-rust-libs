@@ -1,9 +1,8 @@
 //! Skill objects represent named skills that appear in UO's Skills menu.
 //! They also contain a flag denoting whether they are clicked to activate
 
-use mul_reader::MulReader;
-use std::ffi::CString;
-use std::io::{Read, Result, Seek};
+use crate::mul_reader::MulReader;
+use std::io::{Error, Read, Result, Seek};
 use std::path::Path;
 use std::str::from_utf8;
 
@@ -14,10 +13,7 @@ pub struct Skill {
 
 impl Skill {
     pub fn new(clickable: bool, name: String) -> Skill {
-        Skill {
-            clickable: clickable,
-            name: name,
-        }
+        Skill { clickable, name }
     }
 
     /**
@@ -25,8 +21,8 @@ impl Skill {
      */
     pub fn serialize(&self) -> Vec<u8> {
         let mut vec = vec![if self.clickable { 1 } else { 0 }];
-        let name = CString::new(self.name.clone()); //FIXME: There must be a way to do this without copying?
-        vec.extend_from_slice(name.unwrap().as_bytes_with_nul());
+        vec.extend_from_slice(self.name.as_bytes());
+        vec.push(0);
         vec
     }
 }
@@ -42,35 +38,32 @@ pub struct Skills {
 }
 
 impl Skills {
-    pub fn from_mul<T: Seek + Read>(reader: &mut MulReader<T>) -> Skills {
+    pub fn from_mul<T: Seek + Read>(reader: &mut MulReader<T>) -> Result<Skills> {
         //Unpack the lot
         let mut result = vec![];
         let mut id = 0;
 
-        loop {
-            match reader.read(id) {
-                Ok(record) => {
-                    let slice = &record.data[1..record.data.len() - 1];
-                    result.push(Skill::new(
-                        record.data[0] == 1,
-                        String::from(from_utf8(slice).unwrap()),
-                    )); //FIXME: Don't unwrap
+        while let Ok(record) = reader.read(id) {
+            let slice = &record.data[1..record.data.len() - 1];
+            match from_utf8(slice) {
+                Ok(string) => {
+                    result.push(Skill::new(record.data[0] == 1, String::from(string)));
+                    id += 1;
                 }
-                _ => {
-                    break;
+                Err(e) => {
+                    return Err(Error::other(format!(
+                        "Failed to parse skill at index {} - {}",
+                        id, e
+                    )));
                 }
             }
-            id += 1;
         }
 
-        Skills { skills: result }
+        Ok(Skills { skills: result })
     }
 
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<Skills> {
-        let maybe_reader = MulReader::new(index_path, mul_path);
-        match maybe_reader {
-            Ok(mut reader) => Ok(Skills::from_mul(&mut reader)),
-            Err(io_error) => Err(io_error),
-        }
+        let mut reader = MulReader::new(index_path, mul_path)?;
+        Skills::from_mul(&mut reader)
     }
 }

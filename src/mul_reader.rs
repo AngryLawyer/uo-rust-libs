@@ -9,7 +9,7 @@
 use std::fs::{File, OpenOptions};
 #[cfg(test)]
 use std::io::Cursor;
-use std::io::{Error, ErrorKind, Read, Result, Seek, SeekFrom, Write};
+use std::io::{Error, Read, Result, Seek, SeekFrom, Write};
 use std::path::Path;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
@@ -34,7 +34,7 @@ pub struct MulRecord {
 }
 
 /**
- * Read Mul records out of am idx and a mul
+ * Read Mul records out of an idx and a mul
  */
 pub struct MulReader<T: Read + Seek> {
     idx_reader: T,
@@ -47,8 +47,8 @@ impl MulReader<File> {
         let data_reader = File::open(mul_path)?;
 
         Ok(MulReader {
-            idx_reader: idx_reader,
-            data_reader: data_reader,
+            idx_reader,
+            data_reader,
         })
     }
 }
@@ -56,8 +56,8 @@ impl MulReader<File> {
 impl<T: Read + Seek> MulReader<T> {
     pub fn from_readables(idx_reader: T, data_reader: T) -> MulReader<T> {
         MulReader {
-            idx_reader: idx_reader,
-            data_reader: data_reader,
+            idx_reader,
+            data_reader,
         }
     }
 
@@ -66,15 +66,12 @@ impl<T: Read + Seek> MulReader<T> {
         self.idx_reader
             .seek(SeekFrom::Start((index * INDEX_SIZE) as u64))?;
         let start = self.idx_reader.read_u32::<LittleEndian>()?;
-        if start == UNDEF_RECORD || start == u32::max_value() {
+        if start == UNDEF_RECORD || start == u32::MAX {
             //Check for empty cell
-            Err(Error::new(
-                ErrorKind::Other,
-                format!(
-                    "Trying to read out of bounds record {}, with a start of {}",
-                    index, start
-                ),
-            ))
+            Err(Error::other(format!(
+                "Trying to read out of bounds record {}, with a start of {}",
+                index, start
+            )))
         } else {
             let length = self.idx_reader.read_u32::<LittleEndian>()?;
             let mut data = vec![0; length as usize];
@@ -85,11 +82,11 @@ impl<T: Read + Seek> MulReader<T> {
             self.data_reader.read_exact(data.as_mut_slice())?;
 
             Ok(MulRecord {
-                data: data,
-                start: start,
-                length: length,
-                opt1: opt1,
-                opt2: opt2,
+                data,
+                start,
+                length,
+                opt1,
+                opt2,
             })
         }
     }
@@ -120,8 +117,8 @@ impl MulWriter<File> {
         let data_writer = options.open(mul_path)?;
 
         Ok(MulWriter {
-            idx_writer: idx_writer,
-            data_writer: data_writer,
+            idx_writer,
+            data_writer,
         })
     }
 }
@@ -135,20 +132,13 @@ impl<T: Write + Seek> MulWriter<T> {
         //Fill up our fields
         let start = mul_size as u32;
         let length = data.len() as u32;
-        let opt1 = match opt1 {
-            Some(value) => value,
-            None => 0,
-        } as u16;
-        let opt2 = match opt2 {
-            Some(value) => value,
-            None => 0,
-        } as u16;
-
-        self.data_writer.write(data.as_slice())?;
+        self.data_writer.write_all(data.as_slice())?;
         self.idx_writer.write_u32::<LittleEndian>(start)?;
         self.idx_writer.write_u32::<LittleEndian>(length)?;
-        self.idx_writer.write_u16::<LittleEndian>(opt1)?;
-        self.idx_writer.write_u16::<LittleEndian>(opt2)?;
+        self.idx_writer
+            .write_u16::<LittleEndian>(opt1.unwrap_or_default())?;
+        self.idx_writer
+            .write_u16::<LittleEndian>(opt2.unwrap_or_default())?;
 
         Ok(())
     }
@@ -169,8 +159,8 @@ pub fn simple_from_vecs(vectors: Vec<Vec<u8>>, opt1: u16, opt2: u16) -> MulReade
         idx_cursor.write_u32::<LittleEndian>(len as u32).unwrap(); //Length
         idx_cursor.write_u16::<LittleEndian>(opt1).unwrap(); //Opt1
         idx_cursor.write_u16::<LittleEndian>(opt2).unwrap(); //Opt2
-        idx_reader.write(idx_cursor.get_ref()).unwrap();
-        mul_reader.write(&vec).unwrap();
+        idx_reader.write_all(idx_cursor.get_ref()).unwrap();
+        mul_reader.write_all(&vec).unwrap();
     }
     MulReader::from_readables(idx_reader, mul_reader)
 }
@@ -191,8 +181,8 @@ pub fn simple_from_mul_records(records: Vec<MulRecord>) -> MulReader<Cursor<Vec<
             .unwrap(); //Length
         idx_cursor.write_u16::<LittleEndian>(record.opt1).unwrap(); //Opt1
         idx_cursor.write_u16::<LittleEndian>(record.opt2).unwrap(); //Opt2
-        idx_reader.write(idx_cursor.get_ref()).unwrap();
-        mul_reader.write(&record.data).unwrap();
+        idx_reader.write_all(idx_cursor.get_ref()).unwrap();
+        mul_reader.write_all(&record.data).unwrap();
     }
     MulReader::from_readables(idx_reader, mul_reader)
 }

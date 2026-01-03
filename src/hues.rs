@@ -6,13 +6,13 @@
 //! Individual HueEntries are defined as
 //! `|color_table:[u16..32]|table_start:u16|table_end:u16|name:[u8..20]|`
 //!
+use crate::color::Color16;
+use crate::utils::MEMWRITER_ERROR;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
-use color::Color16;
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::str::from_utf8;
-use utils::MEMWRITER_ERROR;
 
 /**
  * An individual Hue
@@ -47,10 +47,10 @@ impl Hue {
         name: String,
     ) -> Hue {
         Hue {
-            color_table: color_table,
-            table_start: table_start,
-            table_end: table_end,
-            name: name,
+            color_table,
+            table_start,
+            table_end,
+            name,
         }
     }
 
@@ -71,9 +71,11 @@ impl Hue {
             .write_u16::<LittleEndian>(self.table_end)
             .expect(MEMWRITER_ERROR);
 
-        writer.write(self.name.as_bytes()).expect(MEMWRITER_ERROR);
         writer
-            .write(vec![0; 20 - self.name.len()].as_slice())
+            .write_all(self.name.as_bytes())
+            .expect(MEMWRITER_ERROR);
+        writer
+            .write_all(vec![0; 20 - self.name.len()].as_slice())
             .expect(MEMWRITER_ERROR);
 
         assert_eq!(writer.len(), ENTRY_SIZE as usize);
@@ -93,10 +95,7 @@ pub struct HueGroup {
 
 impl HueGroup {
     pub fn new(header: u32, entries: [Hue; 8]) -> HueGroup {
-        HueGroup {
-            header: header,
-            entries: entries,
-        }
+        HueGroup { header, entries }
     }
 
     pub fn serialize(&self) -> Vec<u8> {
@@ -106,7 +105,7 @@ impl HueGroup {
             .expect(MEMWRITER_ERROR);
         for hue in self.entries.iter() {
             writer
-                .write(hue.serialize().as_slice())
+                .write_all(hue.serialize().as_slice())
                 .expect(MEMWRITER_ERROR);
         }
         writer.into_inner()
@@ -126,9 +125,7 @@ impl HueReader<File> {
     pub fn new(hues_path: &Path) -> Result<HueReader<File>> {
         let data_reader = File::open(hues_path)?;
 
-        Ok(HueReader {
-            data_reader: data_reader,
-        })
+        Ok(HueReader { data_reader })
     }
 }
 
@@ -137,9 +134,7 @@ impl<T: Read + Seek> HueReader<T> {
      * If we've already got a file-like object, wrap it
      * */
     pub fn from_readable(data_reader: T) -> HueReader<T> {
-        HueReader {
-            data_reader: data_reader,
-        }
+        HueReader { data_reader }
     }
 
     /**
@@ -162,16 +157,13 @@ impl<T: Read + Seek> HueReader<T> {
             self.read_hue()?,
         ];
 
-        Ok(HueGroup {
-            header: header,
-            entries: entries,
-        })
+        Ok(HueGroup { header, entries })
     }
 
     fn read_hue(&mut self) -> Result<Hue> {
         let mut color_table = [0u16; 32];
-        for idx in 0..32 {
-            color_table[idx] = self.data_reader.read_u16::<LittleEndian>()?;
+        for cell in &mut color_table {
+            *cell = self.data_reader.read_u16::<LittleEndian>()?;
         }
 
         let table_start = self.data_reader.read_u16::<LittleEndian>()?;

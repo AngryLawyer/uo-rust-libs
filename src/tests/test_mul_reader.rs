@@ -1,5 +1,5 @@
+use crate::mul_reader::{MulReader, MulWriter, MulWriterMode, simple_from_vecs};
 use byteorder::{LittleEndian, WriteBytesExt};
-use mul_reader::{simple_from_vecs, MulReader, MulWriter, MulWriterMode};
 use std::ffi::CString;
 use std::io::Cursor;
 use std::path::Path;
@@ -35,7 +35,7 @@ fn test_read_entries() {
             assert_eq!(record.data.len(), 1);
             assert_eq!(record.data[0], 255);
         }
-        Err(err) => panic!(format!("{:?}", err)),
+        Err(err) => panic!("{:?}", err),
     };
     match record2 {
         Ok(record) => {
@@ -45,7 +45,7 @@ fn test_read_entries() {
             assert_eq!(record.opt2, 3);
             assert_eq!(record.data.len(), 4);
         }
-        Err(err) => panic!(format!("{:?}", err)),
+        Err(err) => panic!("{:?}", err),
     }
 }
 
@@ -65,7 +65,7 @@ fn test_read_entries_provided_by_helper() {
             assert_eq!(record.data.len(), 1);
             assert_eq!(record.data[0], 255);
         }
-        Err(err) => panic!(format!("{:?}", err)),
+        Err(err) => panic!("{:?}", err),
     };
     match record2 {
         Ok(record) => {
@@ -75,7 +75,7 @@ fn test_read_entries_provided_by_helper() {
             assert_eq!(record.opt2, 0);
             assert_eq!(record.data.len(), 4);
         }
-        Err(err) => panic!(format!("{:?}", err)),
+        Err(err) => panic!("{:?}", err),
     }
 }
 
@@ -94,8 +94,8 @@ fn test_read_impossible_entry() {
 #[test]
 fn test_write_simple_mul() {
     match MulWriter::new(
-        &Path::new("./target/test_mul_out.idx"),
-        &Path::new("./target/test_mul_out.mul"),
+        Path::new("./target/test_mul_out.idx"),
+        Path::new("./target/test_mul_out.mul"),
         MulWriterMode::Truncate,
     ) {
         Ok(mut mul_writer) => {
