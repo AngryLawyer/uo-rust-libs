@@ -15,11 +15,6 @@ use std::path::Path;
 use image::{Rgba, RgbaImage};
 
 pub trait Art {
-    /**
-     * Convert to a 32bit array
-     *
-     * Returns (width, height, colors)
-     */
     fn serialize(&self) -> Vec<u8>;
 
     #[cfg(feature = "image")]
@@ -178,11 +173,6 @@ pub struct Static {
     pub rows: Vec<StaticRow>,
 }
 
-pub enum TileOrStatic {
-    Tile(Box<Tile>),
-    Static(Static),
-}
-
 pub struct ArtReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }
@@ -199,96 +189,88 @@ impl<T: Read + Seek> ArtReader<T> {
         ArtReader { mul_reader: reader }
     }
 
-    pub fn read(&mut self, id: u32) -> Result<TileOrStatic> {
+    pub fn read_tile(&mut self, id: u32) -> Result<Tile> {
+        if id >= STATIC_OFFSET {
+            return Err(Error::other("Index out of bounds"));
+        }
+
         let raw = self.mul_reader.read(id)?;
         let mut reader = Cursor::new(raw.data);
-        if id >= STATIC_OFFSET {
-            //It's a static, so deal with accordingly
-            let size = reader.read_u16::<LittleEndian>()?;
-            let trigger = reader.read_u16::<LittleEndian>()?;
-            let width = reader.read_u16::<LittleEndian>()?;
-            let height = reader.read_u16::<LittleEndian>()?;
-            if width == 0 || width >= 1024 || height == 0 || height >= 1024 {
-                Err(Error::other(format!(
-                    "Got invalid width and height of {}, {}",
-                    width, height
-                )))
-            } else {
-                //Load our offset table
-                let mut offset_table = vec![];
-                for _index in 0..height {
-                    offset_table.push(reader.read_u16::<LittleEndian>()?);
-                }
 
-                let data_start_pos = reader.position();
-                let mut rows = vec![];
-
-                for &offset in offset_table.iter() {
-                    reader.seek(SeekFrom::Start(data_start_pos + offset as u64 * 2))?;
-                    let mut row = vec![];
-
-                    loop {
-                        let x_offset = reader.read_u16::<LittleEndian>()?;
-                        let run_length = reader.read_u16::<LittleEndian>()?;
-                        if x_offset + run_length == 0 {
-                            break;
-                        } else {
-                            let mut run = vec![];
-                            for _index in 0..run_length {
-                                run.push(reader.read_u16::<LittleEndian>()?);
-                            }
-
-                            row.push(RunPair {
-                                offset: x_offset,
-                                run,
-                            });
-                        }
-                    }
-                    rows.push(row);
-                }
-
-                Ok(TileOrStatic::Static(Static {
-                    size,
-                    trigger,
-                    width,
-                    height,
-                    rows,
-                }))
-            }
+        if raw.length > TILE_SIZE {
+            Err(Error::other(format!(
+                "Got tile size of {}, expected {}",
+                raw.length, TILE_SIZE
+            )))
         } else {
-            //It's a map tile
-            if raw.length > TILE_SIZE {
-                Err(Error::other(format!(
-                    "Got tile size of {}, expected {}",
-                    raw.length, TILE_SIZE
-                )))
-            } else {
-                let header = reader.read_u32::<LittleEndian>()?;
-                let mut body = [0; 1022];
-                for cell in &mut body {
-                    *cell = reader.read_u16::<LittleEndian>().unwrap_or(0);
-                }
-                Ok(TileOrStatic::Tile(Box::new(Tile {
-                    header,
-                    image_data: body,
-                })))
+            let header = reader.read_u32::<LittleEndian>()?;
+            let mut body = [0; 1022];
+            for cell in &mut body {
+                *cell = reader.read_u16::<LittleEndian>().unwrap_or(0);
             }
-        }
-    }
-
-    pub fn read_tile(&mut self, id: u32) -> Result<Tile> {
-        match self.read(id) {
-            Ok(TileOrStatic::Tile(tile)) => Ok(*tile),
-            Ok(_) => Err(Error::other("Index out of bounds")),
-            Err(e) => Err(e),
+            Ok(Tile {
+                header,
+                image_data: body,
+            })
         }
     }
 
     pub fn read_static(&mut self, id: u32) -> Result<Static> {
-        match self.read(id + STATIC_OFFSET) {
-            Ok(TileOrStatic::Static(stat)) => Ok(stat),
-            Ok(_) => Err(Error::other("Index out of bounds")),
-            Err(e) => Err(e),
+        let offset_id = id + STATIC_OFFSET;
+
+        let raw = self.mul_reader.read(offset_id)?;
+        let mut reader = Cursor::new(raw.data);
+
+        let size = reader.read_u16::<LittleEndian>()?;
+        let trigger = reader.read_u16::<LittleEndian>()?;
+        let width = reader.read_u16::<LittleEndian>()?;
+        let height = reader.read_u16::<LittleEndian>()?;
+        if width == 0 || width >= 1024 || height == 0 || height >= 1024 {
+            return Err(Error::other(format!(
+                "Got invalid width and height of {}, {}",
+                width, height
+            )))
         }
+
+        //Load our offset table
+        let mut offset_table = vec![];
+        for _index in 0..height {
+            offset_table.push(reader.read_u16::<LittleEndian>()?);
+        }
+
+        let data_start_pos = reader.position();
+        let mut rows = vec![];
+
+        for &offset in offset_table.iter() {
+            reader.seek(SeekFrom::Start(data_start_pos + offset as u64 * 2))?;
+            let mut row = vec![];
+
+            loop {
+                let x_offset = reader.read_u16::<LittleEndian>()?;
+                let run_length = reader.read_u16::<LittleEndian>()?;
+                if x_offset + run_length == 0 {
+                    break;
+                } else {
+                    let mut run = vec![];
+                    for _index in 0..run_length {
+                        run.push(reader.read_u16::<LittleEndian>()?);
+                    }
+
+                    row.push(RunPair {
+                        offset: x_offset,
+                        run,
+                    });
+                }
+            }
+            rows.push(row);
+        }
+
+        Ok(Static {
+            size,
+            trigger,
+            width,
+            height,
+            rows,
+        })
     }
 }

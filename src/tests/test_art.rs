@@ -6,7 +6,7 @@ use byteorder::{LittleEndian, WriteBytesExt};
 
 #[cfg(feature = "image")]
 use crate::art::{Art, Tile};
-use crate::art::{ArtReader, STATIC_OFFSET, TileOrStatic};
+use crate::art::{ArtReader, STATIC_OFFSET};
 use crate::mul::tests::simple_from_vecs;
 
 #[test]
@@ -19,13 +19,10 @@ fn test_load_tile() {
 
     let mul_reader = simple_from_vecs(vec![data.into_inner()], 0, 0);
     let mut reader = ArtReader::from_mul(mul_reader);
-    match reader.read(0) {
-        Ok(TileOrStatic::Tile(tile)) => {
+    match reader.read_tile(0) {
+        Ok(tile) => {
             assert_eq!(tile.header, 0);
             assert_eq!(tile.image_data[0], 0xFFFF);
-        }
-        Ok(_) => {
-            panic!("Got Static instead of Tile");
         }
         Err(err) => panic!("{}", err),
     };
@@ -99,15 +96,12 @@ fn example_art_mul() -> ArtReader<Cursor<Vec<u8>>> {
 #[test]
 fn test_load_static() {
     let mut reader = example_art_mul();
-    match reader.read(STATIC_OFFSET) {
-        Ok(TileOrStatic::Static(stat)) => {
+    match reader.read_static(0) {
+        Ok(stat) => {
             assert_eq!(stat.size, 0);
             assert_eq!(stat.trigger, 1);
             assert_eq!(stat.width, 3);
             assert_eq!(stat.height, 3);
-        }
-        Ok(_) => {
-            panic!("Got Tile instead of Static");
         }
         Err(err) => panic!("{}", err),
     };
@@ -117,8 +111,8 @@ fn test_load_static() {
 #[cfg(feature = "image")]
 fn test_static_to_image() {
     let mut reader = example_art_mul();
-    match reader.read(STATIC_OFFSET) {
-        Ok(TileOrStatic::Static(stat)) => {
+    match reader.read_static(0) {
+        Ok(stat) => {
             let image = stat.to_image();
             assert_eq!(image.width(), 3);
             assert_eq!(image.height(), 3);
@@ -135,9 +129,6 @@ fn test_static_to_image() {
             assert_eq!(image.get_pixel(0, 2).channels(), transparent);
             assert_eq!(image.get_pixel(1, 2).channels(), white);
             assert_eq!(image.get_pixel(2, 2).channels(), transparent);
-        }
-        Ok(_) => {
-            panic!("Got Tile instead of Static");
         }
         Err(err) => panic!("{}", err),
     };
