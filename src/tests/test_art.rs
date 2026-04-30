@@ -7,7 +7,7 @@ use byteorder::{LittleEndian, WriteBytesExt};
 #[cfg(feature = "image")]
 use crate::art::{Art, Tile};
 use crate::art::{ArtReader, STATIC_OFFSET, TileOrStatic};
-use crate::mul_reader::tests::simple_from_vecs;
+use crate::mul::tests::simple_from_vecs;
 
 #[test]
 fn test_load_tile() {

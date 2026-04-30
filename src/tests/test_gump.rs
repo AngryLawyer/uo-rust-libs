@@ -1,3 +1,8 @@
+use std::io::Cursor;
+use byteorder::{LittleEndian, WriteBytesExt};
+use crate::gump::GumpReader;
+use crate::mul::tests::simple_from_vecs;
+
 #[cfg(feature = "image")]
 use image::Pixel;
 
@@ -37,8 +42,9 @@ fn example_gump_mul() -> GumpReader<Cursor<Vec<u8>>> {
 #[test]
 #[cfg(feature = "image")]
 fn test_to_image() {
+
     let mut reader = example_gump_mul();
-    match reader.read_gump(0) {
+    match reader.read(0) {
         Ok(gump) => {
             let image = gump.to_image();
             assert_eq!(image.width(), 3);

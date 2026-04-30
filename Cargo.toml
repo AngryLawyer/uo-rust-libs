@@ -21,3 +21,4 @@ image = { version = "0.25", default-features = false, optional = true }
 
 [features]
 image = ["dep:image"]
+default = ["image"]

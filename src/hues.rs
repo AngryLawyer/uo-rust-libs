@@ -1,22 +1,23 @@
 //! Methods for reading hue data out of hues.mul
 //!
 //! Hues are represented in a continuous, unindexed file as groups -
-//! `|header: u32|hues: [HueEntry..8]`
+//! `|header: u32|hues: [HueEntry..8]|`
 //!
 //! Individual HueEntries are defined as
 //! `|color_table:[u16..32]|table_start:u16|table_end:u16|name:[u8..20]|`
 //!
 use crate::color::Color16;
-use crate::utils::MEMWRITER_ERROR;
+use crate::errors::MEMWRITER_ERROR;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek, SeekFrom, Write};
 use std::path::Path;
 use std::str::from_utf8;
 
-/**
- * An individual Hue
- */
+///An individual Hue.
+///
+///Hues act as a ramp of colors that can be used for palette swapping other art assets
+#[derive(Clone)]
 pub struct Hue {
     ///32 color values
     pub color_table: [Color16; 32],
@@ -28,16 +29,6 @@ pub struct Hue {
     pub name: String,
 }
 
-impl Clone for Hue {
-    fn clone(&self) -> Hue {
-        Hue {
-            color_table: self.color_table,
-            table_start: self.table_start,
-            table_end: self.table_end,
-            name: self.name.clone(),
-        }
-    }
-}
 
 impl Hue {
     pub fn new(
@@ -54,9 +45,7 @@ impl Hue {
         }
     }
 
-    /**
-     * Convert a hue back into its canonical mul representation
-     */
+    ///Convert a hue back into its canonical mul representation
     pub fn serialize(&self) -> Vec<u8> {
         let mut writer = vec![];
         for color in self.color_table.iter() {
@@ -84,9 +73,7 @@ impl Hue {
     }
 }
 
-/**
- * A collection of 8 hues
- */
+///A collection of 8 hues
 pub struct HueGroup {
     ///Unknown usage
     pub header: u32,
@@ -98,6 +85,7 @@ impl HueGroup {
         HueGroup { header, entries }
     }
 
+    ///Convert a hue group back into its canonical mul representation
     pub fn serialize(&self) -> Vec<u8> {
         let mut writer = Cursor::new(vec![]);
         writer
@@ -130,16 +118,12 @@ impl HueReader<File> {
 }
 
 impl<T: Read + Seek> HueReader<T> {
-    /**
-     * If we've already got a file-like object, wrap it
-     * */
+    /// Create a HueReader from a file-like object
     pub fn from_readable(data_reader: T) -> HueReader<T> {
         HueReader { data_reader }
     }
 
-    /**
-     * Read the given indexed group
-     */
+    /// Read the given indexed group
     pub fn read_hue_group(&mut self, id: u32) -> Result<HueGroup> {
         self.data_reader
             .seek(SeekFrom::Start((id * GROUP_SIZE) as u64))?;

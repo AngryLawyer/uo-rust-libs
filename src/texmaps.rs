@@ -4,7 +4,7 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::mul_reader::MulReader;
+use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};

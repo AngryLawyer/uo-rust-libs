@@ -4,8 +4,8 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::mul_reader::MulReader;
-use crate::utils::MEMWRITER_ERROR;
+use crate::mul::MulReader;
+use crate::errors::MEMWRITER_ERROR;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::fs::File;
 use std::io::{Cursor, Error, Read, Result, Seek, SeekFrom, Write};

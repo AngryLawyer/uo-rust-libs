@@ -1,6 +1,6 @@
 use super::diff::StaticDiffReader;
 use super::shared::{StaticLocation, read_block_statics};
-use crate::mul_reader::MulReader;
+use crate::mul::MulReader;
 use std::fs::File;
 use std::io::{Error, Read, Result, Seek};
 use std::path::Path;

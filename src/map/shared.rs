@@ -1,4 +1,4 @@
-use crate::mul_reader::MulReader;
+use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek, SeekFrom};

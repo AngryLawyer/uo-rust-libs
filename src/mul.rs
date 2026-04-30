@@ -12,8 +12,8 @@ use std::path::Path;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
-static UNDEF_RECORD: u32 = 0xFEFEFEFF;
-static INDEX_SIZE: u32 = 12;
+const UNDEF_RECORD: u32 = 0xFEFEFEFF;
+const INDEX_SIZE: u32 = 12;
 
 /**
  * An individual record, read from a Mul file
@@ -63,30 +63,31 @@ impl<T: Read + Seek> MulReader<T> {
         //Wind the idx reader to the index position
         self.idx_reader
             .seek(SeekFrom::Start((index * INDEX_SIZE) as u64))?;
+
         let start = self.idx_reader.read_u32::<LittleEndian>()?;
+        //Check for empty cell
         if start == UNDEF_RECORD || start == u32::MAX {
-            //Check for empty cell
-            Err(Error::other(format!(
+            return Err(Error::other(format!(
                 "Trying to read out of bounds record {}, with a start of {}",
                 index, start
             )))
-        } else {
-            let length = self.idx_reader.read_u32::<LittleEndian>()?;
-            let mut data = vec![0; length as usize];
-            let opt1 = self.idx_reader.read_u16::<LittleEndian>()?;
-            let opt2 = self.idx_reader.read_u16::<LittleEndian>()?;
-            self.data_reader.seek(SeekFrom::Start(start as u64))?;
-
-            self.data_reader.read_exact(data.as_mut_slice())?;
-
-            Ok(MulRecord {
-                data,
-                start,
-                length,
-                opt1,
-                opt2,
-            })
         }
+
+        let length = self.idx_reader.read_u32::<LittleEndian>()?;
+        let mut data = vec![0; length as usize];
+        let opt1 = self.idx_reader.read_u16::<LittleEndian>()?;
+        let opt2 = self.idx_reader.read_u16::<LittleEndian>()?;
+
+        self.data_reader.seek(SeekFrom::Start(start as u64))?;
+        self.data_reader.read_exact(data.as_mut_slice())?;
+
+        Ok(MulRecord {
+            data,
+            start,
+            length,
+            opt1,
+            opt2,
+        })
     }
 }
 
@@ -122,6 +123,12 @@ impl MulWriter<File> {
 }
 
 impl<T: Write + Seek> MulWriter<T> {
+    pub fn from_writables(idx_writer: T, data_writer: T) -> MulWriter<T> {
+        MulWriter {
+            idx_writer,
+            data_writer,
+        }
+    }
     pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) -> Result<()> {
         //Wind the files to the end
         self.idx_writer.seek(SeekFrom::End(0))?;

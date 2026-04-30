@@ -1,8 +1,26 @@
 //! Methods for reading animated characters out of anim.mul/anim.idx
+//!
+//! Animations are stored as a sequence of frames, with offsets.
+//! Inside these frames, a sequence rows. Rows store their offsets, allowing for compact
+//! representations of the data
+//!
+//! The underlying raw data for AnimationGroup is defined as
+//! `|palette:[u16..256]|frame_count:u32|frame_offsets:[u32..frame_count]|frames:[frame..frame_count]|`
+//!
+//! Frame offsets are read from the end of the palette to find individual frames
+//!
+//! The raw frame is defined as
+//!
+//! `|image_center_x:i16|image_center_y:i16|width:u16|height:u16|rows:[row..?]|`
+//!
+//! Each row has a header, which either contains offset information and length, or a special stop
+//! value of `0x7FFF7FFF`
+//!
+//! `|header:u32|pixels:[u8..?]|`
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::mul_reader::MulReader;
+use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
 use image::error::{DecodingError, ImageError, ImageFormatHint};
@@ -19,22 +37,30 @@ const IMAGE_COMPLETE: u32 = 0x7FFF7FFF;
 
 const OFFSET_MASK: i32 = (0x200 << 22) | (0x200 << 12);
 
+/// A single row of a frame
 pub struct Row {
+    /// Compacted header information.
+    /// It contains the length of the associated data, plus offsets of where to plot, relative
+    /// to the image centre
     pub header: u32,
+    /// Individual pixels for the row, as lookups in the AnimGroup palette
     pub image_data: Vec<u8>,
 }
 
 impl Row {
+    /// Get the x offset of where to start drawing this row, relative to a centre point
     pub fn x_offset(&self, image_centre_x: i16) -> i32 {
         (((self.header as i32 ^ OFFSET_MASK) >> 22) & 0x3FF) + image_centre_x as i32 - 0x200
     }
 
+    /// Get the y offset of where to start drawing this row, relative to a centre point
     pub fn y_offset(&self, image_centre_y: i16, height: u32) -> i32 {
         (((self.header as i32 ^ OFFSET_MASK) >> 12) & 0x3FF) + image_centre_y as i32 + height as i32
             - 0x200
     }
 }
 
+/// A frame of an animtion
 pub struct AnimFrame {
     pub image_centre_x: i16,
     pub image_centre_y: i16,
@@ -43,6 +69,7 @@ pub struct AnimFrame {
     pub data: Vec<Row>,
 }
 
+/// An animation sequence
 pub struct AnimGroup {
     pub palette: [Color16; 256],
     pub frame_count: u32,
@@ -58,7 +85,6 @@ impl AnimGroup {
                     ImageFormatHint::Name("UO AnimFrame".to_string()),
                 )));
             }
-            // TODO: Figure out what to do with image_centre_x and y, and sort out offsets
             let mut buffer = RgbaImage::new(anim_frame.width as u32, anim_frame.height as u32);
             for row in &anim_frame.data {
                 let x = row.x_offset(anim_frame.image_centre_x);
@@ -90,6 +116,7 @@ impl AnimGroup {
     }
 }
 
+/// A struct to allow reading of animations from data muls
 pub struct AnimReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }
@@ -125,6 +152,7 @@ fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
 }
 
 impl AnimReader<File> {
+    /// Create an animation reader from paths to an index mul and a data mul
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<AnimReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(AnimReader { mul_reader })
@@ -132,10 +160,12 @@ impl AnimReader<File> {
 }
 
 impl<T: Read + Seek> AnimReader<T> {
+    /// Create an animation reader from an existing Mul
     pub fn from_mul(reader: MulReader<T>) -> AnimReader<T> {
         AnimReader { mul_reader: reader }
     }
 
+    /// Read an animation group by id
     pub fn read(&mut self, id: u32) -> Result<AnimGroup> {
         let raw = self.mul_reader.read(id)?;
         let mut reader = Cursor::new(raw.data);

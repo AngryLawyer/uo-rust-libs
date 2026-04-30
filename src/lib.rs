@@ -1,9 +1,13 @@
+//! UORustLibs provides methods for reading and writing data files from the classic video game
+//! Ultima Online. Most code is tested on data files from the Age of Shadows client, but it should
+//! work for earlier clients, and clients up until the switch from `.mul` to `.uop`
+
 extern crate byteorder;
 #[cfg(feature = "image")]
 extern crate image;
 
-pub mod mul_reader;
-pub mod utils;
+pub mod mul;
+pub mod errors;
 
 pub mod color;
 
@@ -23,7 +27,7 @@ mod tests {
     mod test_color;
     mod test_gump;
     mod test_hues;
-    mod test_mul_reader;
+    mod test_mul;
     mod test_skills;
     //    mod test_tiledata;
 }

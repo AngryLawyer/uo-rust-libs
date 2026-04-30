@@ -1,10 +1,15 @@
+//! Traits for easy conversion between packed color data and easy-to-manipulate tuples
+
 pub trait Color {
+    //! A color that can be converted between an rgba tuple and back
     fn to_rgba(&self) -> (u8, u8, u8, u8);
     fn from_rgba(r: u8, g: u8, b: u8, a: u8) -> Self;
 }
 
 pub type Color16 = u16;
 pub type Color32 = u32;
+
+pub const BLACK_16: Color16 = 0;
 
 impl Color for Color16 {
     fn to_rgba(&self) -> (u8, u8, u8, u8) {

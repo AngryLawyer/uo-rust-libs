@@ -1,7 +1,7 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::mul_reader::MulReader;
+use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
@@ -60,7 +60,7 @@ impl<T: Read + Seek> GumpReader<T> {
         GumpReader { mul_reader: reader }
     }
 
-    pub fn read_gump(&mut self, index: u32) -> Result<Gump> {
+    pub fn read(&mut self, index: u32) -> Result<Gump> {
         let raw = self.mul_reader.read(index)?;
         let mut output = vec![];
         let len = raw.data.len();

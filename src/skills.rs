@@ -1,7 +1,7 @@
 //! Skill objects represent named skills that appear in UO's Skills menu.
 //! They also contain a flag denoting whether they are clicked to activate
 
-use crate::mul_reader::MulReader;
+use crate::mul::MulReader;
 use std::io::{Error, Read, Result, Seek};
 use std::path::Path;
 use std::str::from_utf8;
