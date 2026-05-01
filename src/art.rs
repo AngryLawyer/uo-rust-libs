@@ -1,11 +1,29 @@
 //! Methods for reading tile and static data out of art.mul
 //!
-//! Tiles and Statics are both traditionally stored in art.mul/artidx.mul
+//! Tiles and Statics are both traditionally stored in art.mul/artidx.mul, and are packed into the
+//! same files - all entried before 0x4000 are tiles, and the rest statics.
+//!
+//! Map tiles are stored as
+//! `|header:u32|pixels:[u16..1022]|`
+//! Where pixels represents a list of rows, length 2, 4, 6, 8 .. 42, 44, 44, 42 .. 8, 6, 4, 2
+//!
+//! Statics are stored as
+//! `|size:u16|trigger:u16|width:u16|height:u16|offset_table:[u16..height]|rows:[row..height]`
+//!
+//! Rows are stored as
+//! `|runs:[run_pair..?]|`
+//! and are read until a stop value is found
+//!
+//! Run pairs are stored as
+//! `|x_offset:u16|run_length:u16|pixels:[Color16..run_length]|`
+//! where the x_offset defines how many transparent pixels should be left before drawing this run.
+//!
+//! A run pair with an offset and length of 0 denotes that the row is complete.
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::mul::MulReader;
 use crate::errors::MEMWRITER_ERROR;
+use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::fs::File;
 use std::io::{Cursor, Error, Read, Result, Seek, SeekFrom, Write};
@@ -14,9 +32,12 @@ use std::path::Path;
 #[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
 
+/// A shared trait for dealing with both static and tile data
 pub trait Art {
+    /// Convert this asset back to the raw, storable form
     fn serialize(&self) -> Vec<u8>;
 
+    /// Convert this asset to a standarized image format
     #[cfg(feature = "image")]
     fn to_image(&self) -> RgbaImage;
 }
@@ -24,6 +45,8 @@ pub trait Art {
 pub const TILE_SIZE: u32 = 2048;
 pub const STATIC_OFFSET: u32 = 0x4000;
 
+/// A run pair contains an offset at which point to start drawing the run,
+/// and the pixels to draw
 pub struct RunPair {
     pub offset: u16,
     pub run: Vec<Color16>,
@@ -50,16 +73,12 @@ impl RunPair {
 
 pub type StaticRow = Vec<RunPair>;
 
-/// A Map Tile, 44px by 44px
-///
-/// Map tiles are stored as
-/// |Header:u32|Pixels:u16|
-/// Where pixels represents a list of rows, length 2, 4, 6, 8 .. 42, 44, 44, 42 .. 8, 6, 4, 2 and are drawn
-/// centred
+/// A map tile, 44px by 44px.
 pub struct Tile {
     /// Header information for a tile.  Unused
     pub header: u32,
     /// Individual pixels. These work as rows, of length 2, 4, 6, 8 .. 42, 44, 44, 42 .. 8, 6, 4, 2
+    /// These should be drawn centered to the 44px-wide tile
     pub image_data: [Color16; 1022],
 }
 
@@ -165,19 +184,27 @@ impl Art for Static {
     }
 }
 
+/// A static image, typically used to render props
 pub struct Static {
+    /// The number of bytes this static is stored as
     pub size: u16,
+    /// Trigger information. Yet unknown what this represents
     pub trigger: u16,
+    /// The width of the image
     pub width: u16,
+    /// The height of the image
     pub height: u16,
+    /// The image data
     pub rows: Vec<StaticRow>,
 }
 
+/// A struct to help read out Tile and Static data
 pub struct ArtReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }
 
 impl ArtReader<File> {
+    /// Create a new ArtReader from an index and mul path
     pub fn new(index_path: &Path, mul_path: &Path) -> Result<ArtReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(ArtReader { mul_reader })
@@ -185,10 +212,12 @@ impl ArtReader<File> {
 }
 
 impl<T: Read + Seek> ArtReader<T> {
+    /// Create an ArtReader from an existing mul reader
     pub fn from_mul(reader: MulReader<T>) -> ArtReader<T> {
         ArtReader { mul_reader: reader }
     }
 
+    /// Read a single tile
     pub fn read_tile(&mut self, id: u32) -> Result<Tile> {
         if id >= STATIC_OFFSET {
             return Err(Error::other("Index out of bounds"));
@@ -198,23 +227,26 @@ impl<T: Read + Seek> ArtReader<T> {
         let mut reader = Cursor::new(raw.data);
 
         if raw.length > TILE_SIZE {
-            Err(Error::other(format!(
+            return Err(Error::other(format!(
                 "Got tile size of {}, expected {}",
                 raw.length, TILE_SIZE
-            )))
-        } else {
-            let header = reader.read_u32::<LittleEndian>()?;
-            let mut body = [0; 1022];
-            for cell in &mut body {
-                *cell = reader.read_u16::<LittleEndian>().unwrap_or(0);
-            }
-            Ok(Tile {
-                header,
-                image_data: body,
-            })
+            )));
         }
+
+        let header = reader.read_u32::<LittleEndian>()?;
+        let mut body = [0; 1022];
+        for cell in &mut body {
+            *cell = reader.read_u16::<LittleEndian>().unwrap_or(0);
+        }
+        Ok(Tile {
+            header,
+            image_data: body,
+        })
     }
 
+    /// Read a single static.
+    ///
+    /// Statics are read with an offset, so 0 is the first static in the file.
     pub fn read_static(&mut self, id: u32) -> Result<Static> {
         let offset_id = id + STATIC_OFFSET;
 
@@ -225,11 +257,12 @@ impl<T: Read + Seek> ArtReader<T> {
         let trigger = reader.read_u16::<LittleEndian>()?;
         let width = reader.read_u16::<LittleEndian>()?;
         let height = reader.read_u16::<LittleEndian>()?;
+
         if width == 0 || width >= 1024 || height == 0 || height >= 1024 {
             return Err(Error::other(format!(
                 "Got invalid width and height of {}, {}",
                 width, height
-            )))
+            )));
         }
 
         //Load our offset table

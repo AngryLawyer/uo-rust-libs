@@ -70,7 +70,7 @@ impl<T: Read + Seek> MulReader<T> {
             return Err(Error::other(format!(
                 "Trying to read out of bounds record {}, with a start of {}",
                 index, start
-            )))
+            )));
         }
 
         let length = self.idx_reader.read_u32::<LittleEndian>()?;
@@ -154,15 +154,11 @@ pub mod tests {
     use super::*;
     use std::io::Cursor;
 
-    pub fn simple_from_vecs(
-        vectors: Vec<Vec<u8>>,
-        opt1: u16,
-        opt2: u16,
-    ) -> MulReader<Cursor<Vec<u8>>> {
+    pub fn simple_from_vecs(vectors: Vec<(Vec<u8>, u16, u16)>) -> MulReader<Cursor<Vec<u8>>> {
         let mut idx_reader = Cursor::new(vec![]);
         let mut mul_reader = Cursor::new(vec![]);
         //For every MUL record, we should have an index record pointing at it
-        for vec in vectors {
+        for (vec, opt1, opt2) in vectors {
             let len = vec.len();
             let mul_size = mul_reader.seek(SeekFrom::End(0)).unwrap();
             let mut idx_cursor = Cursor::new(vec![]);

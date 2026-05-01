@@ -3,14 +3,14 @@ use crate::skills::{Skill, Skills};
 
 #[test]
 fn test_load_skills() {
-    let mut mul_reader = simple_from_vecs(
-        vec![
+    let mut mul_reader = simple_from_vecs(vec![
+        (
             vec![1, b'S', b'a', b'n', b'd', b'w', b'i', b'c', b'h', 0],
-            vec![0, b'B', b'u', b'r', b'g', b'e', b'r', 0],
-        ],
-        0,
-        0,
-    );
+            0,
+            0,
+        ),
+        (vec![0, b'B', b'u', b'r', b'g', b'e', b'r', 0], 0, 0),
+    ]);
 
     let skills = Skills::from_mul(&mut mul_reader).unwrap();
     assert_eq!(skills.skills.len(), 2);

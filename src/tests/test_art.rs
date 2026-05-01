@@ -9,23 +9,38 @@ use crate::art::{Art, Tile};
 use crate::art::{ArtReader, STATIC_OFFSET};
 use crate::mul::tests::simple_from_vecs;
 
+fn raw_tile_data() -> Vec<u8> {
+    let mut data = Cursor::new(vec![]);
+    data.write_u32::<LittleEndian>(0x6).unwrap(); // Header
+    for i in 0..1022 {
+        data.write_u16::<LittleEndian>(if i % 2 == 0 { 0xFFFF } else { 0x0 })
+            .unwrap();
+    }
+    data.into_inner()
+}
+
 #[test]
 fn test_load_tile() {
-    let mut data = Cursor::new(vec![]);
-    data.write_u32::<LittleEndian>(0).unwrap(); // Header
-    for _i in 0..1022 {
-        data.write_u16::<LittleEndian>(0xFFFF).unwrap();
-    }
-
-    let mul_reader = simple_from_vecs(vec![data.into_inner()], 0, 0);
+    let mul_reader = simple_from_vecs(vec![(raw_tile_data(), 0, 0)]);
     let mut reader = ArtReader::from_mul(mul_reader);
     match reader.read_tile(0) {
         Ok(tile) => {
-            assert_eq!(tile.header, 0);
+            assert_eq!(tile.header, 0x6);
             assert_eq!(tile.image_data[0], 0xFFFF);
+            assert_eq!(tile.image_data[1], 0x0);
         }
         Err(err) => panic!("{}", err),
     };
+}
+
+#[test]
+fn test_serialize_tile() {
+    let raw = raw_tile_data();
+    let mul_reader = simple_from_vecs(vec![(raw.clone(), 0, 0)]);
+    let mut reader = ArtReader::from_mul(mul_reader);
+    let tile = reader.read_tile(0).unwrap();
+    let serialized = tile.serialize();
+    assert_eq!(raw, serialized);
 }
 
 #[cfg(feature = "image")]
@@ -54,7 +69,7 @@ fn test_tile_to_image() {
     }
 }
 
-fn example_art_mul() -> ArtReader<Cursor<Vec<u8>>> {
+fn raw_static() -> Vec<u8> {
     let mut data = Cursor::new(vec![]);
 
     data.write_u16::<LittleEndian>(0).unwrap(); //Size, unused
@@ -82,20 +97,23 @@ fn example_art_mul() -> ArtReader<Cursor<Vec<u8>>> {
     data.write_u16::<LittleEndian>(1).unwrap(); //Row 1, run 1 number of pixels
     data.write_u16::<LittleEndian>(0xFFFF).unwrap(); //Row 1, run 1 data
     data.write_u32::<LittleEndian>(0).unwrap(); //Row 2 EOL
+    data.into_inner()
+}
 
+fn example_art_mul(static_data: &[u8]) -> ArtReader<Cursor<Vec<u8>>> {
     let mut padded = vec![];
     for _i in 0..STATIC_OFFSET {
-        padded.push(vec![]);
+        padded.push((vec![], 0, 0));
     }
-    padded.push(data.into_inner());
+    padded.push((static_data.into(), 0, 0));
 
-    let mul_reader = simple_from_vecs(padded, 0, 0);
+    let mul_reader = simple_from_vecs(padded);
     ArtReader::from_mul(mul_reader)
 }
 
 #[test]
 fn test_load_static() {
-    let mut reader = example_art_mul();
+    let mut reader = example_art_mul(&raw_static());
     match reader.read_static(0) {
         Ok(stat) => {
             assert_eq!(stat.size, 0);
@@ -108,9 +126,18 @@ fn test_load_static() {
 }
 
 #[test]
+fn test_serialize_static() {
+    let raw = raw_static();
+    let mut reader = example_art_mul(&raw);
+    let s = reader.read_static(0).unwrap();
+    let serialized = s.serialize();
+    assert_eq!(raw, serialized);
+}
+
+#[test]
 #[cfg(feature = "image")]
 fn test_static_to_image() {
-    let mut reader = example_art_mul();
+    let mut reader = example_art_mul(&raw_static());
     match reader.read_static(0) {
         Ok(stat) => {
             let image = stat.to_image();

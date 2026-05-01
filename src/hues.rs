@@ -29,7 +29,6 @@ pub struct Hue {
     pub name: String,
 }
 
-
 impl Hue {
     pub fn new(
         color_table: [Color16; 32],

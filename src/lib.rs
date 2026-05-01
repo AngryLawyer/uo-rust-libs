@@ -6,8 +6,8 @@ extern crate byteorder;
 #[cfg(feature = "image")]
 extern crate image;
 
-pub mod mul;
 pub mod errors;
+pub mod mul;
 
 pub mod color;
 
