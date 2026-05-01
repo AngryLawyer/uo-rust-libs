@@ -7,10 +7,12 @@
 //! Index values of `0xFEFEFEFF` are considered undefined, and should be skipped
 
 use std::fs::{File, OpenOptions};
-use std::io::{Error, Read, Result, Seek, SeekFrom, Write};
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::path::Path;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
+
+use crate::errors::{MulReaderError, MulReaderResult, MulWriterResult};
 
 const UNDEF_RECORD: u32 = 0xFEFEFEFF;
 const INDEX_SIZE: u32 = 12;
@@ -40,7 +42,7 @@ pub struct MulReader<T: Read + Seek> {
 }
 
 impl MulReader<File> {
-    pub fn new(idx_path: &Path, mul_path: &Path) -> Result<MulReader<File>> {
+    pub fn new(idx_path: &Path, mul_path: &Path) -> MulReaderResult<MulReader<File>> {
         let idx_reader = File::open(idx_path)?;
         let data_reader = File::open(mul_path)?;
 
@@ -59,7 +61,7 @@ impl<T: Read + Seek> MulReader<T> {
         }
     }
 
-    pub fn read(&mut self, index: u32) -> Result<MulRecord> {
+    pub fn read(&mut self, index: u32) -> MulReaderResult<MulRecord> {
         //Wind the idx reader to the index position
         self.idx_reader
             .seek(SeekFrom::Start((index * INDEX_SIZE) as u64))?;
@@ -67,10 +69,10 @@ impl<T: Read + Seek> MulReader<T> {
         let start = self.idx_reader.read_u32::<LittleEndian>()?;
         //Check for empty cell
         if start == UNDEF_RECORD || start == u32::MAX {
-            return Err(Error::other(format!(
-                "Trying to read out of bounds record {}, with a start of {}",
-                index, start
-            )));
+            return Err(MulReaderError::OffsetOutOfBounds {
+                index,
+                offset: start,
+            });
         }
 
         let length = self.idx_reader.read_u32::<LittleEndian>()?;
@@ -105,7 +107,11 @@ pub enum MulWriterMode {
 }
 
 impl MulWriter<File> {
-    pub fn new(idx_path: &Path, mul_path: &Path, mode: MulWriterMode) -> Result<MulWriter<File>> {
+    pub fn new(
+        idx_path: &Path,
+        mul_path: &Path,
+        mode: MulWriterMode,
+    ) -> MulWriterResult<MulWriter<File>> {
         let mut options = OpenOptions::new();
         let options = options.write(true).create(true).truncate(match mode {
             MulWriterMode::Append => false,
@@ -129,7 +135,12 @@ impl<T: Write + Seek> MulWriter<T> {
             data_writer,
         }
     }
-    pub fn append(&mut self, data: &Vec<u8>, opt1: Option<u16>, opt2: Option<u16>) -> Result<()> {
+    pub fn append(
+        &mut self,
+        data: &Vec<u8>,
+        opt1: Option<u16>,
+        opt2: Option<u16>,
+    ) -> MulWriterResult<()> {
         //Wind the files to the end
         self.idx_writer.seek(SeekFrom::End(0))?;
         let mul_size = self.data_writer.seek(SeekFrom::End(0))?;

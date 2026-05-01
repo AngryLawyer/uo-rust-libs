@@ -4,12 +4,13 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
+use crate::errors::MulReaderResult;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
 use std::fs::File;
-use std::io::{Cursor, Read, Result, Seek};
+use std::io::{Cursor, Read, Seek};
 use std::path::Path;
 
 pub const LARGE_TILE: usize = 0x8000;
@@ -43,7 +44,7 @@ pub struct TexMapsReader<T: Read + Seek> {
 }
 
 impl TexMapsReader<File> {
-    pub fn new(index_path: &Path, mul_path: &Path) -> Result<TexMapsReader<File>> {
+    pub fn new(index_path: &Path, mul_path: &Path) -> MulReaderResult<TexMapsReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(TexMapsReader { mul_reader })
     }
@@ -54,7 +55,7 @@ impl<T: Read + Seek> TexMapsReader<T> {
         TexMapsReader { mul_reader: reader }
     }
 
-    pub fn read(&mut self, id: u32) -> Result<TexMap> {
+    pub fn read(&mut self, id: u32) -> MulReaderResult<TexMap> {
         let raw = self.mul_reader.read(id)?;
         let len = raw.data.len();
         let mut reader = Cursor::new(raw.data);

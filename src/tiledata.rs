@@ -1,8 +1,10 @@
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::fs::File;
-use std::io::{Read, Result, Seek, SeekFrom};
+use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 use std::str::from_utf8;
+
+use crate::errors::MulReaderResult;
 
 #[repr(usize)]
 pub enum Flags {
@@ -70,7 +72,7 @@ pub struct TileDataReader<T: Read + Seek> {
 }
 
 impl TileDataReader<File> {
-    pub fn new(mul_path: &Path) -> Result<TileDataReader<File>> {
+    pub fn new(mul_path: &Path) -> MulReaderResult<TileDataReader<File>> {
         let data_reader = File::open(mul_path)?;
 
         Ok(TileDataReader { data_reader })
@@ -78,7 +80,7 @@ impl TileDataReader<File> {
 }
 
 impl<T: Read + Seek> TileDataReader<T> {
-    pub fn read_map_tile_data(&mut self, idx: u32) -> Result<MapTileData> {
+    pub fn read_map_tile_data(&mut self, idx: u32) -> MulReaderResult<MapTileData> {
         let offset = self.calculate_map_tile_offset(idx);
         self.data_reader.seek(SeekFrom::Start(offset))?;
         let flags = self.data_reader.read_u32::<LittleEndian>()?;
@@ -105,7 +107,7 @@ impl<T: Read + Seek> TileDataReader<T> {
         ((idx * MAP_TILE_SIZE) + group_header_jumps) as u64
     }
 
-    pub fn read_static_tile_data(&mut self, idx: u32) -> Result<StaticTileData> {
+    pub fn read_static_tile_data(&mut self, idx: u32) -> MulReaderResult<StaticTileData> {
         let offset = self.calculate_static_tile_offset(idx);
         self.data_reader.seek(SeekFrom::Start(offset))?;
 

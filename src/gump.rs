@@ -1,12 +1,13 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
+use crate::errors::MulReaderResult;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
 use std::fs::File;
-use std::io::{Cursor, Read, Result, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::path::Path;
 
 #[derive(Clone, Copy)]
@@ -49,7 +50,7 @@ pub struct GumpReader<T: Read + Seek> {
 }
 
 impl GumpReader<File> {
-    pub fn new(index_path: &Path, mul_path: &Path) -> Result<GumpReader<File>> {
+    pub fn new(index_path: &Path, mul_path: &Path) -> MulReaderResult<GumpReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(GumpReader { mul_reader })
     }
@@ -60,7 +61,7 @@ impl<T: Read + Seek> GumpReader<T> {
         GumpReader { mul_reader: reader }
     }
 
-    pub fn read(&mut self, index: u32) -> Result<Gump> {
+    pub fn read(&mut self, index: u32) -> MulReaderResult<Gump> {
         let raw = self.mul_reader.read(index)?;
         let mut output = vec![];
         let len = raw.data.len();

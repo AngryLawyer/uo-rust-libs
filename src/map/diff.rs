@@ -1,4 +1,5 @@
 use super::shared::{Block, StaticLocation, read_block, read_block_statics};
+use crate::errors::MulReaderResult;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::collections::HashMap;
@@ -27,14 +28,14 @@ impl MapDiffReader {
         Ok(MapDiffReader { lookup_table, diff })
     }
 
-    pub fn read(&mut self, idx: u32) -> Option<Result<Block>> {
+    pub fn read(&mut self, idx: u32) -> Option<MulReaderResult<Block>> {
         match self.lookup_table.get(&idx) {
             Some(block_idx) => Some(read_block(&mut self.diff, *block_idx)),
             None => None,
         }
     }
 
-    pub fn read_all(&mut self) -> HashMap<u32, Result<Block>> {
+    pub fn read_all(&mut self) -> HashMap<u32, MulReaderResult<Block>> {
         let mut out = HashMap::new();
         let keys = self.lookup_table.keys().copied().collect::<Vec<u32>>();
         for map_idx in keys {
@@ -54,7 +55,7 @@ impl StaticDiffReader<File> {
         lookup_path: &Path,
         diff_idx_path: &Path,
         diff_path: &Path,
-    ) -> Result<StaticDiffReader<File>> {
+    ) -> MulReaderResult<StaticDiffReader<File>> {
         let mut lookup = File::open(lookup_path)?;
 
         let meta = lookup.metadata()?;
@@ -73,14 +74,14 @@ impl StaticDiffReader<File> {
 }
 
 impl<T: Read + Seek> StaticDiffReader<T> {
-    pub fn read(&mut self, idx: u32) -> Option<Result<Vec<StaticLocation>>> {
+    pub fn read(&mut self, idx: u32) -> Option<MulReaderResult<Vec<StaticLocation>>> {
         match self.lookup_table.get(&idx) {
             Some(block_idx) => Some(read_block_statics(&mut self.mul_reader, *block_idx)),
             None => None,
         }
     }
 
-    pub fn read_all(&mut self) -> HashMap<u32, Result<Vec<StaticLocation>>> {
+    pub fn read_all(&mut self) -> HashMap<u32, MulReaderResult<Vec<StaticLocation>>> {
         let mut out = HashMap::new();
         let keys = self.lookup_table.keys().copied().collect::<Vec<u32>>();
         for map_idx in keys {

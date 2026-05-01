@@ -1,7 +1,8 @@
+use crate::errors::MulReaderResult;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::fs::File;
-use std::io::{Cursor, Read, Result, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom};
 
 pub const BLOCK_SIZE: usize = 196;
 pub const OFFSET: u32 = 4;
@@ -21,27 +22,11 @@ pub struct Cell {
     pub altitude: i8,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Clone, Copy)]
 pub struct Block {
     pub checksum: u32, //Not actually used
     pub cells: [Cell; 64],
 }
-/*
-impl Clone for Block {
-    fn clone(&self) -> Self {
-        let mut cells = [Cell {
-            graphic: 0,
-            altitude: 0,
-        }; 64];
-        for i in 0..64 {
-            cells[i] = self.cells[i].clone();
-        }
-        Block {
-            checksum: self.checksum,
-            cells: cells,
-        }
-    }
-}*/
 
 #[derive(Clone, Copy)]
 pub struct StaticLocation {
@@ -61,7 +46,7 @@ impl StaticLocation {
 /**
  * Read a specific block from a map
  */
-pub fn read_block(data_reader: &mut File, id: u32) -> Result<Block> {
+pub fn read_block(data_reader: &mut File, id: u32) -> MulReaderResult<Block> {
     //Cycle to id * 192
     data_reader.seek(SeekFrom::Start((id * BLOCK_SIZE as u32) as u64))?;
     //Read the header
@@ -85,7 +70,7 @@ pub fn read_block(data_reader: &mut File, id: u32) -> Result<Block> {
 pub fn read_block_statics<T: Read + Seek>(
     mul_reader: &mut MulReader<T>,
     id: u32,
-) -> Result<Vec<StaticLocation>> {
+) -> MulReaderResult<Vec<StaticLocation>> {
     let raw = mul_reader.read(id)?;
     let len = raw.data.len();
     assert!(len % 7 == 0);

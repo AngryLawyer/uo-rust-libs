@@ -20,6 +20,7 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
+use crate::errors::MulReaderResult;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
@@ -27,7 +28,7 @@ use image::error::{DecodingError, ImageError, ImageFormatHint};
 #[cfg(feature = "image")]
 use image::{Delay, Frame, Frames, Rgba, RgbaImage};
 use std::fs::File;
-use std::io::{Cursor, Read, Result, Seek, SeekFrom};
+use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::path::Path;
 #[cfg(feature = "image")]
 use std::time::Duration;
@@ -121,7 +122,7 @@ pub struct AnimReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }
 
-fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
+fn read_frame<T: Read + Seek>(reader: &mut T) -> MulReaderResult<AnimFrame> {
     let image_centre_x = reader.read_i16::<LittleEndian>()?;
     let image_centre_y = reader.read_i16::<LittleEndian>()?;
     let width = reader.read_u16::<LittleEndian>()?;
@@ -153,7 +154,7 @@ fn read_frame<T: Read + Seek>(reader: &mut T) -> Result<AnimFrame> {
 
 impl AnimReader<File> {
     /// Create an animation reader from paths to an index mul and a data mul
-    pub fn new(index_path: &Path, mul_path: &Path) -> Result<AnimReader<File>> {
+    pub fn new(index_path: &Path, mul_path: &Path) -> MulReaderResult<AnimReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(AnimReader { mul_reader })
     }
@@ -166,7 +167,7 @@ impl<T: Read + Seek> AnimReader<T> {
     }
 
     /// Read an animation group by id
-    pub fn read(&mut self, id: u32) -> Result<AnimGroup> {
+    pub fn read(&mut self, id: u32) -> MulReaderResult<AnimGroup> {
         let raw = self.mul_reader.read(id)?;
         let mut reader = Cursor::new(raw.data);
         // Read the palette

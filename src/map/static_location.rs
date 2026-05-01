@@ -1,8 +1,9 @@
 use super::diff::StaticDiffReader;
 use super::shared::{StaticLocation, read_block_statics};
+use crate::errors::{MulReaderError, MulReaderResult};
 use crate::mul::MulReader;
 use std::fs::File;
-use std::io::{Error, Read, Result, Seek};
+use std::io::{Read, Seek};
 use std::path::Path;
 
 pub struct StaticReader<T: Read + Seek> {
@@ -17,7 +18,7 @@ impl StaticReader<File> {
         mul_path: &Path,
         width_blocks: u32,
         height_blocks: u32,
-    ) -> Result<StaticReader<File>> {
+    ) -> MulReaderResult<StaticReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
 
         Ok(StaticReader {
@@ -33,7 +34,7 @@ impl<T: Read + Seek> StaticReader<T> {
         &mut self,
         id: u32,
         patch: Option<&mut StaticDiffReader<T>>,
-    ) -> Result<Vec<StaticLocation>> {
+    ) -> MulReaderResult<Vec<StaticLocation>> {
         match patch {
             Some(reader) => reader
                 .read(id)
@@ -47,16 +48,13 @@ impl<T: Read + Seek> StaticReader<T> {
         x: u32,
         y: u32,
         patch: Option<&mut StaticDiffReader<T>>,
-    ) -> Result<Vec<StaticLocation>> {
+    ) -> MulReaderResult<Vec<StaticLocation>> {
         let width = self.width;
         let height = self.height;
         if x < width && y < height {
             self.read_block(y + (x * height), patch)
         } else {
-            Err(Error::other(format!(
-                "{} {} is outside of valid map coordinates",
-                x, y
-            )))
+            Err(MulReaderError::CoordinatesOutOfBounds { x, y })
         }
     }
 }

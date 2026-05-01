@@ -22,11 +22,11 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::errors::MEMWRITER_ERROR;
+use crate::errors::{MEMWRITER_ERROR, MulReaderError, MulReaderResult};
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::fs::File;
-use std::io::{Cursor, Error, Read, Result, Seek, SeekFrom, Write};
+use std::io::{Cursor, Read, Seek, SeekFrom, Write};
 use std::path::Path;
 
 #[cfg(feature = "image")]
@@ -205,7 +205,7 @@ pub struct ArtReader<T: Read + Seek> {
 
 impl ArtReader<File> {
     /// Create a new ArtReader from an index and mul path
-    pub fn new(index_path: &Path, mul_path: &Path) -> Result<ArtReader<File>> {
+    pub fn new(index_path: &Path, mul_path: &Path) -> MulReaderResult<ArtReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
         Ok(ArtReader { mul_reader })
     }
@@ -218,19 +218,19 @@ impl<T: Read + Seek> ArtReader<T> {
     }
 
     /// Read a single tile
-    pub fn read_tile(&mut self, id: u32) -> Result<Tile> {
+    pub fn read_tile(&mut self, id: u32) -> MulReaderResult<Tile> {
         if id >= STATIC_OFFSET {
-            return Err(Error::other("Index out of bounds"));
+            return Err(MulReaderError::IndexOutOfBounds(id));
         }
 
         let raw = self.mul_reader.read(id)?;
         let mut reader = Cursor::new(raw.data);
 
         if raw.length > TILE_SIZE {
-            return Err(Error::other(format!(
-                "Got tile size of {}, expected {}",
-                raw.length, TILE_SIZE
-            )));
+            return Err(MulReaderError::UnexpectedSize {
+                found: raw.length,
+                expected: TILE_SIZE,
+            });
         }
 
         let header = reader.read_u32::<LittleEndian>()?;
@@ -247,7 +247,7 @@ impl<T: Read + Seek> ArtReader<T> {
     /// Read a single static.
     ///
     /// Statics are read with an offset, so 0 is the first static in the file.
-    pub fn read_static(&mut self, id: u32) -> Result<Static> {
+    pub fn read_static(&mut self, id: u32) -> MulReaderResult<Static> {
         let offset_id = id + STATIC_OFFSET;
 
         let raw = self.mul_reader.read(offset_id)?;
@@ -259,7 +259,7 @@ impl<T: Read + Seek> ArtReader<T> {
         let height = reader.read_u16::<LittleEndian>()?;
 
         if width == 0 || width >= 1024 || height == 0 || height >= 1024 {
-            return Err(Error::other(format!(
+            return Err(MulReaderError::FailedParse(format!(
                 "Got invalid width and height of {}, {}",
                 width, height
             )));

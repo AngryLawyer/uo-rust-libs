@@ -1,11 +1,13 @@
 use std::fs::File;
-use std::io::{Error, Result};
 use std::path::Path;
 
 mod diff;
 mod radarcol;
 mod shared;
 mod static_location;
+
+use crate::errors::MulReaderError;
+use crate::errors::MulReaderResult;
 
 pub use self::diff::*;
 pub use self::radarcol::*;
@@ -19,7 +21,7 @@ pub struct MapReader {
 }
 
 impl MapReader {
-    pub fn new(map_path: &Path, width: u32, height: u32) -> Result<MapReader> {
+    pub fn new(map_path: &Path, width: u32, height: u32) -> MulReaderResult<MapReader> {
         let data_reader = File::open(map_path)?;
 
         Ok(MapReader {
@@ -32,7 +34,11 @@ impl MapReader {
     /**
      * Read a specific block from a map
      */
-    pub fn read_block(&mut self, id: u32, patch: Option<&mut MapDiffReader>) -> Result<Block> {
+    pub fn read_block(
+        &mut self,
+        id: u32,
+        patch: Option<&mut MapDiffReader>,
+    ) -> MulReaderResult<Block> {
         match patch {
             Some(reader) => reader
                 .read(id)
@@ -46,16 +52,13 @@ impl MapReader {
         x: u32,
         y: u32,
         patch: Option<&mut MapDiffReader>,
-    ) -> Result<Block> {
+    ) -> MulReaderResult<Block> {
         let width = self.width;
         let height = self.height;
         if x < width && y < height {
             self.read_block(y + (x * height), patch)
         } else {
-            Err(Error::other(format!(
-                "{} {} is outside of valid map coordinates",
-                x, y
-            )))
+            Err(MulReaderError::CoordinatesOutOfBounds { x, y })
         }
     }
 }

@@ -1,9 +1,9 @@
 use crate::mul::tests::simple_from_vecs;
-use crate::skills::{Skill, Skills};
+use crate::skills::{Skill, SkillReader};
 
 #[test]
 fn test_load_skills() {
-    let mut mul_reader = simple_from_vecs(vec![
+    let mul_reader = simple_from_vecs(vec![
         (
             vec![1, b'S', b'a', b'n', b'd', b'w', b'i', b'c', b'h', 0],
             0,
@@ -12,12 +12,13 @@ fn test_load_skills() {
         (vec![0, b'B', b'u', b'r', b'g', b'e', b'r', 0], 0, 0),
     ]);
 
-    let skills = Skills::from_mul(&mut mul_reader).unwrap();
-    assert_eq!(skills.skills.len(), 2);
-    let skill = &skills.skills[0];
+    let mut skill_reader = SkillReader::from_mul(mul_reader);
+    let skills = skill_reader.read_all();
+    assert_eq!(skills.len(), 2);
+    let skill = &skills[0];
     assert!(skill.clickable);
     assert_eq!(&skill.name, "Sandwich");
-    let skill = &skills.skills[1];
+    let skill = &skills[1];
     assert!(!skill.clickable);
     assert_eq!(&skill.name, "Burger");
 }
