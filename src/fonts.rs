@@ -1,5 +1,7 @@
 //! Methods for reading font data out of fonts.mul
 //!
+//! There are 10 fonts in a file.
+//!
 //! Fonts are represented in a continuous, unindexed file as groups
 //! `|header: u8|characters: [Character..224]`
 //!
@@ -8,14 +10,15 @@
 //!
 #[cfg(feature = "image")]
 use crate::color::Color;
-use crate::color::Color16;
+use crate::color::{Color16, BLACK_16};
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
 use std::fs::File;
-use std::io::{Read, Result, Seek};
+use std::io::{Read, MulReaderResult, Seek};
 use std::path::Path;
 
+/// An individual glyph in a font
 #[derive(Clone)]
 pub struct Character {
     pub width: u8,
@@ -31,9 +34,9 @@ impl Character {
         for y in 0..self.height {
             for x in 0..self.width {
                 let pixel = self.data[(y as usize * self.width as usize) + x as usize];
-                let (r, g, b, a) = pixel.to_rgba();
-                // Black is transparent
-                if r != 0 || g != 0 || b != 0 {
+                // Black is transparent here
+                if pixel != BLACK_16 {
+                    let (r, g, b, a) = pixel.to_rgba();
                     buffer.put_pixel(x as u32, y as u32, Rgba([r, g, b, a]));
                 }
             }
@@ -42,18 +45,22 @@ impl Character {
     }
 }
 
+/// A font. Fonts should always have 224 characters in them.
+/// They map to ASCII, but skip the first 32 characters
 #[derive(Clone)]
 pub struct Font {
     pub header: u8,
     pub characters: Vec<Character>,
 }
 
+/// A struct to help reading fonts from a 
 pub struct FontReader<T: Read + Seek> {
     data_reader: T,
 }
 
 impl FontReader<File> {
-    pub fn new(font_path: &Path) -> Result<FontReader<File>> {
+    /// Create a new FontReader from a mul path
+    pub fn new(font_path: &Path) -> MulReaderResult<FontReader<File>> {
         let data_reader = File::open(font_path)?;
 
         Ok(FontReader { data_reader })
@@ -61,14 +68,15 @@ impl FontReader<File> {
 }
 
 impl<T: Read + Seek> FontReader<T> {
-    /**
-     * If we've already got a file-like object, wrap it
-     * */
+    /// Create a FontReader from an existing readable object
     pub fn from_readable(data_reader: T) -> FontReader<T> {
         FontReader { data_reader }
     }
 
-    pub fn read_fonts(&mut self) -> Result<Vec<Font>> {
+    /// Read all 10 fonts from the file.
+    /// As fonts are variable-length (due to differing character sizes),
+    /// it's not easy to read them individually
+    pub fn read_fonts(&mut self) -> MulReaderResult<Vec<Font>> {
         let mut out = vec![];
         for _ in 0..10 {
             out.push(self.read_font()?);
@@ -76,7 +84,7 @@ impl<T: Read + Seek> FontReader<T> {
         Ok(out)
     }
 
-    fn read_font(&mut self) -> Result<Font> {
+    fn read_font(&mut self) -> MulReaderResult<Font> {
         let header = self.data_reader.read_u8()?;
         let mut chars = vec![];
         for _ in 0..224 {
@@ -88,7 +96,7 @@ impl<T: Read + Seek> FontReader<T> {
         })
     }
 
-    fn read_character(&mut self) -> Result<Character> {
+    fn read_character(&mut self) -> MulReaderResult<Character> {
         let width = self.data_reader.read_u8()?;
         let height = self.data_reader.read_u8()?;
         let unknown = self.data_reader.read_u8()?;
