@@ -1,4 +1,6 @@
 //! Traits for easy conversion between packed color data and easy-to-manipulate tuples
+//!
+//! UO's colour palette is 16-bit 555, with the high bit unused
 
 pub trait Color {
     //! A color that can be converted between an rgba tuple and back

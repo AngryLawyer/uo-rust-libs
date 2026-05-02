@@ -17,6 +17,8 @@
 //! value of `0x7FFF7FFF`
 //!
 //! `|header:u32|pixels:[u8..?]|`
+//!
+//!
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
@@ -43,6 +45,10 @@ pub struct Row {
     /// Compacted header information.
     /// It contains the length of the associated data, plus offsets of where to plot, relative
     /// to the image centre
+    ///
+    /// `|y_offset..10bits|x_offset..10bits|run_length..12bits|`
+    ///
+    /// The offsets are signed values
     pub header: u32,
     /// Individual pixels for the row, as lookups in the AnimGroup palette
     pub image_data: Vec<u8>,
