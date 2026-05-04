@@ -67,6 +67,38 @@ impl Row {
         (((self.header as i32 ^ OFFSET_MASK) >> 12) & 0x3FF) + image_center_y as i32 + height as i32
             - 0x200
     }
+
+    #[cfg(feature = "image")]
+    /// Draw a row into an image buffer.
+    ///
+    /// This is typically called by to_frame, and you won't need to call it directly
+    pub fn plot(
+        &self,
+        image_center_x: i16,
+        image_center_y: i16,
+        width: u16,
+        height: u16,
+        palette: &[u16],
+        buffer: &mut RgbaImage,
+    ) -> Result<(), ImageError> {
+        let x = self.x_offset(image_center_x);
+        let y = self.y_offset(image_center_y, height as u32);
+        if (x < 0 || y < 0) && (width == 0 || height == 0) {
+            return Err(ImageError::Decoding(DecodingError::from_format_hint(
+                ImageFormatHint::Name("UO AnimFrame".to_string()),
+            )));
+        }
+        for i in 0..self.image_data.len() {
+            if (x + i as i32 > width as i32 || y > height as i32) && (width == 0 || height == 0) {
+                return Err(ImageError::Decoding(DecodingError::from_format_hint(
+                    ImageFormatHint::Name("UO AnimFrame".to_string()),
+                )));
+            }
+            let (r, g, b, a) = palette[self.image_data[i] as usize].to_rgba();
+            buffer.put_pixel(x as u32 + i as u32, y as u32, Rgba([r, g, b, a]));
+        }
+        Ok(())
+    }
 }
 
 /// A frame of an animtion
@@ -78,6 +110,35 @@ pub struct AnimFrame {
     pub data: Vec<Row>,
 }
 
+#[cfg(feature = "image")]
+impl AnimFrame {
+    /// Convert an individual frame to an Image frame
+    pub fn to_frame(&self, palette: &[u16]) -> Result<Frame, ImageError> {
+        if self.width == 0 || self.height == 0 {
+            return Err(ImageError::Decoding(DecodingError::from_format_hint(
+                ImageFormatHint::Name("UO AnimFrame".to_string()),
+            )));
+        }
+        let mut buffer = RgbaImage::new(self.width as u32, self.height as u32);
+        for row in &self.data {
+            row.plot(
+                self.image_center_x,
+                self.image_center_y,
+                self.width,
+                self.height,
+                palette,
+                &mut buffer,
+            )?;
+        }
+        Ok(Frame::from_parts(
+            buffer,
+            0,
+            0,
+            Delay::from_saturating_duration(Duration::from_millis(0)),
+        ))
+    }
+}
+
 /// An animation sequence
 pub struct AnimGroup {
     pub palette: [Color16; 256],
@@ -87,42 +148,15 @@ pub struct AnimGroup {
 
 impl AnimGroup {
     #[cfg(feature = "image")]
+    /// Convert an AnimGroup into Image-based frames.
+    ///
+    /// Currently, this doesn't produce values around delays
     pub fn to_frames(&self) -> Frames<'_> {
-        Frames::new(Box::new(self.frames.iter().map(move |anim_frame| {
-            if anim_frame.width == 0 || anim_frame.height == 0 {
-                return Err(ImageError::Decoding(DecodingError::from_format_hint(
-                    ImageFormatHint::Name("UO AnimFrame".to_string()),
-                )));
-            }
-            let mut buffer = RgbaImage::new(anim_frame.width as u32, anim_frame.height as u32);
-            for row in &anim_frame.data {
-                let x = row.x_offset(anim_frame.image_center_x);
-                let y = row.y_offset(anim_frame.image_center_y, anim_frame.height as u32);
-                if (x < 0 || y < 0) && (anim_frame.width == 0 || anim_frame.height == 0) {
-                    return Err(ImageError::Decoding(DecodingError::from_format_hint(
-                        ImageFormatHint::Name("UO AnimFrame".to_string()),
-                    )));
-                }
-                for i in 0..row.image_data.len() {
-                    if (x + i as i32 > anim_frame.width as i32 || y > anim_frame.height as i32)
-                        && (anim_frame.width == 0 || anim_frame.height == 0)
-                    {
-                        return Err(ImageError::Decoding(DecodingError::from_format_hint(
-                            ImageFormatHint::Name("UO AnimFrame".to_string()),
-                        )));
-                    }
-                    let (r, g, b, a) = self.palette[row.image_data[i] as usize].to_rgba();
-                    println!("Plotting {},{}", x as u32 + i as u32, y as u32);
-                    buffer.put_pixel(x as u32 + i as u32, y as u32, Rgba([r, g, b, a]));
-                }
-            }
-            Ok(Frame::from_parts(
-                buffer,
-                0,
-                0,
-                Delay::from_saturating_duration(Duration::from_millis(0)),
-            ))
-        })))
+        Frames::new(Box::new(
+            self.frames
+                .iter()
+                .map(move |anim_frame| anim_frame.to_frame(&self.palette)),
+        ))
     }
 }
 
