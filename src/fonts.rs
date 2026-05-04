@@ -10,12 +10,13 @@
 //!
 #[cfg(feature = "image")]
 use crate::color::Color;
-use crate::color::{Color16, BLACK_16};
+use crate::color::{BLACK_16, Color16};
+use crate::errors::MulReaderResult;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};
 use std::fs::File;
-use std::io::{Read, MulReaderResult, Seek};
+use std::io::{Read, Seek};
 use std::path::Path;
 
 /// An individual glyph in a font
@@ -53,7 +54,7 @@ pub struct Font {
     pub characters: Vec<Character>,
 }
 
-/// A struct to help reading fonts from a 
+/// A struct to help reading fonts from a
 pub struct FontReader<T: Read + Seek> {
     data_reader: T,
 }

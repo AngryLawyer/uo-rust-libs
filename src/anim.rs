@@ -44,9 +44,9 @@ const OFFSET_MASK: i32 = (0x200 << 22) | (0x200 << 12);
 pub struct Row {
     /// Compacted header information.
     /// It contains the length of the associated data, plus offsets of where to plot, relative
-    /// to the image centre
+    /// to the image center
     ///
-    /// `|y_offset..10bits|x_offset..10bits|run_length..12bits|`
+    /// `|x_offset..10bits|y_offset..10bits|run_length..12bits|`
     ///
     /// The offsets are signed values
     pub header: u32,
@@ -55,22 +55,24 @@ pub struct Row {
 }
 
 impl Row {
-    /// Get the x offset of where to start drawing this row, relative to a centre point
-    pub fn x_offset(&self, image_centre_x: i16) -> i32 {
-        (((self.header as i32 ^ OFFSET_MASK) >> 22) & 0x3FF) + image_centre_x as i32 - 0x200
+    /// Get the x offset of where to start drawing this row, relative to a center point
+    /// The resulting offset will be from the bottom left
+    pub fn x_offset(&self, image_center_x: i16) -> i32 {
+        (((self.header as i32 ^ OFFSET_MASK) >> 22) & 0x3FF) + image_center_x as i32 - 0x200
     }
 
-    /// Get the y offset of where to start drawing this row, relative to a centre point
-    pub fn y_offset(&self, image_centre_y: i16, height: u32) -> i32 {
-        (((self.header as i32 ^ OFFSET_MASK) >> 12) & 0x3FF) + image_centre_y as i32 + height as i32
+    /// Get the y offset of where to start drawing this row, relative to a center point
+    /// The resulting offset will be from the bottom left
+    pub fn y_offset(&self, image_center_y: i16, height: u32) -> i32 {
+        (((self.header as i32 ^ OFFSET_MASK) >> 12) & 0x3FF) + image_center_y as i32 + height as i32
             - 0x200
     }
 }
 
 /// A frame of an animtion
 pub struct AnimFrame {
-    pub image_centre_x: i16,
-    pub image_centre_y: i16,
+    pub image_center_x: i16,
+    pub image_center_y: i16,
     pub width: u16,
     pub height: u16,
     pub data: Vec<Row>,
@@ -94,8 +96,8 @@ impl AnimGroup {
             }
             let mut buffer = RgbaImage::new(anim_frame.width as u32, anim_frame.height as u32);
             for row in &anim_frame.data {
-                let x = row.x_offset(anim_frame.image_centre_x);
-                let y = row.y_offset(anim_frame.image_centre_y, anim_frame.height as u32);
+                let x = row.x_offset(anim_frame.image_center_x);
+                let y = row.y_offset(anim_frame.image_center_y, anim_frame.height as u32);
                 if (x < 0 || y < 0) && (anim_frame.width == 0 || anim_frame.height == 0) {
                     return Err(ImageError::Decoding(DecodingError::from_format_hint(
                         ImageFormatHint::Name("UO AnimFrame".to_string()),
@@ -110,6 +112,7 @@ impl AnimGroup {
                         )));
                     }
                     let (r, g, b, a) = self.palette[row.image_data[i] as usize].to_rgba();
+                    println!("Plotting {},{}", x as u32 + i as u32, y as u32);
                     buffer.put_pixel(x as u32 + i as u32, y as u32, Rgba([r, g, b, a]));
                 }
             }
@@ -129,8 +132,8 @@ pub struct AnimReader<T: Read + Seek> {
 }
 
 fn read_frame<T: Read + Seek>(reader: &mut T) -> MulReaderResult<AnimFrame> {
-    let image_centre_x = reader.read_i16::<LittleEndian>()?;
-    let image_centre_y = reader.read_i16::<LittleEndian>()?;
+    let image_center_x = reader.read_i16::<LittleEndian>()?;
+    let image_center_y = reader.read_i16::<LittleEndian>()?;
     let width = reader.read_u16::<LittleEndian>()?;
     let height = reader.read_u16::<LittleEndian>()?;
 
@@ -150,8 +153,8 @@ fn read_frame<T: Read + Seek>(reader: &mut T) -> MulReaderResult<AnimFrame> {
 
     // Read data
     Ok(AnimFrame {
-        image_centre_x,
-        image_centre_y,
+        image_center_x,
+        image_center_y,
         width,
         height,
         data,

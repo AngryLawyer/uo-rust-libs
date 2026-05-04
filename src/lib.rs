@@ -23,6 +23,7 @@ pub mod tiledata;
 
 #[cfg(test)]
 mod tests {
+    mod test_anim;
     mod test_art;
     mod test_color;
     mod test_gump;
