@@ -20,7 +20,7 @@ fn raw_tile_data() -> Vec<u8> {
 }
 
 #[test]
-fn test_load_tile() {
+fn test_read_tile() {
     let mul_reader = simple_from_vecs(vec![(raw_tile_data(), 0, 0)]);
     let mut reader = ArtReader::from_mul(mul_reader);
     match reader.read_tile(0) {
@@ -112,7 +112,7 @@ fn example_art_mul(static_data: &[u8]) -> ArtReader<Cursor<Vec<u8>>> {
 }
 
 #[test]
-fn test_load_static() {
+fn test_read_static() {
     let mut reader = example_art_mul(&raw_static());
     match reader.read_static(0) {
         Ok(stat) => {

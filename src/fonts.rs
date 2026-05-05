@@ -35,6 +35,7 @@ impl Character {
         for y in 0..self.height {
             for x in 0..self.width {
                 let pixel = self.data[(y as usize * self.width as usize) + x as usize];
+                println!("{}", pixel);
                 // Black is transparent here
                 if pixel != BLACK_16 {
                     let (r, g, b, a) = pixel.to_rgba();
@@ -54,7 +55,7 @@ pub struct Font {
     pub characters: Vec<Character>,
 }
 
-/// A struct to help reading fonts from a
+/// A struct to help reading fonts from a path
 pub struct FontReader<T: Read + Seek> {
     data_reader: T,
 }

@@ -26,6 +26,7 @@ mod tests {
     mod test_anim;
     mod test_art;
     mod test_color;
+    mod test_fonts;
     mod test_gump;
     mod test_hues;
     mod test_mul;
