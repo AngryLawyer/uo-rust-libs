@@ -23,6 +23,8 @@
 use crate::color::Color;
 use crate::color::Color16;
 use crate::errors::MulReaderResult;
+#[cfg(feature = "image")]
+use crate::errors::ToImageError;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
@@ -83,19 +85,28 @@ impl Row {
     ) -> Result<(), ImageError> {
         let x = self.x_offset(image_center_x);
         let y = self.y_offset(image_center_y, height as u32);
-        if (x < 0 || y < 0) && (width == 0 || height == 0) {
-            return Err(ImageError::Decoding(DecodingError::from_format_hint(
+        if x < 0 || y < 0 || y >= height as i32 || x as u16 + self.image_data.len() as u16 > width {
+            return Err(ImageError::Decoding(DecodingError::new(
                 ImageFormatHint::Name("UO AnimFrame".to_string()),
+                ToImageError::PixelOutOfBounds {
+                    x: x as i64,
+                    y: y as i64,
+                },
             )));
         }
         for i in 0..self.image_data.len() {
-            if (x + i as i32 > width as i32 || y > height as i32) && (width == 0 || height == 0) {
-                return Err(ImageError::Decoding(DecodingError::from_format_hint(
+            let target_x = x + i as i32;
+            if target_x > width as i32 {
+                return Err(ImageError::Decoding(DecodingError::new(
                     ImageFormatHint::Name("UO AnimFrame".to_string()),
+                    ToImageError::PixelOutOfBounds {
+                        x: target_x as i64,
+                        y: y as i64,
+                    },
                 )));
             }
             let (r, g, b, a) = palette[self.image_data[i] as usize].to_rgba();
-            buffer.put_pixel(x as u32 + i as u32, y as u32, Rgba([r, g, b, a]));
+            buffer.put_pixel(target_x as u32, y as u32, Rgba([r, g, b, a]));
         }
         Ok(())
     }

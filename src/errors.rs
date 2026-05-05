@@ -26,3 +26,11 @@ pub enum MulWriterError {
 
 pub type MulReaderResult<T> = std::result::Result<T, MulReaderError>;
 pub type MulWriterResult<T> = std::result::Result<T, MulWriterError>;
+
+#[derive(Error, Debug)]
+pub enum ToImageError {
+    #[error("Pixel {x}, {y} is out of bounds")]
+    PixelOutOfBounds { x: i64, y: i64 },
+    #[error("Invalid image size of {x}, {y}")]
+    InvalidImageSize { x: u32, y: u32 },
+}

@@ -37,7 +37,7 @@ pub trait Art {
     /// Convert this asset back to the raw, storable form
     fn serialize(&self) -> Vec<u8>;
 
-    /// Convert this asset to a standarized image format
+    /// Convert this asset into a standarized image format
     #[cfg(feature = "image")]
     fn to_image(&self) -> RgbaImage;
 }
