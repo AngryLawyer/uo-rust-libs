@@ -19,6 +19,7 @@ path = "src/lib.rs"
 byteorder = "1.5"
 image = { version = "0.25", default-features = false, optional = true }
 thiserror = "2.0.18"
+bitflags = "2.11"
 
 [features]
 image = ["dep:image"]
