@@ -15,8 +15,8 @@ use crate::color::Color16;
 #[cfg(feature = "image")]
 use crate::color::{BLACK_16, Color};
 #[cfg(feature = "image")]
-use crate::errors::ToImageError;
-use crate::errors::{MulReaderError, MulReaderResult};
+use crate::error::ToImageError;
+use crate::error::{MulReaderError, MulReaderResult};
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]

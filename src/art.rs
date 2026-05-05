@@ -22,7 +22,7 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::errors::{MEMWRITER_ERROR, MulReaderError, MulReaderResult};
+use crate::error::{MEMWRITER_ERROR, MulReaderError, MulReaderResult};
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::fs::File;

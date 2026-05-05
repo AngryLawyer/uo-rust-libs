@@ -6,7 +6,6 @@ use std::io::{Cursor, Result};
 #[cfg(feature = "image")]
 use image::Pixel;
 
-#[cfg(feature = "image")]
 fn example_gump_mul() -> Result<(Vec<u8>, u16, u16)> {
     let mut data = Cursor::new(vec![]);
 

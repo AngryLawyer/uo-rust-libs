@@ -7,7 +7,7 @@
 //! `|color_table:[u16..32]|table_start:u16|table_end:u16|name:[u8..20]|`
 //!
 use crate::color::Color16;
-use crate::errors::MEMWRITER_ERROR;
+use crate::error::MEMWRITER_ERROR;
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 use std::fs::File;
 use std::io::{Cursor, Read, Result, Seek, SeekFrom, Write};

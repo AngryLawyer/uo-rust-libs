@@ -6,7 +6,7 @@
 //! Skills are encoded as a list of
 //! |clickable:u8|name:c-string|
 
-use crate::errors::{MulReaderError, MulReaderResult};
+use crate::error::{MulReaderError, MulReaderResult};
 use crate::mul::MulReader;
 use std::fs::File;
 use std::io::{Read, Seek};

@@ -6,19 +6,19 @@ extern crate byteorder;
 #[cfg(feature = "image")]
 extern crate image;
 
-pub mod errors;
+pub mod error;
 pub mod mul;
 
 pub mod color;
 
 pub mod anim;
 pub mod art;
-pub mod fonts;
+pub mod font;
 pub mod gump;
-pub mod hues;
+pub mod hue;
 pub mod map;
-pub mod skills;
-pub mod texmaps;
+pub mod skill;
+pub mod texmap;
 pub mod tiledata;
 
 #[cfg(test)]
@@ -26,10 +26,11 @@ mod tests {
     mod test_anim;
     mod test_art;
     mod test_color;
-    mod test_fonts;
+    mod test_font;
     mod test_gump;
-    mod test_hues;
+    mod test_hue;
     mod test_mul;
-    mod test_skills;
+    mod test_skill;
+    mod test_texmap;
     //    mod test_tiledata;
 }

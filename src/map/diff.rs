@@ -1,5 +1,5 @@
 use super::shared::{Block, StaticLocation, read_block, read_block_statics};
-use crate::errors::MulReaderResult;
+use crate::error::MulReaderResult;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::collections::HashMap;

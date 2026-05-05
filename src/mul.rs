@@ -12,7 +12,7 @@ use std::path::Path;
 
 use byteorder::{LittleEndian, ReadBytesExt, WriteBytesExt};
 
-use crate::errors::{MulReaderError, MulReaderResult, MulWriterResult};
+use crate::error::{MulReaderError, MulReaderResult, MulWriterResult};
 
 const UNDEF_RECORD: u32 = 0xFEFEFEFF;
 const INDEX_SIZE: u32 = 12;

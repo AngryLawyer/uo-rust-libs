@@ -1,4 +1,4 @@
-use crate::errors::MulReaderResult;
+use crate::error::MulReaderResult;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::fs::File;

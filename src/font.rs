@@ -11,7 +11,7 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::{BLACK_16, Color16};
-use crate::errors::MulReaderResult;
+use crate::error::MulReaderResult;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
 use image::{Rgba, RgbaImage};

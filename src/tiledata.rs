@@ -4,7 +4,7 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 use std::str::from_utf8;
 
-use crate::errors::MulReaderResult;
+use crate::error::MulReaderResult;
 
 #[repr(usize)]
 pub enum Flags {

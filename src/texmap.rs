@@ -1,10 +1,12 @@
 //! Methods for reading texture data out of texmaps.mul
 //!
 //! Texmaps are used when non-flat surfaces need to be drawn
+//!
+//! Texmaps exist as a sequence of colours, and are either 128x128, or 64x64
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::errors::MulReaderResult;
+use crate::error::MulReaderResult;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]
@@ -15,12 +17,14 @@ use std::path::Path;
 
 pub const LARGE_TILE: usize = 0x8000;
 
+/// A texture. They are always either 128x128 or 64x64
 pub struct TexMap {
     pub data: Vec<Color16>,
 }
 
 #[cfg(feature = "image")]
 impl TexMap {
+    /// Convert this asset into a standarized image format
     pub fn to_image(&self) -> RgbaImage {
         let tile_width = if self.data.len() * 2 >= LARGE_TILE {
             128
@@ -39,22 +43,26 @@ impl TexMap {
     }
 }
 
-pub struct TexMapsReader<T: Read + Seek> {
+/// A struct to help read out TexMap data
+pub struct TexMapReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }
 
-impl TexMapsReader<File> {
-    pub fn new(index_path: &Path, mul_path: &Path) -> MulReaderResult<TexMapsReader<File>> {
+impl TexMapReader<File> {
+    /// Create a new TexMapReader from an index and mul path
+    pub fn new(index_path: &Path, mul_path: &Path) -> MulReaderResult<TexMapReader<File>> {
         let mul_reader = MulReader::new(index_path, mul_path)?;
-        Ok(TexMapsReader { mul_reader })
+        Ok(TexMapReader { mul_reader })
     }
 }
 
-impl<T: Read + Seek> TexMapsReader<T> {
-    pub fn from_mul(reader: MulReader<T>) -> TexMapsReader<T> {
-        TexMapsReader { mul_reader: reader }
+impl<T: Read + Seek> TexMapReader<T> {
+    /// Create a TexMapReader from an existing mul reader
+    pub fn from_mul(reader: MulReader<T>) -> TexMapReader<T> {
+        TexMapReader { mul_reader: reader }
     }
 
+    /// Read a single texmap
     pub fn read(&mut self, id: u32) -> MulReaderResult<TexMap> {
         let raw = self.mul_reader.read(id)?;
         let len = raw.data.len();

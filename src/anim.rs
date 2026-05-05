@@ -22,9 +22,9 @@
 #[cfg(feature = "image")]
 use crate::color::Color;
 use crate::color::Color16;
-use crate::errors::MulReaderResult;
+use crate::error::MulReaderResult;
 #[cfg(feature = "image")]
-use crate::errors::ToImageError;
+use crate::error::ToImageError;
 use crate::mul::MulReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 #[cfg(feature = "image")]

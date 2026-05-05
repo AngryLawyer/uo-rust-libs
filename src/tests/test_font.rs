@@ -2,8 +2,8 @@ use byteorder::{LittleEndian, WriteBytesExt};
 use std::io::{Cursor, Result, Write};
 
 #[cfg(feature = "image")]
-use crate::fonts::Character;
-use crate::fonts::FontReader;
+use crate::font::Character;
+use crate::font::FontReader;
 #[cfg(feature = "image")]
 use image::Pixel;
 

@@ -6,8 +6,8 @@ mod radarcol;
 mod shared;
 mod static_location;
 
-use crate::errors::MulReaderError;
-use crate::errors::MulReaderResult;
+use crate::error::MulReaderError;
+use crate::error::MulReaderResult;
 
 pub use self::diff::*;
 pub use self::radarcol::*;
