@@ -32,5 +32,5 @@ mod tests {
     mod test_mul;
     mod test_skill;
     mod test_texmap;
-    //    mod test_tiledata;
+    mod test_tiledata;
 }

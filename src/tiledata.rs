@@ -1,3 +1,28 @@
+//! Methods for reading supplementary data about tiles and statics from tiledata.mul
+//!
+//! `tiledata` is split in two, much like `art`; first with those for map tiles, then statics.
+//!
+//! The file starts with 512 blocks of MapTileData, which are defined as
+//!
+//! `|unknown:u32|tiles:[MapTileData..32]|`
+//!
+//! MapTileData is defined as
+//!
+//! `|flags:u32|texture_id:u16|name:[u8..20(CString)]|`
+//!
+//! The rest of the file is Static tile data, also organised into blocks
+//!
+//! `|unknown:u32|tiles:[StaticTileData..32]|`
+//!
+//! StaticTileData is defined as
+//!
+//! `|flags:u32|weight:u8|quality:u8|unknown:u16|unknown:u8|quantity:u8|anim_id:u16|unknown:u8|hue:u8|unknown:u16|height:u8|name:[u8..20(CString)]|`
+//!
+//! Several fields are used to represent multiple attributes:
+//!
+//! * Quality also represents Layer for wearables, and Light ID for lights
+//! * Quantity represents Weapon Class for weapons, and Armor value for Armor
+//! * Height represents capacity for containers
 use bitflags::bitflags;
 use byteorder::{LittleEndian, ReadBytesExt};
 use std::fs::File;
@@ -8,7 +33,8 @@ use std::str::from_utf8;
 use crate::error::MulReaderResult;
 
 bitflags! {
-    #[derive(Debug, Clone)]
+    /// Bitflags associated with a tile
+    #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
     pub struct Flags: u32 {
         const BackgroundFlag = 0x00000001;
         const WeaponFlag = 0x00000002;
@@ -45,27 +71,34 @@ bitflags! {
     }
 }
 
-// Tile data is odd, as we have [(unknown, (LAND_TILE_DATA) *32) * 512]
+// Tile data is odd, as we have [(unknown, (LAND_TILE_DATA) * 32) * 512]
+// All values are in bytes
 const GROUP_HEADER_SIZE: u32 = 4;
 const MAP_TILE_SIZE: u32 = 26;
 const STATIC_TILE_SIZE: u32 = 37;
 const STATIC_OFFSET: u32 = 428032;
 
+/// Information about a given Map tile
 #[derive(Clone, Debug)]
 pub struct MapTileData {
     pub flags: Flags,
+    /// Which TexMap to use instead if this tile is non-flat
     pub texture_id: u16,
     pub name: String,
 }
 
+/// Information about a given Static tile
 #[derive(Clone, Debug)]
 pub struct StaticTileData {
     pub flags: Flags,
     pub weight: u8,
+    /// This field becomes Layer for wearables, and the Light ID for lights, otherwise quality.
     pub quality_layer_light_id: u8,
+    /// This field becomes weapon class for weapons, armor class for armor, or defaults to quantity.
     pub quantity_weapon_class_armor_class: u8,
     pub anim_id: u16,
     pub hue: u8,
+    /// This field becomes capacity for containers, otherwise height
     pub height_capacity: u8,
     pub name: String,
 }
@@ -85,13 +118,16 @@ impl TileDataReader<File> {
 }
 
 impl<T: Read + Seek> TileDataReader<T> {
-    /// Create an TileDataReader from an existing mul reader
-    pub fn from_mul(reader: T) -> TileDataReader<T> {
+    /// Create a TileDataReader from an existing file reader
+    pub fn from_readable(reader: T) -> TileDataReader<T> {
         TileDataReader {
             data_reader: reader,
         }
     }
 
+    /// Read a map tile's associated data.
+    ///
+    /// The ID matches the data in ArtReader's `read_tile`
     pub fn read_map_tile_data(&mut self, idx: u32) -> MulReaderResult<MapTileData> {
         let offset = self.calculate_map_tile_offset(idx);
         self.data_reader.seek(SeekFrom::Start(offset))?;
@@ -120,6 +156,9 @@ impl<T: Read + Seek> TileDataReader<T> {
         ((idx * MAP_TILE_SIZE) + group_header_jumps) as u64
     }
 
+    /// Read a static tile's associated data.
+    ///
+    /// The ID is read from the static offset, and matches the data in ArtReader's `read_static`
     pub fn read_static_tile_data(&mut self, idx: u32) -> MulReaderResult<StaticTileData> {
         let offset = self.calculate_static_tile_offset(idx);
         self.data_reader.seek(SeekFrom::Start(offset))?;

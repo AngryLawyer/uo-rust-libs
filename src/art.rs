@@ -11,7 +11,7 @@
 //! `|size:u16|trigger:u16|width:u16|height:u16|offset_table:[u16..height]|rows:[row..height]`
 //!
 //! Rows are stored as
-//! `|runs:[run_pair..?]|`
+//! `|runs:[RunPair..?]|`
 //! and are read until a stop value is found
 //!
 //! Run pairs are stored as
