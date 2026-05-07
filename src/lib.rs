@@ -1,5 +1,7 @@
 //! UORustLibs provides methods for reading and writing data files from the classic video game
-//! Ultima Online. Most code is tested on data files from the Age of Shadows client, but it should
+//! Ultima Online.
+//!
+//! Most code is tested on data files from the Age of Shadows client, but it should
 //! work for earlier clients, and clients up until the switch from `.mul` to `.uop`
 
 extern crate byteorder;

@@ -4,7 +4,7 @@
 //!
 //! Where index and size represent references into the equivalent Mul file
 //!
-//! Index values of `0xFEFEFEFF` are considered undefined, and should be skipped
+//! Index values of `0xFEFEFEFF` and `0xFFFFFFFF` are considered undefined, and should be skipped
 
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Seek, SeekFrom, Write};
@@ -16,10 +16,7 @@ use crate::error::{MulReaderError, MulReaderResult, MulWriterResult};
 
 const UNDEF_RECORD: u32 = 0xFEFEFEFF;
 const INDEX_SIZE: u32 = 12;
-
-/**
- * An individual record, read from a Mul file
- */
+/// An individual record, read from a Mul file
 pub struct MulRecord {
     ///Raw Mul data
     pub data: Vec<u8>,
@@ -33,15 +30,14 @@ pub struct MulRecord {
     pub opt2: u16,
 }
 
-/**
- * Read Mul records out of an idx and a mul
- */
+///Read Mul records out of an idx and a mul
 pub struct MulReader<T: Read + Seek> {
     idx_reader: T,
     data_reader: T,
 }
 
 impl MulReader<File> {
+    /// Create a new mul reader from an index and mul path
     pub fn new(idx_path: &Path, mul_path: &Path) -> MulReaderResult<MulReader<File>> {
         let idx_reader = File::open(idx_path)?;
         let data_reader = File::open(mul_path)?;
@@ -54,6 +50,7 @@ impl MulReader<File> {
 }
 
 impl<T: Read + Seek> MulReader<T> {
+    /// Create a new mul reader from existing index and mul readers
     pub fn from_readables(idx_reader: T, data_reader: T) -> MulReader<T> {
         MulReader {
             idx_reader,
@@ -61,6 +58,9 @@ impl<T: Read + Seek> MulReader<T> {
         }
     }
 
+    /// Read a specific entry from the Mul.
+    ///
+    /// This method will return OffsetOutOfBounds if the index is marked invalid.
     pub fn read(&mut self, index: u32) -> MulReaderResult<MulRecord> {
         //Wind the idx reader to the index position
         self.idx_reader
@@ -93,9 +93,7 @@ impl<T: Read + Seek> MulReader<T> {
     }
 }
 
-/**
- * Write new records onto existing Mul and Idx files
- */
+///Write new records onto existing Mul and Idx files
 pub struct MulWriter<T: Write + Seek> {
     idx_writer: T,
     data_writer: T,
@@ -107,6 +105,7 @@ pub enum MulWriterMode {
 }
 
 impl MulWriter<File> {
+    /// Create a new mul writer from an index and mul path
     pub fn new(
         idx_path: &Path,
         mul_path: &Path,
@@ -129,15 +128,17 @@ impl MulWriter<File> {
 }
 
 impl<T: Write + Seek> MulWriter<T> {
+    /// Create a new mul writer from an index and mul path
     pub fn from_writables(idx_writer: T, data_writer: T) -> MulWriter<T> {
         MulWriter {
             idx_writer,
             data_writer,
         }
     }
+    /// Append a new value to the mul files
     pub fn append(
         &mut self,
-        data: &Vec<u8>,
+        data: &[u8],
         opt1: Option<u16>,
         opt2: Option<u16>,
     ) -> MulWriterResult<()> {
@@ -148,7 +149,7 @@ impl<T: Write + Seek> MulWriter<T> {
         //Fill up our fields
         let start = mul_size as u32;
         let length = data.len() as u32;
-        self.data_writer.write_all(data.as_slice())?;
+        self.data_writer.write_all(data)?;
         self.idx_writer.write_u32::<LittleEndian>(start)?;
         self.idx_writer.write_u32::<LittleEndian>(length)?;
         self.idx_writer

@@ -1,7 +1,9 @@
+//! Shared error types
 use thiserror::Error;
 
 pub const MEMWRITER_ERROR: &str = "MemWriter unexpectedly failed";
 
+/// Errors that occur when reading muls
 #[derive(Error, Debug)]
 pub enum MulReaderError {
     #[error("IO Error: {0}")]
@@ -18,6 +20,7 @@ pub enum MulReaderError {
     CoordinatesOutOfBounds { x: u32, y: u32 },
 }
 
+/// Errors that occur when writing muls
 #[derive(Error, Debug)]
 pub enum MulWriterError {
     #[error("IO Error: {0}")]
@@ -27,6 +30,7 @@ pub enum MulWriterError {
 pub type MulReaderResult<T> = std::result::Result<T, MulReaderError>;
 pub type MulWriterResult<T> = std::result::Result<T, MulWriterError>;
 
+/// Errors that occur when trying to create Image types from Mul data
 #[derive(Error, Debug)]
 pub enum ToImageError {
     #[error("Pixel {x}, {y} is out of bounds")]
