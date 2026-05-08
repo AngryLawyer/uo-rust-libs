@@ -44,14 +44,14 @@ impl<T: Read + Seek + ExactSizeIterator> RadarColReader<T> {
 
 impl<T: Read + Seek> RadarColReader<T> {
     /// Read the color at a specific index
-    pub fn read_color(&mut self, id: u32) -> MulReaderResult<Color16> {
+    pub fn read(&mut self, id: u32) -> MulReaderResult<Color16> {
         self.data_reader.seek(SeekFrom::Start((id * 2) as u64))?;
         let data = self.data_reader.read_u16::<LittleEndian>()?;
         Ok(data)
     }
 
     /// Read all colors contained in the file
-    pub fn read_colors(&mut self) -> MulReaderResult<Vec<Color16>> {
+    pub fn read_all(&mut self) -> MulReaderResult<Vec<Color16>> {
         let mut output = vec![];
         self.data_reader.seek(SeekFrom::Start(0))?;
         for _i in 0..(self.length / 2) {

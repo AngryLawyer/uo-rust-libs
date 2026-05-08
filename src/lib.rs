@@ -35,4 +35,6 @@ mod tests {
     mod test_skill;
     mod test_texmap;
     mod test_tiledata;
+    mod map;
+    mod utils;
 }
