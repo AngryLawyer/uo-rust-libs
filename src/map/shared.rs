@@ -6,7 +6,7 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 pub const BLOCK_SIZE: usize = 196;
 
 /// An individual tile on a map
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Cell {
     /// A lookup into art.mul as to what the floor tile should be
     pub graphic: u16,
@@ -19,7 +19,7 @@ pub struct Cell {
 /// A block. Blocks contain a grid of 8x8 cells.
 ///
 /// Blocks are stored in Maps in columns, top to bottom, left to right
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct Block {
     /// Unused
     pub checksum: u32,
@@ -29,7 +29,7 @@ pub struct Block {
 }
 
 /// The location of a fixed map prop, relative to a block
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 pub struct StaticLocation {
     /// A lookup into art.mul, as to what the static should be
     pub object_id: u16,

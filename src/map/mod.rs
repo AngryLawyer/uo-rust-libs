@@ -16,7 +16,10 @@ use std::path::Path;
 
 pub mod diff;
 pub mod radarcol;
+#[cfg(not(test))]
 mod shared;
+#[cfg(test)]
+pub mod shared;
 pub mod static_location;
 
 use crate::error::{MulReaderError, MulReaderResult};

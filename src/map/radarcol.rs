@@ -31,18 +31,15 @@ impl RadarColReader<File> {
     }
 }
 
-impl<T: Read + Seek + ExactSizeIterator> RadarColReader<T> {
+impl<T: Read + Seek> RadarColReader<T> {
     /// Create a RadarColReader from an existing readable
-    pub fn from_readable(data_reader: T) -> RadarColReader<T> {
-        let length = data_reader.len() as u32;
+    pub fn from_readable(data_reader: T, length: u32) -> RadarColReader<T> {
         RadarColReader {
             data_reader,
             length,
         }
     }
-}
 
-impl<T: Read + Seek> RadarColReader<T> {
     /// Read the color at a specific index
     pub fn read(&mut self, id: u32) -> MulReaderResult<Color16> {
         self.data_reader.seek(SeekFrom::Start((id * 2) as u64))?;
