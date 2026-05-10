@@ -66,14 +66,9 @@ impl<T: Read + Seek> SkillReader<T> {
     pub fn read_all(&mut self) -> Vec<Skill> {
         let mut result = vec![];
         let mut id = 0;
-        loop {
-            match self.read_skill(id) {
-                Ok(skill) => {
-                    result.push(skill);
-                    id += 1;
-                }
-                Err(_) => break,
-            }
+        while let Ok(skill) = self.read_skill(id) {
+            result.push(skill);
+            id += 1;
         }
         result
     }
