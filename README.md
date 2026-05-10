@@ -1,8 +1,42 @@
 UO Rust Libs
 ============
 
-Rust libraries for reading Ultima Online data files. This is still pre-1.0, and has yet to be thoroughly tested, and the API WILL likely change several times before then, so use at your own peril.
+This library contains various modules for reading and writing pre-UOP Ultima Online data files, written in Rust.
 
-This has been tested on a fresh install of Ultima Online: Age of Shadows - I am not sure if more modern clients will work with it, although older clients should. Let me know!
+This library is still pre-1.0 (although is stabilising), so the API may shift underfoot while you're working with it.
 
-If you'd like features for converting to [Image](https://crates.io/crates/image) types, use the `image` feature switch.
+By default, the library contains helper methods for converting to [Image](https://crates.io/crates/image) types. Import it with `default-features = false` if you don't need this for your use-case.
+
+This has been tested on a fresh install of Ultima Online: Age of Shadows, but should support clients up to Mondain's Legacy.
+
+Supported files
+---------------
+
+There are currently readers for the following filetypes:
+
+* anim.mul/anim.idx (and successive files) - Animated characters
+* art.mul/art.idx - Tiles and static art
+* fonts.mul - Fonts
+* gumpart.mul/gumpidx.mul - GUI elements
+* hues.mul - Palette swap colours
+* map[n].mul - World maps
+* mapdif[n].mul/mapdifl[n].mul - Patches for world maps
+* radarcol.mul - Color lookup table for map and static tiles
+* skills.mul/skills.idx - Skill names
+* stadif[n].mul/stadifl[n].mul/stadifi[n].mul - Patches for static locations
+* statics[n].mul - Static locations
+* texmaps.mul/texidx.mul - 3D texture maps
+* tiledata.mul - Information about tiles and statics
+
+Features yet to be added
+------------------------
+
+* sound.mul/soundidx.mul support
+* animdata.mul/animinfo.mul
+* palette.mul
+* skillgrp.mul
+* unifont.mul
+* speech.mul
+* multi.mul/multi.idx
+* Converting from images to UO assets/Writing muls back to files
+* A built-in viewer application
