@@ -55,12 +55,12 @@ impl MapDiffReader<File> {
 
 impl<T: Read + Seek> MapDiffReader<T> {
     /// Create a MapDiffReader from existing lookup and data readers
-    pub fn from_readable<U: Read + Seek + ExactSizeIterator>(
+    pub fn from_readable<U: Read + Seek>(
         mut lookup_reader: U,
         data_reader: T,
+        lookup_file_length: u32,
     ) -> MulReaderResult<MapDiffReader<T>> {
-        let len = lookup_reader.len() as u32;
-        let lookup_table = generate_lookup_table(&mut lookup_reader, len)?;
+        let lookup_table = generate_lookup_table(&mut lookup_reader, lookup_file_length)?;
 
         Ok(MapDiffReader {
             lookup_table,
@@ -119,12 +119,12 @@ impl StaticLocationDiffReader<File> {
 
 impl<T: Read + Seek> StaticLocationDiffReader<T> {
     /// Create a StaticLocationDiffReader from existing lookup and mul readers
-    pub fn from_mul_reader<U: Read + Seek + ExactSizeIterator>(
+    pub fn from_mul_reader<U: Read + Seek>(
         mut lookup_reader: U,
         mul_reader: MulReader<T>,
+        lookup_file_length: u32,
     ) -> MulReaderResult<StaticLocationDiffReader<T>> {
-        let len = lookup_reader.len() as u32;
-        let lookup_table = generate_lookup_table(&mut lookup_reader, len)?;
+        let lookup_table = generate_lookup_table(&mut lookup_reader, lookup_file_length)?;
 
         Ok(StaticLocationDiffReader {
             mul_reader,

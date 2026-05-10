@@ -1,6 +1,6 @@
-use std::io::{Cursor, Result};
 use crate::map::radarcol::RadarColReader;
 use byteorder::{LittleEndian, WriteBytesExt};
+use std::io::{Cursor, Result};
 
 fn raw_color_table() -> Result<Vec<u8>> {
     let mut out = Cursor::new(vec![]);
@@ -27,4 +27,3 @@ fn test_read_all() {
     let mut reader = RadarColReader::from_readable(data, len as u32);
     assert_eq!(reader.read_all().unwrap().len(), 65536);
 }
-

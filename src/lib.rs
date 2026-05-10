@@ -25,6 +25,7 @@ pub mod tiledata;
 
 #[cfg(test)]
 mod tests {
+    mod map;
     mod test_anim;
     mod test_art;
     mod test_color;
@@ -35,5 +36,4 @@ mod tests {
     mod test_skill;
     mod test_texmap;
     mod test_tiledata;
-    mod map;
 }

@@ -1,32 +1,18 @@
-use byteorder::{LittleEndian, WriteBytesExt};
+use crate::{
+    map::{
+        StaticLocation,
+        shared::{read_block, read_block_statics},
+    },
+    mul::tests::simple_from_vecs,
+    tests::map::helpers::{raw_block, raw_static_location},
+};
 use std::io::{Cursor, Result, Write};
-use crate::map::shared::{read_block, read_block_statics};
-
-fn raw_block() -> Result<Vec<u8>> {
-    let mut data = Cursor::new(vec![]);
-    data.write_u32::<LittleEndian>(0)?;
-    for i in 0..64 {
-        data.write_u16::<LittleEndian>(3)?;
-        data.write_i8(i)?;
-    }
-    Ok(data.into_inner())
-}
 
 fn raw_map() -> Result<Vec<u8>> {
     let mut data = Cursor::new(vec![]);
     for _ in 0..4 {
         data.write_all(&raw_block()?)?;
     }
-    Ok(data.into_inner())
-}
-
-fn raw_static_location() -> Result<Vec<u8>> {
-    let mut data = Cursor::new(vec![]);
-    data.write_u16::<LittleEndian>(23)?; // Object id
-    data.write_u8(2)?; // X
-    data.write_u8(3)?; // Y
-    data.write_i8(-1)?; // Z
-    data.write_u16::<LittleEndian>(0)?; // Checksum
     Ok(data.into_inner())
 }
 
@@ -51,4 +37,22 @@ fn test_read_block() {
 
 #[test]
 fn test_read_block_statics() {
+    let mut mul_reader = simple_from_vecs(vec![
+        (raw_static_locations().unwrap(), 0, 0),
+        (raw_static_locations().unwrap(), 0, 0),
+        (raw_static_locations().unwrap(), 0, 0),
+    ]);
+    let locations = read_block_statics(&mut mul_reader, 1).unwrap();
+    assert_eq!(locations.len(), 3);
+    let second_loc = locations[1];
+    assert_eq!(
+        second_loc,
+        StaticLocation {
+            object_id: 23,
+            x: 2,
+            y: 3,
+            altitude: -1,
+            checksum: 0
+        }
+    )
 }
