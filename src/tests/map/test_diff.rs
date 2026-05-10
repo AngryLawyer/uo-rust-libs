@@ -13,7 +13,7 @@ use crate::{
 fn raw_map() -> Result<Vec<u8>> {
     let mut data = Cursor::new(vec![]);
     for _ in 0..2 {
-        data.write_all(&raw_block()?)?;
+        data.write_all(&raw_block(3)?)?;
     }
     Ok(data.into_inner())
 }
@@ -27,7 +27,7 @@ fn raw_references() -> Result<Vec<u8>> {
 
 fn raw_static_locations() -> Result<Vec<u8>> {
     let mut data = Cursor::new(vec![]);
-    data.write_all(&raw_static_location()?)?;
+    data.write_all(&raw_static_location(23)?)?;
     Ok(data.into_inner())
 }
 

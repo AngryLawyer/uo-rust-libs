@@ -11,14 +11,14 @@ use std::io::{Cursor, Result, Write};
 fn raw_map() -> Result<Vec<u8>> {
     let mut data = Cursor::new(vec![]);
     for _ in 0..4 {
-        data.write_all(&raw_block()?)?;
+        data.write_all(&raw_block(3)?)?;
     }
     Ok(data.into_inner())
 }
 
 fn raw_static_locations() -> Result<Vec<u8>> {
     let mut data = Cursor::new(vec![]);
-    let raw_location = raw_static_location()?;
+    let raw_location = raw_static_location(23)?;
     data.write_all(&raw_location)?;
     data.write_all(&raw_location)?;
     data.write_all(&raw_location)?;
