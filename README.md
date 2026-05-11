@@ -1,4 +1,4 @@
-UO Rust Libs
+UO Rust Libs [![Crates.io](https://img.shields.io/crates/v/uo-rust-libs.svg)](https://crates.io/crates/uo-rust-libs) ![License](https://img.shields.io/crates/l/uo-rust-libs.svg) [![Documentation](https://docs.rs/uo-rust-libs/badge.svg)](https://docs.rs/uo-rust-libs/)
 ============
 
 This library contains various modules for reading and writing pre-UOP Ultima Online data files, written in Rust.
