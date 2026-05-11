@@ -1,6 +1,7 @@
 [package]
 
 name = "uo-rust-libs"
+description = "Data readers for various Ultima Online client mul files"
 version = "0.1.0"
 edition = "2024"
 authors = ["Tony Aldridge <tony@angry-lawyer.com>"]
