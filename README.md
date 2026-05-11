@@ -40,3 +40,8 @@ Features yet to be added
 * multi.mul/multi.idx
 * Converting from images to UO assets/Writing muls back to files
 * A built-in viewer application
+
+References
+----------
+
+https://uo.stratics.com/heptazane/fileformats.shtml
