@@ -12,6 +12,7 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
 /// A struct to help read colors out of RadarCol
+#[derive(Debug)]
 pub struct RadarColReader<T: Read + Seek> {
     data_reader: T,
     length: u32,

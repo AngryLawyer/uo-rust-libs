@@ -20,6 +20,7 @@ use std::path::Path;
 ///
 /// The methods on this struct optionally take a StaticLocationDiffReader,
 /// to make it easier to apply patches to a map
+#[derive(Debug)]
 pub struct StaticLocationReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
     /// Width, in blocks

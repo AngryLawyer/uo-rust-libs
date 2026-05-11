@@ -47,6 +47,7 @@ pub const STATIC_OFFSET: u32 = 0x4000;
 
 /// A run pair contains an offset at which point to start drawing the run,
 /// and the pixels to draw
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct RunPair {
     pub offset: u16,
     pub run: Vec<Color16>,
@@ -74,6 +75,7 @@ impl RunPair {
 pub type StaticRow = Vec<RunPair>;
 
 /// A map tile, 44px by 44px.
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Tile {
     /// Header information for a tile.  Unused
     pub header: u32,
@@ -185,6 +187,7 @@ impl Art for Static {
 }
 
 /// A static image, typically used to render props
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Static {
     /// The number of bytes this static is stored as
     pub size: u16,
@@ -199,6 +202,7 @@ pub struct Static {
 }
 
 /// A struct to help read out Tile and Static data
+#[derive(Debug)]
 pub struct ArtReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }

@@ -14,6 +14,7 @@ use std::path::Path;
 use std::str::from_utf8;
 
 /// A skill name, plus whether it requires clicking to activate
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Skill {
     pub clickable: bool,
     pub name: String,
@@ -34,6 +35,7 @@ impl Skill {
     }
 }
 
+/// A struct to help read out Skill data
 pub struct SkillReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }

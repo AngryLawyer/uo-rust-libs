@@ -40,6 +40,7 @@ pub mod map_size {
 ///
 /// The methods on this struct optionally take a MapDiffReader,
 /// to make it easier to apply patches to a map
+#[derive(Debug)]
 pub struct MapReader<T: Read + Seek> {
     data_reader: T,
     /// Width, in blocks

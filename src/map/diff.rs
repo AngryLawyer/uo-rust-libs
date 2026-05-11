@@ -34,6 +34,7 @@ fn generate_lookup_table<T: Read + Seek>(
 }
 
 /// A struct to help read out map blocks from a diff file
+#[derive(Debug)]
 pub struct MapDiffReader<T: Read + Seek> {
     lookup_table: HashMap<u32, u32>,
     diff: T,
@@ -92,6 +93,7 @@ impl<T: Read + Seek> MapDiffReader<T> {
 }
 
 /// A struct to help read out static locations for a block from a diff file
+#[derive(Debug)]
 pub struct StaticLocationDiffReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
     lookup_table: HashMap<u32, u32>,

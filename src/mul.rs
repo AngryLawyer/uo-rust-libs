@@ -16,7 +16,9 @@ use crate::error::{MulReaderError, MulReaderResult, MulWriterResult};
 
 const UNDEF_RECORD: u32 = 0xFEFEFEFF;
 const INDEX_SIZE: u32 = 12;
+
 /// An individual record, read from a Mul file
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct MulRecord {
     ///Raw Mul data
     pub data: Vec<u8>,
@@ -31,6 +33,7 @@ pub struct MulRecord {
 }
 
 ///Read Mul records out of an idx and a mul
+#[derive(Debug)]
 pub struct MulReader<T: Read + Seek> {
     idx_reader: T,
     data_reader: T,
@@ -94,6 +97,7 @@ impl<T: Read + Seek> MulReader<T> {
 }
 
 ///Write new records onto existing Mul and Idx files
+#[derive(Debug)]
 pub struct MulWriter<T: Write + Seek> {
     idx_writer: T,
     data_writer: T,

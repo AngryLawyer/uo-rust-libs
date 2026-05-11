@@ -79,7 +79,7 @@ const STATIC_TILE_SIZE: u32 = 37;
 const STATIC_OFFSET: u32 = 428032;
 
 /// Information about a given Map tile
-#[derive(Clone, Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct MapTileData {
     pub flags: Flags,
     /// Which TexMap to use instead if this tile is non-flat
@@ -88,7 +88,7 @@ pub struct MapTileData {
 }
 
 /// Information about a given Static tile
-#[derive(Clone, Debug)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct StaticTileData {
     pub flags: Flags,
     pub weight: u8,
@@ -104,6 +104,7 @@ pub struct StaticTileData {
 }
 
 /// A struct to help read out MapTileData and StaticTileData data
+#[derive(Debug)]
 pub struct TileDataReader<T: Read + Seek> {
     data_reader: T,
 }

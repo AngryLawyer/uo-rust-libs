@@ -28,14 +28,14 @@ use std::io::{Cursor, Read, Seek, SeekFrom};
 use std::path::Path;
 
 /// An RLE pair
-#[derive(Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct GumpPair {
     pub color: Color16,
     pub count: u16,
 }
 
 /// A user-interface element.
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Gump {
     pub width: u16,
     pub height: u16,
@@ -77,6 +77,7 @@ impl Gump {
 }
 
 /// A struct to help read out Gump data
+#[derive(Debug)]
 pub struct GumpReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }

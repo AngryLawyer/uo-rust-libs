@@ -17,7 +17,7 @@ use std::str::from_utf8;
 ///An individual Hue.
 ///
 ///Hues act as a ramp of colors that can be used for palette swapping other art assets
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Hue {
     ///32 color values
     pub color_table: [Color16; 32],
@@ -73,6 +73,7 @@ impl Hue {
 }
 
 ///A collection of 8 hues
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct HueGroup {
     ///Unknown usage
     pub header: u32,
@@ -104,6 +105,8 @@ const ENTRY_SIZE: u32 = 88;
 //8 entries to a group, plus a 4 byte header. 708 bytes.
 const GROUP_SIZE: u32 = (ENTRY_SIZE * 8) + 4;
 
+#[derive(Debug)]
+/// A struct to help read out Hue data
 pub struct HueReader<T: Read + Seek> {
     data_reader: T,
 }

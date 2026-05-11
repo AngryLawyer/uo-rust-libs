@@ -43,6 +43,7 @@ const IMAGE_COMPLETE: u32 = 0x7FFF7FFF;
 const OFFSET_MASK: i32 = (0x200 << 22) | (0x200 << 12);
 
 /// A single row of a frame
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Row {
     /// Compacted header information.
     /// It contains the length of the associated data, plus offsets of where to plot, relative
@@ -113,6 +114,7 @@ impl Row {
 }
 
 /// A frame of an animtion
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AnimFrame {
     pub image_center_x: i16,
     pub image_center_y: i16,
@@ -151,6 +153,7 @@ impl AnimFrame {
 }
 
 /// An animation sequence
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct AnimGroup {
     pub palette: [Color16; 256],
     pub frame_count: u32,
@@ -172,6 +175,7 @@ impl AnimGroup {
 }
 
 /// A struct to allow reading of animations from data muls
+#[derive(Debug)]
 pub struct AnimReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }

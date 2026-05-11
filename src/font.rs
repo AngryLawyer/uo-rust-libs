@@ -20,7 +20,7 @@ use std::io::{Read, Seek};
 use std::path::Path;
 
 /// An individual glyph in a font
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Character {
     pub width: u8,
     pub height: u8,
@@ -49,13 +49,14 @@ impl Character {
 
 /// A font. Fonts should always have 224 characters in them.
 /// They map to ASCII, but skip the first 32 characters
-#[derive(Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Font {
     pub header: u8,
     pub characters: Vec<Character>,
 }
 
 /// A struct to help reading fonts from a path
+#[derive(Debug)]
 pub struct FontReader<T: Read + Seek> {
     data_reader: T,
 }

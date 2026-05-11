@@ -18,6 +18,7 @@ use std::path::Path;
 pub const LARGE_TILE: usize = 0x8000;
 
 /// A texture. They are always either 128x128 or 64x64
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct TexMap {
     pub data: Vec<Color16>,
 }
@@ -44,6 +45,7 @@ impl TexMap {
 }
 
 /// A struct to help read out TexMap data
+#[derive(Debug)]
 pub struct TexMapReader<T: Read + Seek> {
     mul_reader: MulReader<T>,
 }
